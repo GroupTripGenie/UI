@@ -1,0 +1,1468 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TripGenie</title>
+  <link rel="stylesheet" href="styles.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700&family=DM+Sans:wght@400;500&display=swap" rel="stylesheet" />
+</head>
+<body>
+  <script>
+    if (!sessionStorage.getItem('tg_logged_in')) {
+      window.location.replace('login.html');
+    }
+  </script>
+  
+
+
+  <div class="app">
+    <!-- Sidebar -->
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-header">
+        <div class="logo">
+          <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+            <circle cx="14" cy="14" r="14" fill="#068cdf"/>
+            <path d="M8 16 Q14 6 20 16" stroke="white" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+            <circle cx="14" cy="18" r="2.5" fill="white"/>
+          </svg>
+          <span class="logo-text">TripGenie</span>
+        </div>
+        <button class="sidebar-close" id="sidebarClose" aria-label="Close menu">✕</button>
+      </div>
+
+      <nav class="nav">
+        <a href="#" class="nav-link active" data-page="dashboard">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+          Dashboard
+        </a>
+        <a href="#" class="nav-link" data-page="mytrips">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+          My Trips
+        </a>
+        <a href="#" class="nav-link" data-page="plantrip">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+          Plan Trip
+        </a>
+        <a href="#" class="nav-link" data-page="budget">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>
+          Budget
+        </a>
+        <a href="#" class="nav-link" data-page="checklists">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
+          Checklists
+        </a>
+        <a href="#" class="nav-link" data-page="reminders">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>
+          Reminders
+        </a>
+        <a href="#" class="nav-link" data-page="budget">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>
+          Budget
+        </a>
+        <a href="#" class="nav-link" data-page="checklists">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
+          Checklists
+        </a>
+        <a href="#" class="nav-link" data-page="reminders">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>
+          Reminders
+        </a>
+        <a href="#" class="nav-link" data-page="calendar">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+          Calendar
+        </a>
+        <a href="#" class="nav-link" data-page="profile">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          Profile
+        </a>
+        <a href="#" class="nav-link nav-logout" id="logoutBtn" style="margin-top:auto;color:#ef4444">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+          Log Out
+        </a>
+      </nav>
+    </aside>
+
+    <!-- Overlay -->
+    <div class="overlay" id="overlay"></div>
+
+    <!-- Main -->
+    <div class="main">
+      <!-- Top Bar -->
+      <header class="topbar">
+        <button class="menu-btn" id="menuBtn" aria-label="Open menu">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+        </button>
+        <div class="topbar-right">
+
+          <div class="avatar" id="userAvatar">?</div>
+        </div>
+      </header>
+
+      <!-- Pages -->
+      <div class="pages">
+
+        <!-- Dashboard -->
+        <div class="page active" id="page-dashboard">
+          <div class="page-content">
+            <div class="page-header">
+              <h1 id="dashGreeting">Welcome back!</h1>
+              <p>Ready to plan your next adventure?</p>
+            </div>
+
+            <div class="stats-grid">
+              <div class="stat-card">
+                <div class="stat-icon" style="background:#e8f4fd"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#068cdf" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg></div>
+                <div><p class="stat-label">Trips Planned</p><p class="stat-value" id="statTripsPlanned">—</p></div>
+              </div>
+              <div class="stat-card">
+                <div class="stat-icon" style="background:#e8f8f0"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></div>
+                <div><p class="stat-label">Countries</p><p class="stat-value" id="statCountries">—</p></div>
+              </div>
+              <div class="stat-card">
+                <div class="stat-icon" style="background:#f3edfd"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#a855f7" stroke-width="2"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg></div>
+                <div><p class="stat-label">Completed</p><p class="stat-value" id="statCompleted">—</p></div>
+              </div>
+              <div class="stat-card">
+                <div class="stat-icon" style="background:#fff3e8"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#f97316" stroke-width="2"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg></div>
+                <div><p class="stat-label">Upcoming</p><p class="stat-value" id="statUpcoming">—</p></div>
+              </div>
+            </div>
+
+            <div class="section">
+              <h2 class="section-title">Quick Actions</h2>
+              <div class="quick-actions">
+                <a href="#" class="action-btn action-blue" data-page="plantrip">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+                  Plan New Trip
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-left:auto"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+                </a>
+                <a href="#" class="action-btn action-green" data-page="mytrips">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                  View All Trips
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-left:auto"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+                </a>
+                <a href="#" class="action-btn action-light" data-page="budget">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>
+                  Check Budget
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-left:auto"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+                </a>
+              </div>
+            </div>
+
+            <div class="section">
+              <div class="section-header">
+                <h2 class="section-title">Upcoming Trips</h2>
+                <a href="#" class="view-all" data-page="mytrips">View All →</a>
+              </div>
+              <div class="trips-grid" id="dashTripsGrid"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- My Trips -->
+                        <!-- My Trips -->
+        <div class="page" id="page-mytrips">
+          <div class="page-content">
+            <div class="page-header flex-header">
+              <div><h1>My Trips</h1><p>Click any trip to open its full page</p></div>
+              <button class="btn-primary" onclick="navigate('plantrip')">+ Plan New Trip</button>
+            </div>
+            <div class="section">
+              <h2 class="section-title">Upcoming Trips</h2>
+              <div class="trips-grid" id="upcomingTripsList"></div>
+            </div>
+            <div class="section">
+              <h2 class="section-title">Past Trips</h2>
+              <div class="trips-grid" id="completedTripsList"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Trip Hub (per-trip page) -->
+        <div class="page" id="page-tripHub">
+          <div class="page-content">
+            <!-- Back + actions bar -->
+            <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px;flex-wrap:wrap">
+              <button class="btn-outline" onclick="navigate('mytrips')" style="display:flex;align-items:center;gap:6px">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+                My Trips
+              </button>
+              <button class="btn-outline small-btn" onclick="openEditCurrentTrip()">✏️ Edit Trip</button>
+              <button class="btn-outline small-btn" onclick="navigate('calendar')" style="display:flex;align-items:center;gap:4px">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                Calendar
+              </button>
+              <button class="btn-outline small-btn" style="color:#ef4444;border-color:#ef4444;margin-left:auto" onclick="deleteCurrentTrip()">🗑 Delete Trip</button>
+            </div>
+
+            <!-- Trip header card -->
+            <div class="card" style="margin-bottom:24px;overflow:hidden;padding:0">
+              <img id="hubTripImg" src="" alt="" style="width:100%;height:200px;object-fit:cover"/>
+              <div style="padding:20px">
+                <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap">
+                  <div>
+                    <h1 id="hubTripName" style="font-size:24px;margin-bottom:6px">—</h1>
+                    <p id="hubTripDates" style="color:#64748b;font-size:14px;margin-bottom:8px">—</p>
+                    <span id="hubTripStatus" class="badge badge-medium" style="font-size:13px">upcoming</span>
+                  </div>
+                </div>
+                <p id="hubTripNotes" style="color:#64748b;font-size:14px;margin-top:12px;font-style:italic">—</p>
+              </div>
+            </div>
+
+            <!-- Itinerary section -->
+            <div class="card section" style="margin-bottom:24px">
+              <div class="card-header" style="flex-wrap:wrap;gap:8px">
+                <h2>📅 Itinerary</h2>
+                <div style="display:flex;gap:8px;margin-left:auto">
+                  <button class="btn-outline small-btn" id="hubGenBtn" onclick="generateHubItinerary()">✨ Generate with AI</button>
+                  <button class="btn-outline small-btn" onclick="openManualItinerary()">✏️ Write My Own</button>
+                </div>
+              </div>
+              <div id="hubItinerary"></div>
+              <!-- Manual itinerary editor (hidden by default) -->
+              <div id="manualItineraryEditor" style="display:none;margin-top:16px">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+                  <strong style="font-size:14px">Edit Itinerary</strong>
+                  <div style="display:flex;gap:6px">
+                    <button class="btn-primary small-btn" onclick="addItineraryDay()">+ Add Day</button>
+                    <button class="btn-outline small-btn" onclick="saveManualItinerary()">💾 Save</button>
+                    <button class="btn-outline small-btn" onclick="closeManualItinerary()">Cancel</button>
+                  </div>
+                </div>
+                <div id="itineraryDaysList"></div>
+              </div>
+            </div>
+
+            <!-- Budget section -->
+            <div class="card section" style="margin-bottom:24px">
+              <div class="card-header"><h2>💰 Budget</h2></div>
+              <div id="hubBudgetContent"></div>
+            </div>
+
+            <!-- Checklists section -->
+            <div class="card section" style="margin-bottom:24px">
+              <div class="card-header"><h2>✅ Checklists</h2></div>
+              <div id="hubChecklistContent"></div>
+            </div>
+
+            <!-- Reminders section -->
+            <div class="card section" style="margin-bottom:24px">
+              <div class="card-header"><h2>🔔 Reminders</h2></div>
+              <div id="hubReminderContent"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Plan Trip -->
+        <div class="page" id="page-plantrip">
+          <div class="page-content narrow">
+            <div class="page-header">
+              <h1>Plan Your Perfect Trip</h1>
+              <p>Fill in your details, then choose how you want to plan</p>
+            </div>
+
+            <div class="card">
+              <div class="form-group">
+                <label>📍 Where do you want to go?</label>
+                <input type="text" placeholder="e.g., Paris, France" id="destination"/>
+              </div>
+
+              <div class="form-row">
+                <div class="form-group">
+                  <label>📅 Start Date</label>
+                  <input type="date" id="startDate"/>
+                </div>
+                <div class="form-group">
+                  <label>📅 End Date</label>
+                  <input type="date" id="endDate"/>
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label>💵 Total Budget</label>
+                <div style="display:flex;gap:8px">
+                  <input type="number" placeholder="e.g., 5000" id="budgetAmount" style="flex:1"/>
+                  <select id="budgetCurrency" style="padding:10px 12px;border:1.5px solid #e8ecf0;border-radius:8px;font-size:14px;font-family:inherit">
+                    <option>USD</option><option>PHP</option><option>EUR</option><option>GBP</option><option>JPY</option><option>SGD</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label>📝 Notes (optional)</label>
+                <textarea id="tripNotes" placeholder="Any special notes or requirements…" style="width:100%;padding:10px 12px;border:1.5px solid #e8ecf0;border-radius:8px;font-size:14px;font-family:inherit;min-height:70px;resize:vertical;outline:none;box-sizing:border-box"></textarea>
+              </div>
+
+              <div class="form-group">
+                <label>What are your interests?</label>
+                <div class="interests-grid">
+                  <button class="interest-btn" onclick="this.classList.toggle('active')">Culture & Museums</button>
+                  <button class="interest-btn" onclick="this.classList.toggle('active')">Food & Dining</button>
+                  <button class="interest-btn" onclick="this.classList.toggle('active')">Adventure & Sports</button>
+                  <button class="interest-btn" onclick="this.classList.toggle('active')">Beach & Relaxation</button>
+                  <button class="interest-btn" onclick="this.classList.toggle('active')">Shopping</button>
+                  <button class="interest-btn" onclick="this.classList.toggle('active')">Nightlife</button>
+                  <button class="interest-btn" onclick="this.classList.toggle('active')">Nature & Wildlife</button>
+                  <button class="interest-btn" onclick="this.classList.toggle('active')">History</button>
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label>Preferred Travel Pace</label>
+                <div class="pace-grid">
+                  <button class="pace-btn" onclick="setPace(this)">Relaxed</button>
+                  <button class="pace-btn active" onclick="setPace(this)">Moderate</button>
+                  <button class="pace-btn" onclick="setPace(this)">Fast</button>
+                </div>
+              </div>
+
+              <!-- Two action buttons -->
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:8px">
+                <button class="btn-outline large-btn" onclick="createMyOwnTrip()" style="padding:14px">
+                  ✏️ Create My Own Trip
+                </button>
+                <button class="btn-primary large-btn" id="generateBtn" onclick="generateItinerary()" style="padding:14px">
+                  ✨ Plan with AI
+                </button>
+              </div>
+            </div>
+
+            <div class="generating-card" id="generatingCard" style="display:none">
+              <div class="generating-icon">✨</div>
+              <h3>Creating your perfect itinerary...</h3>
+              <p>Our AI is analyzing your preferences and finding the best experiences</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Calendar -->
+        <div class="page" id="page-calendar">
+          <div class="page-content">
+            <div class="page-header flex-header">
+              <div><h1>Calendar</h1><p>Your trips, itinerary & reminders in one view</p></div>
+              <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+                <select id="calTripFilter" onchange="renderCalendar()" style="padding:8px 12px;border:1.5px solid #e8ecf0;border-radius:8px;font-family:inherit;font-size:14px;outline:none">
+                  <option value="all">All Trips</option>
+                </select>
+                <div style="display:flex;border:1.5px solid #e8ecf0;border-radius:8px;overflow:hidden">
+                  <button id="calViewMonth" onclick="setCalView('month')" style="padding:8px 14px;border:none;background:#068cdf;color:white;font-family:inherit;font-size:13px;font-weight:600;cursor:pointer">Month</button>
+                  <button id="calViewWeek"  onclick="setCalView('week')"  style="padding:8px 14px;border:none;background:white;color:#063937;font-family:inherit;font-size:13px;font-weight:600;cursor:pointer;border-left:1px solid #e8ecf0">Week</button>
+                  <button id="calViewDay"   onclick="setCalView('day')"   style="padding:8px 14px;border:none;background:white;color:#063937;font-family:inherit;font-size:13px;font-weight:600;cursor:pointer;border-left:1px solid #e8ecf0">Day</button>
+                </div>
+                <div style="display:flex;gap:4px">
+                  <button onclick="calNav(-1)" style="padding:8px 12px;border:1.5px solid #e8ecf0;border-radius:8px;background:white;cursor:pointer;font-size:16px">‹</button>
+                  <button onclick="calToday()"  style="padding:8px 12px;border:1.5px solid #e8ecf0;border-radius:8px;background:white;cursor:pointer;font-size:13px;font-weight:600">Today</button>
+                  <button onclick="calNav(1)"  style="padding:8px 12px;border:1.5px solid #e8ecf0;border-radius:8px;background:white;cursor:pointer;font-size:16px">›</button>
+                </div>
+              </div>
+            </div>
+            <div class="card" style="padding:0;overflow:hidden">
+              <div id="calHeader" style="padding:16px 20px;border-bottom:1px solid #e8ecf0;display:flex;justify-content:space-between;align-items:center">
+                <h2 id="calTitle" style="font-size:18px">—</h2>
+                <div id="calLegend" style="display:flex;gap:12px;font-size:12px;color:#64748b;flex-wrap:wrap">
+                  <span style="display:flex;align-items:center;gap:4px"><span style="width:10px;height:10px;border-radius:2px;background:#068cdf;display:inline-block"></span>Trip</span>
+                  <span style="display:flex;align-items:center;gap:4px"><span style="width:10px;height:10px;border-radius:2px;background:#22c55e;display:inline-block"></span>Itinerary</span>
+                  <span style="display:flex;align-items:center;gap:4px"><span style="width:10px;height:10px;border-radius:2px;background:#f97316;display:inline-block"></span>Reminder</span>
+                </div>
+              </div>
+              <div id="calBody" style="min-height:500px"></div>
+            </div>
+
+            <!-- Day detail panel -->
+            <div id="calDayDetail" style="display:none;margin-top:16px">
+              <div class="card">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+                  <h3 id="calDayDetailTitle" style="font-size:16px">—</h3>
+                  <button onclick="document.getElementById('calDayDetail').style.display='none'" style="background:none;border:none;color:#64748b;cursor:pointer;font-size:18px">✕</button>
+                </div>
+                <div id="calDayDetailContent"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Profile -->
+        <div class="page" id="page-profile">
+          <div class="page-header">
+            <h1>My Profile</h1>
+            <p>Manage your account and preferences</p>
+          </div>
+          <div class="card" style="max-width:480px;margin:0 auto">
+            <div style="text-align:center;margin-bottom:24px">
+              <div class="avatar" id="profileAvatar" style="width:72px;height:72px;font-size:28px;margin:0 auto 12px;display:flex;align-items:center;justify-content:center">?</div>
+              <h2 id="profileName" style="font-size:20px;margin-bottom:4px">—</h2>
+              <p id="profileEmail" style="color:#64748b;font-size:14px">—</p>
+            </div>
+            <div style="border-top:1px solid #e8ecf0;padding-top:20px">
+              <label style="font-size:13px;font-weight:600;color:#063937;display:block;margin-bottom:6px">Full Name</label>
+              <input type="text" id="profileNameInput" style="width:100%;padding:10px 12px;border:1.5px solid #e8ecf0;border-radius:8px;font-size:14px;margin-bottom:14px;font-family:inherit;outline:none;box-sizing:border-box"/>
+              <label style="font-size:13px;font-weight:600;color:#063937;display:block;margin-bottom:6px">Email</label>
+              <input type="email" id="profileEmailInput" style="width:100%;padding:10px 12px;border:1.5px solid #e8ecf0;border-radius:8px;font-size:14px;margin-bottom:14px;font-family:inherit;outline:none;background:#f8fafc;box-sizing:border-box" readonly/>
+              <label style="font-size:13px;font-weight:600;color:#063937;display:block;margin-bottom:6px">Preferred Currency</label>
+              <select id="profileCurrency" style="width:100%;padding:10px 12px;border:1.5px solid #e8ecf0;border-radius:8px;font-size:14px;margin-bottom:20px;font-family:inherit;outline:none">
+                <option value="USD">🇺🇸 USD — US Dollar</option>
+                <option value="PHP">🇵🇭 PHP — Philippine Peso</option>
+                <option value="EUR">🇪🇺 EUR — Euro</option>
+                <option value="GBP">🇬🇧 GBP — British Pound</option>
+                <option value="JPY">🇯🇵 JPY — Japanese Yen</option>
+                <option value="AUD">🇦🇺 AUD — Australian Dollar</option>
+                <option value="SGD">🇸🇬 SGD — Singapore Dollar</option>
+                <option value="KRW">🇰🇷 KRW — Korean Won</option>
+              </select>
+              <button class="btn-primary full-width" onclick="saveProfile()" style="margin-bottom:10px">Save Changes</button>
+              <button class="btn-outline full-width" id="logoutBtn2" style="color:#ef4444;border-color:#ef4444">Log Out</button>
+            </div>
+          </div>
+        </div>
+
+
+        <!-- Budget (All Trips) -->
+        <div class="page" id="page-budget">
+          <div class="page-content">
+            <div class="page-header flex-header">
+              <div><h1>Budget</h1><p>Track spending across all your trips</p></div>
+              <div style="display:flex;gap:8px;align-items:center">
+                <select id="budgetTripFilter" onchange="filterBudgetByTrip()" style="padding:8px 12px;border:1.5px solid #e8ecf0;border-radius:8px;font-family:inherit;font-size:14px;outline:none">
+                  <option value="all">All Trips</option>
+                </select>
+                <button class="btn-primary small-btn" onclick="openModal('modalAddCategory')">+ Add Category</button>
+              </div>
+            </div>
+            <div id="budgetPageContent"></div>
+          </div>
+        </div>
+
+        <!-- Checklists (All Trips) -->
+        <div class="page" id="page-checklists">
+          <div class="page-content">
+            <div class="page-header flex-header">
+              <div><h1>Checklists</h1><p>Stay organized across all your trips</p></div>
+              <div style="display:flex;gap:8px;align-items:center">
+                <select id="checklistTripFilter" onchange="filterChecklistByTrip()" style="padding:8px 12px;border:1.5px solid #e8ecf0;border-radius:8px;font-family:inherit;font-size:14px;outline:none">
+                  <option value="all">All Trips</option>
+                </select>
+                <button class="btn-primary small-btn" onclick="openNewChecklistFromPage()">+ New Checklist</button>
+              </div>
+            </div>
+            <div id="checklistPageContent"></div>
+          </div>
+        </div>
+
+        <!-- Reminders (All Trips) -->
+        <div class="page" id="page-reminders">
+          <div class="page-content">
+            <div class="page-header flex-header">
+              <div><h1>Reminders</h1><p>Never miss an important travel task</p></div>
+              <div style="display:flex;gap:8px;align-items:center">
+                <select id="reminderTripFilter" onchange="filterReminderByTrip()" style="padding:8px 12px;border:1.5px solid #e8ecf0;border-radius:8px;font-family:inherit;font-size:14px;outline:none">
+                  <option value="all">All Trips</option>
+                </select>
+                <button class="btn-primary small-btn" onclick="openModal('modalAddReminder')">+ Add Reminder</button>
+              </div>
+            </div>
+            <div class="stats-grid three-col" style="margin-bottom:20px">
+              <div class="stat-card"><div><p class="stat-label">High Priority</p><p class="stat-value" id="statHighPriority">—</p></div></div>
+              <div class="stat-card"><div><p class="stat-label">Due Today</p><p class="stat-value" id="statDueToday">—</p></div></div>
+              <div class="stat-card"><div><p class="stat-label">This Week</p><p class="stat-value" id="statThisWeek">—</p></div></div>
+            </div>
+            <div id="reminderPageContent"></div>
+          </div>
+        </div>
+
+      </div><!-- end .pages -->
+    </div><!-- end .main -->
+  </div><!-- end .app -->
+
+    <!-- ============================================================
+       MODALS
+  ============================================================ -->
+  <style>
+    .modal-backdrop {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.45);
+      z-index: 200;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .modal-backdrop.show { display: flex; }
+    .modal {
+      background: #fff;
+      border-radius: 14px;
+      width: 100%;
+      max-width: 480px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+      animation: modalIn 0.22s ease;
+      max-height: 90vh;
+      overflow-y: auto;
+    }
+    @keyframes modalIn { from { opacity:0; transform:translateY(20px) scale(0.97); } to { opacity:1; transform:none; } }
+    .modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 22px 24px 0;
+      margin-bottom: 18px;
+    }
+    .modal-header h3 { font-family: "Sora",sans-serif; font-size: 18px; }
+    .modal-close {
+      background: none; border: none; font-size: 20px;
+      color: #64748b; cursor: pointer; padding: 4px 8px;
+      border-radius: 6px; line-height: 1;
+    }
+    .modal-close:hover { background: #f1f5f9; }
+    .modal-body { padding: 0 24px 24px; }
+    .modal-footer {
+      display: flex;
+      gap: 10px;
+      justify-content: flex-end;
+      padding: 16px 24px;
+      border-top: 1px solid #e8ecf0;
+    }
+    .modal label {
+      display: block;
+      font-weight: 600;
+      font-size: 13px;
+      color: #063937;
+      margin-bottom: 6px;
+      margin-top: 14px;
+    }
+    .modal label:first-of-type { margin-top: 0; }
+    .modal input[type=text],
+    .modal input[type=date],
+    .modal input[type=number],
+    .modal input[type=time],
+    .modal input[type=email],
+    .modal select,
+    .modal textarea {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1.5px solid #e8ecf0;
+      border-radius: 8px;
+      font-size: 14px;
+      font-family: inherit;
+      color: #063937;
+      background: #fff;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+    .modal input:focus,
+    .modal select:focus,
+    .modal textarea:focus { border-color: #068cdf; }
+    .modal textarea { resize: vertical; min-height: 80px; }
+    .modal .form-row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .modal .color-row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 6px; }
+    .color-swatch {
+      width: 28px; height: 28px; border-radius: 50%;
+      border: 3px solid transparent; cursor: pointer; transition: border-color 0.15s;
+    }
+    .color-swatch.selected { border-color: #063937; }
+    .toast {
+      position: fixed; bottom: 28px; left: 50%; transform: translateX(-50%);
+      background: #063937; color: #fff; padding: 12px 22px;
+      border-radius: 99px; font-size: 14px; font-weight: 500;
+      z-index: 999; opacity: 0; transition: opacity 0.3s;
+      pointer-events: none; white-space: nowrap;
+    }
+    .toast.show { opacity: 1; }
+    .trip-detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 4px; }
+    .trip-detail-item { background: #f8fafc; border-radius: 8px; padding: 12px; }
+    .trip-detail-item p:first-child { font-size: 12px; color: #64748b; margin-bottom: 2px; }
+    .trip-detail-item p:last-child { font-size: 14px; font-weight: 600; color: #063937; }
+    .summary-stat { text-align:center; padding: 16px; background: #f8fafc; border-radius: 10px; }
+    .summary-stat .val { font-size: 24px; font-weight: 700; font-family: "Sora",sans-serif; color: #068cdf; }
+    .summary-stat .lbl { font-size: 12px; color: #64748b; margin-top: 2px; }
+    .itinerary-day { border: 1px solid #e8ecf0; border-radius: 10px; overflow: hidden; margin-bottom: 12px; }
+    .itinerary-day-header { background: #e8f4fd; padding: 10px 16px; font-weight: 700; font-size: 14px; color: #068cdf; }
+    .itinerary-activity { padding: 10px 16px; border-bottom: 1px solid #f1f5f9; font-size: 14px; }
+    .itinerary-activity:last-child { border-bottom: none; }
+    .itinerary-activity span { color: #64748b; font-size: 13px; margin-right: 8px; }
+    .voice-steps { display: flex; flex-direction: column; gap: 12px; margin: 16px 0; }
+    .voice-step { display: flex; align-items: center; gap: 12px; font-size: 14px; }
+    .voice-step-num { width: 28px; height: 28px; border-radius: 50%; background: #068cdf; color: #fff;
+      display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; flex-shrink: 0; }
+  </style>
+
+  <!-- View Trip Details Modal -->
+  <div class="modal-backdrop" id="modalTripDetails">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 id="detailTripName">Trip Details</h3>
+        <button class="modal-close" onclick="closeModal('modalTripDetails')">✕</button>
+      </div>
+      <div class="modal-body">
+        <img id="detailTripImg" src="" alt="" style="width:100%;height:180px;object-fit:cover;border-radius:10px;margin-bottom:16px"/>
+        <div class="trip-detail-grid">
+          <div class="trip-detail-item"><p>📅 Dates</p><p id="detailDates">—</p></div>
+          <div class="trip-detail-item"><p>💵 Budget</p><p id="detailBudget">—</p></div>
+          <div class="trip-detail-item"><p>📊 Progress</p><p id="detailProgress">—</p></div>
+          <div class="trip-detail-item"><p>🌍 Status</p><p id="detailStatus">—</p></div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-outline" onclick="closeModal('modalTripDetails')">Close</button>
+        <button class="btn-primary" onclick="closeModal('modalTripDetails');navigate('plantrip')">Edit Trip</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Edit Trip Modal -->
+  <div class="modal-backdrop" id="modalEditTrip">
+    <div class="modal">
+      <div class="modal-header">
+        <h3>Edit Trip</h3>
+        <button class="modal-close" onclick="closeModal('modalEditTrip')">✕</button>
+      </div>
+      <div class="modal-body">
+        <label>Destination</label>
+        <input type="text" id="editTripDest" placeholder="e.g. Paris, France"/>
+        <div class="form-row-2" style="margin-top:14px">
+          <div><label>Start Date</label><input type="date" id="editTripStart"/></div>
+          <div><label>End Date</label><input type="date" id="editTripEnd"/></div>
+        </div>
+        <label>Budget (USD)</label>
+        <input type="number" id="editTripBudget" placeholder="e.g. 3000"/>
+        <label>Notes</label>
+        <textarea id="editTripNotes" placeholder="Any special notes..."></textarea>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-outline" onclick="closeModal('modalEditTrip')">Cancel</button>
+        <button class="btn-primary" onclick="saveEditTrip()">Save Changes</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Trip Summary Modal -->
+  <div class="modal-backdrop" id="modalTripSummary">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 id="summaryTripName">Trip Summary</h3>
+        <button class="modal-close" onclick="closeModal('modalTripSummary')">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="trip-detail-grid" style="margin-bottom:16px">
+          <div class="summary-stat"><div class="val" id="summaryDays">7</div><div class="lbl">Days</div></div>
+          <div class="summary-stat"><div class="val" id="summarySpent">$2,450</div><div class="lbl">Total Spent</div></div>
+          <div class="summary-stat"><div class="val" id="summaryPlaces">12</div><div class="lbl">Places Visited</div></div>
+          <div class="summary-stat"><div class="val" id="summaryMemories">📸</div><div class="lbl">Memories Made</div></div>
+        </div>
+        <p style="font-size:14px;color:#64748b;line-height:1.7" id="summaryDesc">An unforgettable journey full of incredible experiences.</p>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-outline" onclick="closeModal('modalTripSummary')">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- AI Itinerary Modal -->
+  <div class="modal-backdrop" id="modalItinerary">
+    <div class="modal" style="max-width:560px">
+      <div class="modal-header">
+        <h3>✨ Your AI Itinerary</h3>
+        <button class="modal-close" onclick="closeModal('modalItinerary')">✕</button>
+      </div>
+      <div class="modal-body" id="itineraryContent">
+        <div class="itinerary-day">
+          <div class="itinerary-day-header">Day 1 — Arrival & Orientation</div>
+          <div class="itinerary-activity"><span>🕙 10:00 AM</span> Arrive & check in to hotel</div>
+          <div class="itinerary-activity"><span>🕑 2:00 PM</span> Explore the city centre on foot</div>
+          <div class="itinerary-activity"><span>🕖 6:00 PM</span> Welcome dinner at a local restaurant</div>
+        </div>
+        <div class="itinerary-day">
+          <div class="itinerary-day-header">Day 2 — Culture & Landmarks</div>
+          <div class="itinerary-activity"><span>🕘 9:00 AM</span> Visit the main museum</div>
+          <div class="itinerary-activity"><span>🕛 12:00 PM</span> Lunch at a hidden gem café</div>
+          <div class="itinerary-activity"><span>🕒 3:00 PM</span> Historic old town walking tour</div>
+          <div class="itinerary-activity"><span>🕗 7:00 PM</span> Sunset viewpoint & dinner</div>
+        </div>
+        <div class="itinerary-day">
+          <div class="itinerary-day-header">Day 3 — Adventure & Leisure</div>
+          <div class="itinerary-activity"><span>🕙 10:00 AM</span> Morning excursion (bike tour / hike)</div>
+          <div class="itinerary-activity"><span>🕐 1:00 PM</span> Local market lunch</div>
+          <div class="itinerary-activity"><span>🕓 4:00 PM</span> Free time & shopping</div>
+          <div class="itinerary-activity"><span>🕗 7:30 PM</span> Farewell dinner</div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-outline" onclick="closeModal('modalItinerary')">Close</button>
+        <button class="btn-primary" onclick="saveItineraryAsTrip()">Save to My Trips</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Add Category Modal -->
+  <div class="modal-backdrop" id="modalAddCategory">
+    <div class="modal">
+      <div class="modal-header">
+        <h3>Add Budget Category</h3>
+        <button class="modal-close" onclick="closeModal('modalAddCategory')">✕</button>
+      </div>
+      <div class="modal-body">
+        <label>Category Name</label>
+        <input type="text" id="newCatName" placeholder="e.g. Hotel, Food, Activities…"/>
+        <label>Allocated Budget Amount</label>
+        <input type="number" id="newCatAmount" placeholder="e.g. 10000" style="font-size:18px;padding:14px;font-weight:600"/>
+        <p style="font-size:12px;color:#94a3b8;margin-top:4px">Enter the total amount you plan to spend on this category</p>
+        <label>Colour Tag</label>
+        <div class="color-row" id="catColorRow">
+          <div class="color-swatch selected" style="background:#068cdf" data-color="#068cdf" onclick="selectColor(this)"></div>
+          <div class="color-swatch" style="background:#22c55e" data-color="#22c55e" onclick="selectColor(this)"></div>
+          <div class="color-swatch" style="background:#f97316" data-color="#f97316" onclick="selectColor(this)"></div>
+          <div class="color-swatch" style="background:#a855f7" data-color="#a855f7" onclick="selectColor(this)"></div>
+          <div class="color-swatch" style="background:#ec4899" data-color="#ec4899" onclick="selectColor(this)"></div>
+          <div class="color-swatch" style="background:#eab308" data-color="#eab308" onclick="selectColor(this)"></div>
+          <div class="color-swatch" style="background:#ef4444" data-color="#ef4444" onclick="selectColor(this)"></div>
+          <div class="color-swatch" style="background:#3b82f6" data-color="#3b82f6" onclick="selectColor(this)"></div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-outline" onclick="closeModal('modalAddCategory')">Cancel</button>
+        <button class="btn-primary" onclick="saveCategory()">Add Category</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Add Expense Modal -->
+  <div class="modal-backdrop" id="modalAddExpense">
+    <div class="modal">
+      <div class="modal-header">
+        <h3>Add Expense</h3>
+        <button class="modal-close" onclick="closeModal('modalAddExpense')">✕</button>
+      </div>
+      <div class="modal-body">
+        <label>Description</label>
+        <input type="text" id="newExpDesc" placeholder="e.g. Coffee at Day 1"/>
+        <label>Category</label>
+        <select id="newExpCat">
+          <option>Accommodation</option>
+          <option>Transportation</option>
+          <option>Food & Dining</option>
+          <option>Activities</option>
+          <option>Shopping</option>
+          <option>Miscellaneous</option>
+        </select>
+        <label>Amount</label>
+        <input type="number" id="newExpAmount" placeholder="e.g. 500" style="font-size:22px;padding:14px;font-weight:700;letter-spacing:1px"/>
+        <p style="font-size:12px;color:#94a3b8;margin-top:4px">Enter the amount you spent</p>
+        <label>Date</label>
+        <input type="date" id="newExpDate"/>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-outline" onclick="closeModal('modalAddExpense')">Cancel</button>
+        <button class="btn-primary" onclick="saveExpense()">Add Expense</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Edit Budget Category Modal -->
+  <div class="modal-backdrop" id="modalEditBudget">
+    <div class="modal">
+      <div class="modal-header">
+        <h3>Edit Category</h3>
+        <button class="modal-close" onclick="closeModal('modalEditBudget')">✕</button>
+      </div>
+      <div class="modal-body">
+        <label>Category Name</label>
+        <input type="text" id="editCatName"/>
+        <label>Allocated Budget (USD)</label>
+        <input type="number" id="editCatAmount"/>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-outline" onclick="closeModal('modalEditBudget')">Cancel</button>
+        <button class="btn-primary" onclick="saveEditCategory()">Save Changes</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- New Checklist Modal -->
+  <div class="modal-backdrop" id="modalNewChecklist">
+    <div class="modal">
+      <div class="modal-header">
+        <h3>New Checklist</h3>
+        <button class="modal-close" onclick="closeModal('modalNewChecklist')">✕</button>
+      </div>
+      <div class="modal-body">
+        <label>Checklist Title</label>
+        <input type="text" id="newChecklistTitle" placeholder="e.g. Visa Documents"/>
+        <label>Icon (emoji)</label>
+        <input type="text" id="newChecklistIcon" placeholder="e.g. 📋" maxlength="2"/>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-outline" onclick="closeModal('modalNewChecklist')">Cancel</button>
+        <button class="btn-primary" onclick="saveChecklist()">Create Checklist</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Add Checklist Item Modal -->
+  <div class="modal-backdrop" id="modalAddItem">
+    <div class="modal">
+      <div class="modal-header">
+        <h3>Add Item</h3>
+        <button class="modal-close" onclick="closeModal('modalAddItem')">✕</button>
+      </div>
+      <div class="modal-body">
+        <label>Item Label</label>
+        <input type="text" id="newItemLabel" placeholder="e.g. Pack sunscreen"/>
+        <input type="hidden" id="newItemTarget"/>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-outline" onclick="closeModal('modalAddItem')">Cancel</button>
+        <button class="btn-primary" onclick="saveItem()">Add Item</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- AI Shopping List Modal -->
+  <div class="modal-backdrop" id="modalShoppingList">
+    <div class="modal">
+      <div class="modal-header">
+        <h3>🛍️ AI Shopping List</h3>
+        <button class="modal-close" onclick="closeModal('modalShoppingList')">✕</button>
+      </div>
+      <div class="modal-body">
+        <p style="font-size:14px;color:#64748b;margin-bottom:16px">Based on your Paris trip itinerary, here's what we recommend:</p>
+        <div id="aiShoppingItems"></div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-outline" onclick="closeModal('modalShoppingList')">Close</button>
+        <button class="btn-primary" onclick="closeModal('modalShoppingList');showToast('Shopping list added to Checklists!')">Add to Checklists</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Add Reminder Modal -->
+  <div class="modal-backdrop" id="modalAddReminder">
+    <div class="modal">
+      <div class="modal-header">
+        <h3>Add Reminder</h3>
+        <button class="modal-close" onclick="closeModal('modalAddReminder')">✕</button>
+      </div>
+      <div class="modal-body">
+        <label>Title</label>
+        <input type="text" id="newReminderTitle" placeholder="e.g. Check in for flight"/>
+        <label>Description</label>
+        <input type="text" id="newReminderDesc" placeholder="Optional details…"/>
+        <div class="form-row-2" style="margin-top:14px">
+          <div><label>Date</label><input type="date" id="newReminderDate"/></div>
+          <div><label>Time</label><input type="time" id="newReminderTime"/></div>
+        </div>
+        <label>Priority</label>
+        <select id="newReminderPriority">
+          <option value="low">Low</option>
+          <option value="medium" selected>Medium</option>
+          <option value="high">High</option>
+        </select>
+        <label>Category</label>
+        <input type="text" id="newReminderCat" placeholder="e.g. Flight, Accommodation…"/>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-outline" onclick="closeModal('modalAddReminder')">Cancel</button>
+        <button class="btn-primary" onclick="saveReminder()">Add Reminder</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Edit Reminder Modal -->
+  <div class="modal-backdrop" id="modalEditReminder">
+    <div class="modal">
+      <div class="modal-header">
+        <h3>Edit Reminder</h3>
+        <button class="modal-close" onclick="closeModal('modalEditReminder')">✕</button>
+      </div>
+      <div class="modal-body">
+        <label>Title</label>
+        <input type="text" id="editReminderTitle"/>
+        <label>Description</label>
+        <input type="text" id="editReminderDesc"/>
+        <div class="form-row-2" style="margin-top:14px">
+          <div><label>Date</label><input type="date" id="editReminderDate"/></div>
+          <div><label>Time</label><input type="time" id="editReminderTime"/></div>
+        </div>
+        <label>Priority</label>
+        <select id="editReminderPriority">
+          <option value="low">Low</option>
+          <option value="medium">Medium</option>
+          <option value="high">High</option>
+        </select>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-outline" onclick="closeModal('modalEditReminder')">Cancel</button>
+        <button class="btn-primary" onclick="saveEditReminder()">Save Changes</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Voice Assistant Modal -->
+  <div class="modal-backdrop" id="modalVoice">
+    <div class="modal">
+      <div class="modal-header">
+        <h3>🔔 Enable Voice Assistant</h3>
+        <button class="modal-close" onclick="closeModal('modalVoice')">✕</button>
+      </div>
+      <div class="modal-body">
+        <p style="font-size:14px;color:#64748b;margin-bottom:4px">Get hands-free reminders and travel updates with TripGenie's Voice Assistant.</p>
+        <div class="voice-steps">
+          <div class="voice-step"><div class="voice-step-num">1</div>Allow microphone access when prompted</div>
+          <div class="voice-step"><div class="voice-step-num">2</div>Say "Hey TripGenie" to activate</div>
+          <div class="voice-step"><div class="voice-step-num">3</div>Ask about your trips, reminders, or budget</div>
+        </div>
+        <label style="margin-top:8px">Notification Preference</label>
+        <select>
+          <option>Voice + App notifications</option>
+          <option>Voice only</option>
+          <option>App notifications only</option>
+        </select>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-outline" onclick="closeModal('modalVoice')">Not Now</button>
+        <button class="btn-primary" onclick="closeModal('modalVoice');showToast('Voice Assistant enabled! Say \'Hey TripGenie\'')">Enable Now</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast notification -->
+  <div class="toast" id="toast"></div>
+
+
+  <!-- ============================================================
+       AI VOICE ASSISTANT
+  ============================================================ -->
+  <style>
+    /* Floating mic button */
+    .voice-fab {
+      position: fixed;
+      bottom: 32px;
+      right: 32px;
+      width: 64px;
+      height: 64px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #068cdf, #063937);
+      border: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 20px rgba(6,140,223,0.4);
+      z-index: 150;
+      transition: transform 0.15s, box-shadow 0.15s;
+    }
+    .voice-fab:hover { transform: scale(1.08); box-shadow: 0 6px 28px rgba(6,140,223,0.5); }
+    .voice-fab.listening {
+      animation: pulse-ring 1.2s ease infinite;
+      background: linear-gradient(135deg, #ef4444, #dc2626);
+    }
+    @keyframes pulse-ring {
+      0%   { box-shadow: 0 0 0 0 rgba(239,68,68,0.5); }
+      70%  { box-shadow: 0 0 0 18px rgba(239,68,68,0); }
+      100% { box-shadow: 0 0 0 0 rgba(239,68,68,0); }
+    }
+
+    /* Assistant panel */
+    .voice-panel {
+      position: fixed;
+      bottom: 108px;
+      right: 32px;
+      width: 340px;
+      background: white;
+      border-radius: 18px;
+      box-shadow: 0 12px 48px rgba(0,0,0,0.18);
+      z-index: 149;
+      display: none;
+      flex-direction: column;
+      overflow: hidden;
+      animation: slideUp 0.25s ease;
+    }
+    .voice-panel.open { display: flex; }
+    @keyframes slideUp { from { opacity:0; transform:translateY(16px); } to { opacity:1; transform:none; } }
+
+    .voice-panel-header {
+      background: linear-gradient(135deg, #068cdf, #063937);
+      padding: 14px 18px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      color: white;
+    }
+    .voice-panel-header h4 { font-family: "Sora",sans-serif; font-size: 15px; font-weight: 700; }
+    .voice-panel-header span { font-size: 12px; opacity: 0.8; }
+    .voice-close-btn { background:none; border:none; color:white; font-size:18px; cursor:pointer; padding:2px 6px; border-radius:4px; }
+    .voice-close-btn:hover { background: rgba(255,255,255,0.15); }
+
+    .voice-messages {
+      flex: 1;
+      max-height: 260px;
+      overflow-y: auto;
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .voice-msg {
+      display: flex;
+      gap: 8px;
+      align-items: flex-start;
+    }
+    .voice-msg.user { flex-direction: row-reverse; }
+
+    .voice-msg-bubble {
+      max-width: 80%;
+      padding: 10px 14px;
+      border-radius: 14px;
+      font-size: 13px;
+      line-height: 1.5;
+    }
+    .voice-msg.ai .voice-msg-bubble {
+      background: #f1f5f9;
+      color: #063937;
+      border-bottom-left-radius: 4px;
+    }
+    .voice-msg.user .voice-msg-bubble {
+      background: #068cdf;
+      color: white;
+      border-bottom-right-radius: 4px;
+    }
+
+    .voice-msg-avatar {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 13px;
+      flex-shrink: 0;
+    }
+    .voice-msg.ai .voice-msg-avatar { background: linear-gradient(135deg,#068cdf,#063937); }
+    .voice-msg.user .voice-msg-avatar { background: #e2e8f0; }
+
+    .voice-status {
+      padding: 10px 14px;
+      font-size: 12px;
+      color: #64748b;
+      text-align: center;
+      border-top: 1px solid #f1f5f9;
+      min-height: 36px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+
+    .voice-panel-footer {
+      padding: 12px 14px;
+      border-top: 1px solid #f1f5f9;
+      display: flex;
+      gap: 8px;
+    }
+    .voice-text-input {
+      flex: 1;
+      padding: 9px 12px;
+      border: 1.5px solid #e8ecf0;
+      border-radius: 99px;
+      font-size: 13px;
+      outline: none;
+      font-family: inherit;
+    }
+    .voice-text-input:focus { border-color: #068cdf; }
+    .voice-send-btn {
+      width: 36px; height: 36px;
+      border-radius: 50%;
+      background: #068cdf;
+      border: none;
+      color: white;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    .voice-send-btn:hover { background: #0578c4; }
+
+    .typing-dot {
+      display: inline-block;
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: #94a3b8;
+      animation: typingBounce 1.2s ease infinite;
+    }
+    .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+    .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+    @keyframes typingBounce { 0%,60%,100%{transform:translateY(0)} 30%{transform:translateY(-5px)} }
+
+    @media (max-width: 480px) {
+      .voice-panel { width: calc(100vw - 40px); right: 20px; }
+      .voice-fab   { bottom: 20px; right: 20px; }
+    }
+  </style>
+
+  <!-- Floating mic button -->
+  <button class="voice-fab" id="voiceFab" title="TripGenie AI Assistant">
+    <svg id="fabIcon" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
+      <path d="M12 1a3 3 0 00-3 3v8a3 3 0 006 0V4a3 3 0 00-3-3z"/>
+      <path d="M19 10v2a7 7 0 01-14 0v-2"/>
+      <line x1="12" y1="19" x2="12" y2="23"/>
+      <line x1="8" y1="23" x2="16" y2="23"/>
+    </svg>
+  </button>
+
+  <!-- Assistant chat panel -->
+  <div class="voice-panel" id="voicePanel">
+    <div class="voice-panel-header">
+      <div>
+        <h4>🧞 TripGenie AI</h4>
+        <span>Your travel assistant</span>
+      </div>
+      <button class="voice-close-btn" onclick="toggleVoicePanel()">✕</button>
+    </div>
+
+    <div class="voice-messages" id="voiceMessages">
+      <div class="voice-msg ai">
+        <div class="voice-msg-avatar">🧞</div>
+        <div class="voice-msg-bubble">Hi! I'm your TripGenie AI assistant. Hold the mic button and ask me anything about trips, budget, packing, or travel tips! 🌍</div>
+      </div>
+    </div>
+
+    <div class="voice-status" id="voiceStatus">
+      Press 🎤 below or type your question
+    </div>
+
+    <div class="voice-panel-footer">
+      <input class="voice-text-input" id="voiceTextInput" placeholder="Type a question…" 
+             onkeydown="if(event.key==='Enter') sendTextMessage()"/>
+      <button class="voice-send-btn" onclick="sendTextMessage()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
+          <line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/>
+        </svg>
+      </button>
+    </div>
+  </div>
+
+  <script>
+    // ── Core UI functions ─────────────────────────────────────────
+
+    // Navigation
+    function navigate(page) {
+      document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+      const target = document.getElementById('page-' + page);
+      if (target) target.classList.add('active');
+      document.querySelectorAll('.nav-link').forEach(l => {
+        l.classList.toggle('active', l.getAttribute('data-page') === page);
+      });
+      window.scrollTo(0, 0);
+      closeSidebar();
+    }
+
+    document.addEventListener('click', function(e) {
+      const el = e.target.closest('[data-page]');
+      if (el) { e.preventDefault(); navigate(el.getAttribute('data-page')); }
+    });
+
+    // Sidebar
+    const sidebar = document.getElementById('sidebar');
+    const overlay = document.getElementById('overlay');
+    document.getElementById('menuBtn').addEventListener('click', () => {
+      sidebar.classList.add('open'); overlay.classList.add('show');
+    });
+    document.getElementById('sidebarClose').addEventListener('click', closeSidebar);
+    overlay.addEventListener('click', closeSidebar);
+    function closeSidebar() { sidebar.classList.remove('open'); overlay.classList.remove('show'); }
+
+    // Modal helpers
+    function openModal(id)  { document.getElementById(id).classList.add('show'); }
+    function closeModal(id) { document.getElementById(id).classList.remove('show'); }
+    document.querySelectorAll('.modal-backdrop').forEach(bd => {
+      bd.addEventListener('click', e => { if (e.target === bd) bd.classList.remove('show'); });
+    });
+
+    // Toast
+    function showToast(msg) {
+      const t = document.getElementById('toast');
+      t.textContent = msg; t.classList.add('show');
+      setTimeout(() => t.classList.remove('show'), 2800);
+    }
+
+    // Logout
+    function doLogout() {
+      sessionStorage.removeItem('tg_logged_in');
+      localStorage.removeItem('tg_token');
+      localStorage.removeItem('tg_user');
+      localStorage.removeItem('tg_currency');
+      window.location.href = 'login.html';
+    }
+    document.getElementById('logoutBtn').addEventListener('click', doLogout);
+
+    // Load user info
+    (function loadUser() {
+      try {
+        const user     = JSON.parse(localStorage.getItem('tg_user') || '{}');
+        const name     = user.full_name || 'Traveler';
+        const initials = name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0,2);
+        const hour     = new Date().getHours();
+        const greeting = hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening';
+        const avatarEl = document.getElementById('userAvatar');
+        const greetEl  = document.getElementById('dashGreeting');
+        if (avatarEl) avatarEl.textContent = initials;
+        if (greetEl)  greetEl.textContent  = greeting + ', ' + name.split(' ')[0] + '! ✈️';
+        const profAvatar  = document.getElementById('profileAvatar');
+        const profName    = document.getElementById('profileName');
+        const profEmail   = document.getElementById('profileEmail');
+        const profNameIn  = document.getElementById('profileNameInput');
+        const profEmailIn = document.getElementById('profileEmailInput');
+        if (profAvatar)  profAvatar.textContent  = initials;
+        if (profName)    profName.textContent     = name;
+        if (profEmail)   profEmail.textContent    = user.email || '—';
+        if (profNameIn)  profNameIn.value         = name;
+        if (profEmailIn) profEmailIn.value        = user.email || '';
+        const savedCurrency = localStorage.getItem('tg_currency') || 'USD';
+        const currencyEl = document.getElementById('profileCurrency');
+        if (currencyEl) currencyEl.value = savedCurrency;
+      } catch(e) { console.error('loadUser error', e); }
+    })();
+
+    // Profile save
+    function saveProfile() {
+      const name     = document.getElementById('profileNameInput').value.trim();
+      const currency = document.getElementById('profileCurrency').value;
+      if (!name) { showToast('Please enter your name'); return; }
+      const user = JSON.parse(localStorage.getItem('tg_user') || '{}');
+      user.full_name = name;
+      localStorage.setItem('tg_user', JSON.stringify(user));
+      localStorage.setItem('tg_currency', currency);
+      const initials = name.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);
+      const avatarEl = document.getElementById('userAvatar');
+      const profAv   = document.getElementById('profileAvatar');
+      const profNm   = document.getElementById('profileName');
+      if (avatarEl) avatarEl.textContent = initials;
+      if (profAv)   profAv.textContent   = initials;
+      if (profNm)   profNm.textContent   = name;
+      showToast('Profile saved! Currency set to ' + currency);
+    }
+
+    // Logout btn in profile page
+    setTimeout(() => {
+      const lb2 = document.getElementById('logoutBtn2');
+      if (lb2) lb2.addEventListener('click', doLogout);
+    }, 100);
+
+    // Color swatch selector (budget modal)
+    function selectColor(el) {
+      document.querySelectorAll('.color-swatch').forEach(s => s.classList.remove('selected'));
+      el.classList.add('selected');
+    }
+
+    // Plan Trip pace buttons
+    function setPace(btn) {
+      document.querySelectorAll('.pace-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+    }
+
+    // Trip Details modal helpers (called from app.js rendered cards)
+    function openTripDetailsFromCard(id)   { if (typeof openTripDetails   !== 'undefined') openTripDetails(id); }
+    function openEditTripFromCard(id)      { if (typeof openEditTripModal !== 'undefined') openEditTripModal(id); }
+    function openTripSummaryFromCard(id)   { if (typeof openTripSummary   !== 'undefined') openTripSummary(id); }
+  </script>
+
+  <script>
+    // ── Voice Assistant ──────────────────────────────────────────
+    const API_BASE = 'http://localhost:3000/api';
+    let recognition = null;
+    let isListening = false;
+    let panelOpen   = false;
+
+    // ── Status bar ────────────────────────────────────────────────
+    function setStatus(html) {
+      const el = document.getElementById('voiceStatus');
+      if (el) el.innerHTML = html;
+    }
+
+    function toggleVoicePanel() {
+      panelOpen = !panelOpen;
+      document.getElementById('voicePanel').classList.toggle('open', panelOpen);
+    }
+
+    // ── Speech Recognition setup ─────────────────────────────────
+    function setupRecognition() {
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      if (!SpeechRecognition) {
+        setStatus('⚠️ Your browser does not support voice input. Use text instead.');
+        return null;
+      }
+      const r = new SpeechRecognition();
+      r.lang = 'en-US';
+      r.interimResults = false;
+      r.maxAlternatives = 1;
+
+      r.onresult = (e) => {
+        const transcript = e.results[0][0].transcript;
+        addMessage('user', transcript);
+        askAssistant(transcript);
+        resetMic();
+      };
+
+      r.onerror = (e) => {
+        resetMic();
+        if (e.error === 'no-speech') setStatus('No speech detected. Try again! 🎤');
+        else setStatus('Mic error: ' + e.error + '. Try again!');
+      };
+
+      r.onend = () => { if (isListening) resetMic(); };
+      return r;
+    }
+
+    // Click FAB: first click opens panel, subsequent clicks toggle mic
+    document.getElementById('voiceFab').addEventListener('click', function() {
+      if (!panelOpen) {
+        toggleVoicePanel();
+        return;
+      }
+      // Small delay to avoid double-fire issues
+      setTimeout(() => {
+        if (!isListening) startListening();
+        else resetMic();
+      }, 50);
+    });
+
+    function startListening() {
+      // Always create a fresh recognition instance to avoid state issues
+      recognition = setupRecognition();
+      if (!recognition) return;
+      try {
+        isListening = true;
+        document.getElementById('voiceFab').classList.add('listening');
+        document.getElementById('fabIcon').innerHTML = `
+          <rect x="9" y="9" width="6" height="6" rx="1" fill="white"/>
+          <path d="M12 1a3 3 0 00-3 3v8a3 3 0 006 0V4a3 3 0 00-3-3z" stroke="white" fill="none"/>
+          <path d="M19 10v2a7 7 0 01-14 0v-2" stroke="white"/>`;
+        setStatus('🎤 Listening… speak now');
+        recognition.start();
+      } catch(e) {
+        console.error(e);
+        resetMic();
+        setStatus('Could not start mic. Try again!');
+      }
+    }
+
+    function resetMic() {
+      isListening = false;
+      if (recognition) {
+        try { recognition.abort(); } catch(e) {}
+        recognition = null;
+      }
+      const fab  = document.getElementById('voiceFab');
+      const icon = document.getElementById('fabIcon');
+      if (fab)  fab.classList.remove('listening');
+      if (icon) icon.innerHTML = `
+        <path d="M12 1a3 3 0 00-3 3v8a3 3 0 006 0V4a3 3 0 00-3-3z"/>
+        <path d="M19 10v2a7 7 0 01-14 0v-2"/>
+        <line x1="12" y1="19" x2="12" y2="23"/>
+        <line x1="8" y1="23" x2="16" y2="23"/>`;
+      setStatus('🎤 Click the mic button to speak again');
+    }
+
+    function stopListening() { resetMic(); }
+
+    // ── Send text message ────────────────────────────────────────
+    function sendTextMessage() {
+      const input = document.getElementById('voiceTextInput');
+      const text  = input.value.trim();
+      if (!text) return;
+      input.value = '';
+      addMessage('user', text);
+      askAssistant(text);
+    }
+
+    // ── Ask ChatGPT ───────────────────────────────────────────────
+    async function askAssistant(message) {
+      setStatus('<span class="typing-dot"></span><span class="typing-dot"></span><span class="typing-dot"></span>');
+      const token = localStorage.getItem('tg_token');
+
+      try {
+        const res  = await fetch(`${API_BASE}/assistant/chat`, {
+          method:  'POST',
+          headers: {
+            'Content-Type':  'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({ message })
+        });
+        const data = await res.json();
+
+        if (!res.ok) throw new Error(data.error || 'Failed to get response');
+
+        addMessage('ai', data.reply);
+        speak(data.reply);
+        setStatus('🎤 Click the mic button to speak again');
+
+      } catch (err) {
+        addMessage('ai', 'Sorry, I could not connect right now. Make sure your server is running! 🔌');
+        setStatus('🎤 Click the mic button to try again');
+      } finally {
+        // Always re-enable the mic button after a response
+        resetMic();
+      }
+    }
+
+    // ── Add message bubble ────────────────────────────────────────
+    function addMessage(role, text) {
+      const msgs = document.getElementById('voiceMessages');
+      const div  = document.createElement('div');
+      div.className = 'voice-msg ' + role;
+      div.innerHTML = `
+        <div class="voice-msg-avatar">${role === 'ai' ? '🧞' : '👤'}</div>
+        <div class="voice-msg-bubble">${text}</div>`;
+      msgs.appendChild(div);
+      msgs.scrollTop = msgs.scrollHeight;
+    }
+
+    // ── Text to speech ────────────────────────────────────────────
+    function speak(text) {
+      if (!window.speechSynthesis) return;
+      window.speechSynthesis.cancel();
+      const utter = new SpeechSynthesisUtterance(text);
+      utter.lang  = 'en-US';
+      utter.rate  = 0.95;
+      utter.pitch = 1.0;
+      const trySpeak = () => {
+        const voices   = window.speechSynthesis.getVoices();
+        const enVoices = voices.filter(v => v.lang && v.lang.startsWith('en'));
+        const preferred = enVoices.find(v =>
+          v.name.includes('Samantha') || v.name.includes('Karen') ||
+          v.name.includes('Zira')     || v.name.includes('Jenny') ||
+          v.name.includes('Google US English') || v.name.includes('Google UK English')
+        ) || enVoices.find(v => v.lang === 'en-US') || enVoices[0];
+        if (preferred) { utter.voice = preferred; utter.lang = preferred.lang; }
+        window.speechSynthesis.speak(utter);
+      };
+      if (window.speechSynthesis.getVoices().length > 0) trySpeak();
+      else window.speechSynthesis.addEventListener('voiceschanged', trySpeak, { once: true });
+    };
+      async function generateShoppingList() {
+      const dest = activeTripId ? (allTrips.find(t => t.id === activeTripId)?.destination || 'your trip') : 'your trip';
+      document.getElementById('aiShoppingItems').innerHTML = loadingHTML ? '<p style="text-align:center;padding:20px;color:#64748b">Generating list…</p>' : '…';
+      openModal('modalShoppingList');
+      try {
+        const res = await apiFetch('/assistant/chat', {
+          method: 'POST',
+          body: JSON.stringify({ message: `Generate a practical packing and shopping list for a trip to ${dest}. List 10-12 essential items, one per line, starting with an emoji. Keep it brief.` })
+        });
+        const items = res.reply.split('\n').filter(l => l.trim());
+        const html  = items.map(i => `
+          <label class="check-item" style="border:1px solid #e8ecf0;border-radius:8px;margin-bottom:6px;padding:10px 12px">
+            <input type="checkbox"> <span>${i.trim()}</span>
+          </label>`).join('');
+        document.getElementById('aiShoppingItems').innerHTML = html;
+      } catch (err) {
+        document.getElementById('aiShoppingItems').innerHTML = '<p style="color:#ef4444">Could not generate list. Check your connection.</p>';
+      }
+    }
+  </script>
+
+  <script src="app.js"></script>
+</body>
+</html>

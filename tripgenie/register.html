@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TripGenie – Create Account</title>
+  <link rel="stylesheet" href="styles.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700&family=DM+Sans:wght@400;500&display=swap" rel="stylesheet" />
+  <style>
+    body { background: var(--bg); }
+
+    .auth-wrap {
+      min-height: 100vh;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+    }
+
+    /* ===== LEFT PANEL ===== */
+    .auth-panel {
+      background: linear-gradient(145deg, #063937 0%, #068cdf 100%);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 48px 56px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .auth-panel::before, .auth-panel::after {
+      content: '';
+      position: absolute;
+      border-radius: 50%;
+      opacity: 0.12;
+    }
+    .auth-panel::before { width: 420px; height: 420px; background: white; top: -100px; right: -120px; }
+    .auth-panel::after  { width: 280px; height: 280px; background: white; bottom: -60px; left: -60px; }
+
+    .panel-logo {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      position: relative;
+      z-index: 1;
+    }
+    .panel-logo span { font-family: 'Sora', sans-serif; font-weight: 700; font-size: 22px; color: white; }
+
+    .panel-body { position: relative; z-index: 1; }
+    .panel-body h2 { font-family: 'Sora', sans-serif; font-size: 36px; font-weight: 700; color: white; line-height: 1.2; margin-bottom: 18px; }
+    .panel-body p  { color: rgba(255,255,255,0.75); font-size: 16px; line-height: 1.7; max-width: 360px; }
+
+    .panel-steps {
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+      margin-top: 36px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .step-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 14px;
+      color: white;
+    }
+
+    .step-num {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.2);
+      border: 1px solid rgba(255,255,255,0.3);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 13px;
+      font-weight: 700;
+      font-family: 'Sora', sans-serif;
+      flex-shrink: 0;
+    }
+
+    .step-text p { font-size: 14px; font-weight: 600; margin-bottom: 2px; }
+    .step-text span { font-size: 13px; opacity: 0.7; }
+
+    .panel-footer { position: relative; z-index: 1; color: rgba(255,255,255,0.5); font-size: 13px; }
+
+    /* ===== RIGHT PANEL ===== */
+    .auth-form-wrap {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 48px 40px;
+      overflow-y: auto;
+    }
+
+    .auth-card { width: 100%; max-width: 420px; }
+
+    .auth-card-header { margin-bottom: 28px; }
+    .auth-card-header h1 { font-size: 26px; margin-bottom: 6px; }
+    .auth-card-header p { color: var(--text-muted); font-size: 15px; }
+
+    /* ===== FORM ===== */
+    .auth-group { margin-bottom: 18px; }
+    .auth-group label {
+      display: block;
+      font-weight: 600;
+      font-size: 14px;
+      color: var(--dark);
+      margin-bottom: 8px;
+    }
+
+    .input-wrap { position: relative; }
+    .input-wrap svg {
+      position: absolute;
+      left: 14px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--text-muted);
+      pointer-events: none;
+    }
+    .input-wrap input {
+      width: 100%;
+      padding: 12px 14px 12px 42px;
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius-sm);
+      font-size: 14px;
+      color: var(--dark);
+      background: white;
+      outline: none;
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+    .input-wrap input:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(6,140,223,0.1);
+    }
+    .input-wrap input.error-field { border-color: #dc2626; }
+    .input-wrap.has-toggle input { padding-right: 44px; }
+
+    .toggle-pw {
+      position: absolute;
+      right: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      background: none;
+      border: none;
+      padding: 4px;
+      color: var(--text-muted);
+      cursor: pointer;
+      border-radius: 4px;
+      transition: color 0.15s;
+      display: flex;
+    }
+    .toggle-pw:hover { color: var(--dark); }
+
+    /* Password strength bar */
+    .strength-wrap { margin-top: 8px; }
+    .strength-bar {
+      height: 4px;
+      background: var(--border);
+      border-radius: 99px;
+      overflow: hidden;
+      margin-bottom: 4px;
+    }
+    .strength-fill {
+      height: 100%;
+      border-radius: 99px;
+      transition: width 0.3s, background 0.3s;
+      width: 0%;
+    }
+    .strength-label { font-size: 12px; color: var(--text-muted); }
+
+    /* Terms checkbox */
+    .terms-row {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      margin-bottom: 20px;
+      font-size: 13px;
+      color: var(--text-muted);
+      line-height: 1.5;
+    }
+    .terms-row input[type=checkbox] {
+      width: 16px;
+      height: 16px;
+      margin-top: 2px;
+      accent-color: var(--primary);
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+    .terms-row a { color: var(--primary); font-weight: 500; }
+
+    /* Buttons */
+    .btn-auth {
+      width: 100%;
+      padding: 13px;
+      background: var(--primary);
+      color: white;
+      border: none;
+      border-radius: var(--radius-sm);
+      font-size: 15px;
+      font-weight: 600;
+      font-family: 'Sora', sans-serif;
+      cursor: pointer;
+      transition: background 0.15s, transform 0.1s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+    .btn-auth:hover { background: #0578c4; }
+    .btn-auth:active { transform: scale(0.99); }
+    .btn-auth.loading { opacity: 0.8; pointer-events: none; }
+
+    .divider {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin: 20px 0;
+    }
+    .divider::before, .divider::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+    .divider span { font-size: 13px; color: var(--text-muted); white-space: nowrap; }
+
+    .btn-google {
+      width: 100%;
+      padding: 12px;
+      background: white;
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius-sm);
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--dark);
+      font-family: 'Sora', sans-serif;
+      cursor: pointer;
+      transition: background 0.15s, border-color 0.15s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+    }
+    .btn-google:hover { background: #f8fafc; border-color: #c8d0d9; }
+
+    /* Messages */
+    .alert-msg {
+      display: none;
+      font-size: 13px;
+      padding: 10px 14px;
+      border-radius: var(--radius-sm);
+      margin-bottom: 18px;
+      align-items: center;
+      gap: 8px;
+    }
+    .alert-msg.show { display: flex; }
+    .alert-msg.error   { background: #fee2e2; border: 1px solid #fca5a5; color: #dc2626; }
+    .alert-msg.success { background: #dcfce7; border: 1px solid #86efac; color: #16a34a; }
+
+    .auth-footer {
+      text-align: center;
+      margin-top: 24px;
+      font-size: 14px;
+      color: var(--text-muted);
+    }
+    .auth-footer a { color: var(--primary); font-weight: 600; }
+    .auth-footer a:hover { color: var(--primary-dark); }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .auth-wrap { grid-template-columns: 1fr; }
+      .auth-panel { display: none; }
+      .auth-form-wrap { padding: 32px 20px; }
+    }
+
+    .auth-card { animation: fadeUp 0.4s ease both; }
+    @keyframes fadeUp { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
+</head>
+<body>
+  <div class="auth-wrap">
+
+    <!-- Left panel -->
+    <div class="auth-panel">
+      <div class="panel-logo">
+        <svg width="32" height="32" viewBox="0 0 28 28" fill="none">
+          <circle cx="14" cy="14" r="14" fill="rgba(255,255,255,0.2)"/>
+          <path d="M8 16 Q14 6 20 16" stroke="white" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+          <circle cx="14" cy="18" r="2.5" fill="white"/>
+        </svg>
+        <span>TripGenie</span>
+      </div>
+
+      <div class="panel-body">
+        <h2>Start planning smarter trips today</h2>
+        <p>Join thousands of travelers who use TripGenie to plan, budget, and enjoy every adventure.</p>
+        <div class="panel-steps">
+          <div class="step-item">
+            <div class="step-num">1</div>
+            <div class="step-text">
+              <p>Create your account</p>
+              <span>Free forever, no credit card needed</span>
+            </div>
+          </div>
+          <div class="step-item">
+            <div class="step-num">2</div>
+            <div class="step-text">
+              <p>Add your first trip</p>
+              <span>Set destination, dates, and budget</span>
+            </div>
+          </div>
+          <div class="step-item">
+            <div class="step-num">3</div>
+            <div class="step-text">
+              <p>Let AI do the planning</p>
+              <span>Get a full itinerary in seconds</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel-footer">© 2026 TripGenie. All rights reserved.</div>
+    </div>
+
+    <!-- Right form panel -->
+    <div class="auth-form-wrap">
+      <div class="auth-card">
+
+        <div class="auth-card-header">
+          <!-- Mobile logo -->
+          <div class="panel-logo" style="margin-bottom:24px;display:none" id="mobileLogo">
+            <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+              <circle cx="14" cy="14" r="14" fill="#068cdf"/>
+              <path d="M8 16 Q14 6 20 16" stroke="white" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+              <circle cx="14" cy="18" r="2.5" fill="white"/>
+            </svg>
+            <span class="logo-text">TripGenie</span>
+          </div>
+          <h1>Create your account</h1>
+          <p>Free to join — start planning in minutes</p>
+        </div>
+
+        <!-- Alert messages -->
+        <div class="alert-msg error" id="errorMsg">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+          <span id="errorText"></span>
+        </div>
+        <div class="alert-msg success" id="successMsg">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+          <span id="successText"></span>
+        </div>
+
+        <!-- Google sign up -->
+        <button class="btn-google" onclick="handleGoogle()">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+            <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+            <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+            <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05"/>
+            <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+          </svg>
+          Sign up with Google
+        </button>
+
+        <div class="divider"><span>or sign up with email</span></div>
+
+        <!-- Form fields -->
+        <div class="auth-group">
+          <label for="fullName">Full name</label>
+          <div class="input-wrap">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+            <input type="text" id="fullName" placeholder="Mariane Alzona" autocomplete="name" />
+          </div>
+        </div>
+
+        <div class="auth-group">
+          <label for="email">Email address</label>
+          <div class="input-wrap">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+            <input type="email" id="email" placeholder="you@example.com" autocomplete="email" />
+          </div>
+        </div>
+
+        <div class="auth-group">
+          <label for="password">Password</label>
+          <div class="input-wrap has-toggle">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+            <input type="password" id="password" placeholder="Min. 8 characters" autocomplete="new-password" oninput="checkStrength(this.value)" />
+            <button class="toggle-pw" type="button" id="togglePw" aria-label="Show password">
+              <svg id="eyeIcon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
+              </svg>
+            </button>
+          </div>
+          <div class="strength-wrap">
+            <div class="strength-bar"><div class="strength-fill" id="strengthFill"></div></div>
+            <span class="strength-label" id="strengthLabel"></span>
+          </div>
+        </div>
+
+        <div class="auth-group">
+          <label for="confirmPassword">Confirm password</label>
+          <div class="input-wrap">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+            <input type="password" id="confirmPassword" placeholder="Re-enter your password" autocomplete="new-password" />
+          </div>
+        </div>
+
+        <div class="terms-row">
+          <input type="checkbox" id="terms" />
+          <label for="terms">
+            I agree to the <a href="#">Terms of Service</a> and <a href="#">Privacy Policy</a>
+          </label>
+        </div>
+
+        <button class="btn-auth" id="registerBtn" onclick="handleRegister()">
+          Create Account
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+        </button>
+
+        <div class="auth-footer">
+          Already have an account? <a href="login.html">Sign in</a>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const API = 'http://localhost:3000/api';
+
+    // Mobile logo
+    if (window.innerWidth <= 768) {
+      document.getElementById('mobileLogo').style.display = 'flex';
+    }
+
+    // Toggle password visibility
+    document.getElementById('togglePw').addEventListener('click', function() {
+      const input = document.getElementById('password');
+      const icon  = document.getElementById('eyeIcon');
+      const show  = input.type === 'password';
+      input.type  = show ? 'text' : 'password';
+      icon.innerHTML = show
+        ? `<path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/>`
+        : `<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>`;
+    });
+
+    // Password strength checker
+    function checkStrength(val) {
+      const fill  = document.getElementById('strengthFill');
+      const label = document.getElementById('strengthLabel');
+      if (!val) { fill.style.width = '0%'; label.textContent = ''; return; }
+
+      let score = 0;
+      if (val.length >= 8)              score++;
+      if (/[A-Z]/.test(val))            score++;
+      if (/[0-9]/.test(val))            score++;
+      if (/[^A-Za-z0-9]/.test(val))     score++;
+
+      const levels = [
+        { w: '25%', bg: '#ef4444', text: 'Weak' },
+        { w: '50%', bg: '#f97316', text: 'Fair' },
+        { w: '75%', bg: '#eab308', text: 'Good' },
+        { w: '100%',bg: '#22c55e', text: 'Strong' },
+      ];
+      const l = levels[score - 1] || levels[0];
+      fill.style.width      = l.w;
+      fill.style.background = l.bg;
+      label.textContent     = l.text;
+      label.style.color     = l.bg;
+    }
+
+    // Enter key support
+    document.getElementById('confirmPassword').addEventListener('keydown', e => {
+      if (e.key === 'Enter') handleRegister();
+    });
+
+    // Register handler
+    async function handleRegister() {
+      const fullName        = document.getElementById('fullName').value.trim();
+      const email           = document.getElementById('email').value.trim();
+      const password        = document.getElementById('password').value;
+      const confirmPassword = document.getElementById('confirmPassword').value;
+      const termsChecked    = document.getElementById('terms').checked;
+      const btn             = document.getElementById('registerBtn');
+
+      hideMessages();
+
+      // Validation
+      if (!fullName)                          return showError('Please enter your full name.');
+      if (!email || !/\S+@\S+\.\S+/.test(email)) return showError('Please enter a valid email address.');
+      if (password.length < 8)               return showError('Password must be at least 8 characters.');
+      if (password !== confirmPassword)      return showError('Passwords do not match.');
+      if (!termsChecked)                     return showError('Please agree to the Terms of Service.');
+
+      // Loading state
+      btn.classList.add('loading');
+      btn.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="animation:spin 0.8s linear infinite"><path d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" opacity=".25"/><path d="M21 12a9 9 0 00-9-9" stroke-linecap="round"/></svg> Creating account…`;
+
+      try {
+        const res  = await fetch(`${API}/auth/register`, {
+          method:  'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body:    JSON.stringify({ email, password, full_name: fullName })
+        });
+        const data = await res.json();
+
+        if (!res.ok) throw new Error(data.error || 'Registration failed. Please try again.');
+
+        // Save token and redirect
+        localStorage.setItem('tg_token', data.token);
+        localStorage.setItem('tg_user',  JSON.stringify(data.user));
+        sessionStorage.setItem('tg_logged_in', '1');
+
+        showSuccess(`Welcome, ${data.user.full_name}! Redirecting to your dashboard…`);
+        setTimeout(() => window.location.href = 'index.html', 1500);
+
+      } catch (err) {
+        btn.classList.remove('loading');
+        btn.innerHTML = `Create Account <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>`;
+        showError(err.message);
+      }
+    }
+
+    function handleGoogle() {
+      alert('Google sign-up would be wired up to your auth provider here.');
+    }
+
+    function showError(msg) {
+      const el = document.getElementById('errorMsg');
+      document.getElementById('errorText').textContent = msg;
+      el.classList.add('show');
+    }
+
+    function showSuccess(msg) {
+      const el = document.getElementById('successMsg');
+      document.getElementById('successText').textContent = msg;
+      el.classList.add('show');
+    }
+
+    function hideMessages() {
+      document.getElementById('errorMsg').classList.remove('show');
+      document.getElementById('successMsg').classList.remove('show');
+    }
+  </script>
+</body>
+</html>
