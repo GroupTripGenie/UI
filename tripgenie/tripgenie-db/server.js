@@ -12,35 +12,37 @@ const assistantRoutes = require('./routes/assistant');
 const app  = express();
 const PORT = process.env.PORT || 3000;
 
-// ── CORS — allow all origins (frontend on Netlify + local dev) ─
 app.use(cors({
   origin: '*',
   methods: ['GET', 'POST', 'PATCH', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
   credentials: false
 }));
-
-// Handle preflight requests
 app.options('*', cors());
-
 app.use(express.json());
 
-// ── Health check FIRST ────────────────────────────────────────
+// ── Health check FIRST (no auth) ──────────────────────────────
 app.get('/api/health', async (_req, res) => {
   try {
     await pool.query('SELECT 1');
     res.json({ status: 'ok', db: 'connected' });
-  } catch {
-    res.status(500).json({ status: 'error', db: 'disconnected' });
+  } catch(e) {
+    console.error('DB error:', e.message);
+    res.status(500).json({ status: 'error', db: 'disconnected', message: e.message });
   }
 });
 
-// ── Routes ────────────────────────────────────────────────────
+// ── Auth (no middleware) ──────────────────────────────────────
 app.use('/api/auth',      authRoutes);
+
+// ── Protected routes ─────────────────────────────────────────
 app.use('/api/trips',     tripRoutes);
 app.use('/api/budget',    budgetRoutes);
-app.use('/api',           checklistRoutes);
 app.use('/api/assistant', assistantRoutes);
+
+// ── Checklist + Reminder routes (mounted at /api) ─────────────
+// These handle /api/checklists and /api/reminders internally
+app.use('/api',           checklistRoutes);
 
 // ── 404 fallback ──────────────────────────────────────────────
 app.use((_req, res) => res.status(404).json({ error: 'Route not found' }));
