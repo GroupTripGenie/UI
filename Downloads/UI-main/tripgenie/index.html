@@ -1,0 +1,1566 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TripGenie</title>
+  <link rel="stylesheet" href="styles.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700&family=DM+Sans:wght@400;500&display=swap" rel="stylesheet" />
+</head>
+<body>
+  <script>
+    // ── Auth Guard ──────────────────────────────────────────────
+    if (!sessionStorage.getItem('tg_logged_in')) {
+      window.location.replace('login.html');
+    }
+  </script>
+
+  <div class="app">
+    <!-- Sidebar -->
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-header">
+        <div class="logo">
+          <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+            <circle cx="14" cy="14" r="14" fill="#068cdf"/>
+            <path d="M8 16 Q14 6 20 16" stroke="white" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+            <circle cx="14" cy="18" r="2.5" fill="white"/>
+          </svg>
+          <span class="logo-text">TripGenie</span>
+        </div>
+        <button class="sidebar-close" id="sidebarClose" aria-label="Close menu">✕</button>
+      </div>
+
+      <nav class="nav">
+        <a href="#" class="nav-link active" data-page="dashboard">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+          Dashboard
+        </a>
+        <a href="#" class="nav-link" data-page="mytrips">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+          My Trips
+        </a>
+        <a href="#" class="nav-link" data-page="plantrip">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+          Plan Trip
+        </a>
+        <a href="#" class="nav-link" data-page="budget">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>
+          Budget
+        </a>
+        <a href="#" class="nav-link" data-page="checklists">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
+          Checklists
+        </a>
+        <a href="#" class="nav-link" data-page="reminders">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>
+          Reminders
+        </a>
+      </nav>
+    </aside>
+
+    <!-- Overlay -->
+    <div class="overlay" id="overlay"></div>
+
+    <!-- Main -->
+    <div class="main">
+      <!-- Top Bar -->
+      <header class="topbar">
+        <button class="menu-btn" id="menuBtn" aria-label="Open menu">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+        </button>
+        <div class="topbar-right">
+          <button class="btn-outline small-btn" id="logoutBtn" style="margin-right:10px;font-size:13px;padding:6px 14px">Log out</button>
+          <div class="avatar">JD</div>
+        </div>
+      </header>
+
+      <!-- Pages -->
+      <div class="pages">
+
+        <!-- Dashboard -->
+        <div class="page active" id="page-dashboard">
+          <div class="page-content">
+            <div class="page-header">
+              <h1>Welcome back, John!</h1>
+              <p>Ready to plan your next adventure?</p>
+            </div>
+
+            <div class="stats-grid">
+              <div class="stat-card">
+                <div class="stat-icon" style="background:#e8f4fd"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#068cdf" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg></div>
+                <div><p class="stat-label">Trips Planned</p><p class="stat-value">12</p></div>
+              </div>
+              <div class="stat-card">
+                <div class="stat-icon" style="background:#e8f8f0"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></div>
+                <div><p class="stat-label">Countries Visited</p><p class="stat-value">8</p></div>
+              </div>
+              <div class="stat-card">
+                <div class="stat-icon" style="background:#f3edfd"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#a855f7" stroke-width="2"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg></div>
+                <div><p class="stat-label">Total Saved</p><p class="stat-value">$1.2K</p></div>
+              </div>
+              <div class="stat-card">
+                <div class="stat-icon" style="background:#fff3e8"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#f97316" stroke-width="2"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg></div>
+                <div><p class="stat-label">Tasks Completed</p><p class="stat-value">47</p></div>
+              </div>
+            </div>
+
+            <div class="section">
+              <h2 class="section-title">Quick Actions</h2>
+              <div class="quick-actions">
+                <a href="#" class="action-btn action-blue" data-page="plantrip">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+                  Plan New Trip
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-left:auto"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+                </a>
+                <a href="#" class="action-btn action-green" data-page="mytrips">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                  View All Trips
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-left:auto"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+                </a>
+                <a href="#" class="action-btn action-light" data-page="budget">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>
+                  Check Budget
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-left:auto"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+                </a>
+              </div>
+            </div>
+
+            <div class="section">
+              <div class="section-header">
+                <h2 class="section-title">Upcoming Trips</h2>
+                <a href="#" class="view-all" data-page="mytrips">View All →</a>
+              </div>
+              <div class="trips-grid">
+                <div class="trip-card">
+                  <div class="trip-img"><img src="https://images.unsplash.com/photo-1502602898657-3e91760cbb34?w=400&q=80" alt="Paris"/></div>
+                  <div class="trip-body">
+                    <h3>Paris, France</h3>
+                    <p class="trip-dates">📅 Jun 15 – Jun 22, 2026</p>
+                    <div class="progress-row"><span>Trip Planning</span><span>75%</span></div>
+                    <div class="progress-bar"><div class="progress-fill" style="width:75%"></div></div>
+                    <div class="trip-budget"><span>Budget</span><span>$2,450 / $3,000</span></div>
+                    <button class="btn-primary full-width">View Details</button>
+                  </div>
+                </div>
+                <div class="trip-card">
+                  <div class="trip-img"><img src="https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?w=400&q=80" alt="Tokyo"/></div>
+                  <div class="trip-body">
+                    <h3>Tokyo, Japan</h3>
+                    <p class="trip-dates">📅 Aug 10 – Aug 20, 2026</p>
+                    <div class="progress-row"><span>Trip Planning</span><span>40%</span></div>
+                    <div class="progress-bar"><div class="progress-fill" style="width:40%"></div></div>
+                    <div class="trip-budget"><span>Budget</span><span>$3,200 / $4,500</span></div>
+                    <button class="btn-primary full-width">View Details</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- My Trips -->
+        <div class="page" id="page-mytrips">
+          <div class="page-content">
+            <div class="page-header flex-header">
+              <div><h1>My Trips</h1><p>Manage and view all your travel plans</p></div>
+              <a href="#" class="btn-primary" data-page="plantrip">+ Plan New Trip</a>
+            </div>
+
+            <div class="section">
+              <h2 class="section-title">Upcoming Trips (2)</h2>
+              <div class="trips-grid">
+                <div class="trip-card">
+                  <div class="trip-img" style="position:relative">
+                    <img src="https://images.unsplash.com/photo-1502602898657-3e91760cbb34?w=400&q=80" alt="Paris"/>
+                    <button class="more-btn">⋮</button>
+                  </div>
+                  <div class="trip-body">
+                    <h3>Paris, France</h3>
+                    <p class="trip-dates">📅 Jun 15 – Jun 22, 2026</p>
+                    <div class="progress-row"><span>Planning Progress</span><span>75%</span></div>
+                    <div class="progress-bar"><div class="progress-fill" style="width:75%"></div></div>
+                    <div class="trip-budget"><span>💵 Budget</span><span>$2,450 / $3,000</span></div>
+                    <div class="btn-row">
+                      <button class="btn-outline">Edit Trip</button>
+                      <button class="btn-primary">View Details</button>
+                    </div>
+                  </div>
+                </div>
+                <div class="trip-card">
+                  <div class="trip-img" style="position:relative">
+                    <img src="https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?w=400&q=80" alt="Tokyo"/>
+                    <button class="more-btn">⋮</button>
+                  </div>
+                  <div class="trip-body">
+                    <h3>Tokyo, Japan</h3>
+                    <p class="trip-dates">📅 Aug 10 – Aug 20, 2026</p>
+                    <div class="progress-row"><span>Planning Progress</span><span>40%</span></div>
+                    <div class="progress-bar"><div class="progress-fill" style="width:40%"></div></div>
+                    <div class="trip-budget"><span>💵 Budget</span><span>$3,200 / $4,500</span></div>
+                    <div class="btn-row">
+                      <button class="btn-outline">Edit Trip</button>
+                      <button class="btn-primary">View Details</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="section">
+              <h2 class="section-title">Past Trips (2)</h2>
+              <div class="trips-grid">
+                <div class="trip-card past-card">
+                  <div class="trip-img" style="position:relative">
+                    <img src="https://images.unsplash.com/photo-1537996194471-e657df975ab4?w=400&q=80" alt="Bali"/>
+                    <span class="completed-badge">Completed</span>
+                  </div>
+                  <div class="trip-body">
+                    <h3>Bali, Indonesia</h3>
+                    <p class="trip-dates">📅 Mar 5 – Mar 15, 2026</p>
+                    <button class="btn-outline full-width">View Trip Summary</button>
+                  </div>
+                </div>
+                <div class="trip-card past-card">
+                  <div class="trip-img" style="position:relative">
+                    <img src="https://images.unsplash.com/photo-1583422409516-2895a77efded?w=400&q=80" alt="Barcelona"/>
+                    <span class="completed-badge">Completed</span>
+                  </div>
+                  <div class="trip-body">
+                    <h3>Barcelona, Spain</h3>
+                    <p class="trip-dates">📅 Jan 20 – Jan 28, 2026</p>
+                    <button class="btn-outline full-width">View Trip Summary</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Plan Trip -->
+        <div class="page" id="page-plantrip">
+          <div class="page-content narrow">
+            <div class="page-header">
+              <h1>Plan Your Perfect Trip</h1>
+              <p>Tell us about your dream vacation and we'll create a personalized itinerary</p>
+            </div>
+
+            <div class="card">
+              <div class="form-group">
+                <label>📍 Where do you want to go?</label>
+                <input type="text" placeholder="e.g., Paris, France or Multiple cities" id="destination"/>
+              </div>
+
+              <div class="form-row">
+                <div class="form-group">
+                  <label>📅 Start Date</label>
+                  <input type="date" id="startDate"/>
+                </div>
+                <div class="form-group">
+                  <label>📅 End Date</label>
+                  <input type="date" id="endDate"/>
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label>👥 Number of Travelers</label>
+                <div class="form-row">
+                  <div class="form-group">
+                    <label class="sub-label">Adults</label>
+                    <select>
+                      <option>1</option><option selected>2</option><option>3</option><option>4</option><option>5</option><option>6</option>
+                    </select>
+                  </div>
+                  <div class="form-group">
+                    <label class="sub-label">Children</label>
+                    <select>
+                      <option selected>0</option><option>1</option><option>2</option><option>3</option><option>4</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label>💵 Budget per Person (USD)</label>
+                <input type="number" placeholder="e.g., 2000"/>
+              </div>
+
+              <div class="form-group">
+                <label>What are your interests? (Select all that apply)</label>
+                <div class="interests-grid">
+                  <button class="interest-btn" onclick="this.classList.toggle('active')">Culture & Museums</button>
+                  <button class="interest-btn" onclick="this.classList.toggle('active')">Food & Dining</button>
+                  <button class="interest-btn" onclick="this.classList.toggle('active')">Adventure & Sports</button>
+                  <button class="interest-btn" onclick="this.classList.toggle('active')">Beach & Relaxation</button>
+                  <button class="interest-btn" onclick="this.classList.toggle('active')">Shopping</button>
+                  <button class="interest-btn" onclick="this.classList.toggle('active')">Nightlife</button>
+                  <button class="interest-btn" onclick="this.classList.toggle('active')">Nature & Wildlife</button>
+                  <button class="interest-btn" onclick="this.classList.toggle('active')">History</button>
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label>Preferred Travel Pace</label>
+                <div class="pace-grid">
+                  <button class="pace-btn" onclick="setPace(this)">Relaxed</button>
+                  <button class="pace-btn active" onclick="setPace(this)">Moderate</button>
+                  <button class="pace-btn" onclick="setPace(this)">Fast</button>
+                </div>
+              </div>
+
+              <button class="btn-primary full-width large-btn" id="generateBtn" onclick="generateItinerary()">
+                ✨ Generate AI Itinerary
+              </button>
+            </div>
+
+            <div class="generating-card" id="generatingCard" style="display:none">
+              <div class="generating-icon">✨</div>
+              <h3>Creating your perfect itinerary...</h3>
+              <p>Our AI is analyzing your preferences and finding the best experiences</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Budget -->
+        <div class="page" id="page-budget">
+          <div class="page-content">
+            <div class="page-header">
+              <h1>Budget Planner</h1>
+              <p>Track and manage your travel expenses</p>
+            </div>
+
+            <div class="stats-grid three-col">
+              <div class="stat-card">
+                <div class="stat-icon" style="background:#dbeafe"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg></div>
+                <div><p class="stat-label">Total Budget</p><p class="stat-value">$3,600</p></div>
+              </div>
+              <div class="stat-card">
+                <div class="stat-icon" style="background:#ffedd5"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#f97316" stroke-width="2"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg></div>
+                <div><p class="stat-label">Total Spent</p><p class="stat-value">$2,400</p></div>
+              </div>
+              <div class="stat-card">
+                <div class="stat-icon" style="background:#dcfce7"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="2"><path d="M21.21 15.89A10 10 0 118 2.83"/><path d="M22 12A10 10 0 0012 2v10z"/></svg></div>
+                <div><p class="stat-label">Remaining</p><p class="stat-value green">$1,200</p></div>
+              </div>
+            </div>
+
+            <div class="card section">
+              <div class="card-header">
+                <h2>Budget Breakdown</h2>
+                <button class="btn-primary small-btn">+ Add Category</button>
+              </div>
+              <div class="budget-list">
+                <div class="budget-item">
+                  <div class="budget-item-header">
+                    <div class="budget-label"><span class="dot" style="background:#3b82f6"></span>Accommodation</div>
+                    <div class="budget-meta"><span>$800 / $1,200</span><button class="edit-btn">✏️</button></div>
+                  </div>
+                  <div class="budget-progress-row">
+                    <div class="progress-bar flex1"><div class="progress-fill" style="width:66%;background:#3b82f6"></div></div>
+                    <span class="pct">66%</span>
+                  </div>
+                </div>
+                <div class="budget-item">
+                  <div class="budget-item-header">
+                    <div class="budget-label"><span class="dot" style="background:#22c55e"></span>Transportation</div>
+                    <div class="budget-meta"><span>$450 / $600</span><button class="edit-btn">✏️</button></div>
+                  </div>
+                  <div class="budget-progress-row">
+                    <div class="progress-bar flex1"><div class="progress-fill" style="width:75%;background:#22c55e"></div></div>
+                    <span class="pct">75%</span>
+                  </div>
+                </div>
+                <div class="budget-item">
+                  <div class="budget-item-header">
+                    <div class="budget-label"><span class="dot" style="background:#eab308"></span>Food & Dining</div>
+                    <div class="budget-meta"><span>$620 / $800</span><button class="edit-btn">✏️</button></div>
+                  </div>
+                  <div class="budget-progress-row">
+                    <div class="progress-bar flex1"><div class="progress-fill" style="width:77%;background:#eab308"></div></div>
+                    <span class="pct">77%</span>
+                  </div>
+                </div>
+                <div class="budget-item">
+                  <div class="budget-item-header">
+                    <div class="budget-label"><span class="dot" style="background:#a855f7"></span>Activities</div>
+                    <div class="budget-meta"><span>$280 / $500</span><button class="edit-btn">✏️</button></div>
+                  </div>
+                  <div class="budget-progress-row">
+                    <div class="progress-bar flex1"><div class="progress-fill" style="width:56%;background:#a855f7"></div></div>
+                    <span class="pct">56%</span>
+                  </div>
+                </div>
+                <div class="budget-item">
+                  <div class="budget-item-header">
+                    <div class="budget-label"><span class="dot" style="background:#ec4899"></span>Shopping</div>
+                    <div class="budget-meta"><span>$150 / $300</span><button class="edit-btn">✏️</button></div>
+                  </div>
+                  <div class="budget-progress-row">
+                    <div class="progress-bar flex1"><div class="progress-fill" style="width:50%;background:#ec4899"></div></div>
+                    <span class="pct">50%</span>
+                  </div>
+                </div>
+                <div class="budget-item">
+                  <div class="budget-item-header">
+                    <div class="budget-label"><span class="dot" style="background:#f97316"></span>Miscellaneous</div>
+                    <div class="budget-meta"><span>$100 / $200</span><button class="edit-btn">✏️</button></div>
+                  </div>
+                  <div class="budget-progress-row">
+                    <div class="progress-bar flex1"><div class="progress-fill" style="width:50%;background:#f97316"></div></div>
+                    <span class="pct">50%</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="card section">
+              <div class="card-header">
+                <h2>Recent Expenses</h2>
+                <button class="btn-outline small-btn">+ Add Expense</button>
+              </div>
+              <div class="expense-list">
+                <div class="expense-item">
+                  <div><h4>Hotel Booking – 5 nights</h4><p>Accommodation • May 8, 2026</p></div>
+                  <span class="expense-amount">$800</span>
+                </div>
+                <div class="expense-item">
+                  <div><h4>Flight Tickets</h4><p>Transportation • May 7, 2026</p></div>
+                  <span class="expense-amount">$450</span>
+                </div>
+                <div class="expense-item">
+                  <div><h4>Restaurant – Le Jules Verne</h4><p>Food & Dining • May 6, 2026</p></div>
+                  <span class="expense-amount">$180</span>
+                </div>
+                <div class="expense-item">
+                  <div><h4>Louvre Museum Tickets</h4><p>Activities • May 5, 2026</p></div>
+                  <span class="expense-amount">$45</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Checklists -->
+        <div class="page" id="page-checklists">
+          <div class="page-content">
+            <div class="page-header flex-header">
+              <div><h1>Checklists</h1><p>Stay organized with your trip preparation</p></div>
+              <button class="btn-primary">+ New Checklist</button>
+            </div>
+
+            <div class="checklists-grid">
+              <div class="card checklist-card">
+                <div class="checklist-header">
+                  <div class="checklist-icon">🧳</div>
+                  <div>
+                    <h2>Packing List</h2>
+                    <p id="packing-count">2 of 6 completed</p>
+                  </div>
+                </div>
+                <div class="progress-bar" style="margin-bottom:16px"><div class="progress-fill" id="packing-bar" style="width:33%"></div></div>
+                <div class="checklist-items" id="packing-items">
+                  <label class="check-item"><input type="checkbox" checked onchange="updateChecklist('packing')"> <span class="checked">Passport & Travel Documents</span></label>
+                  <label class="check-item"><input type="checkbox" checked onchange="updateChecklist('packing')"> <span class="checked">Clothes for 7 days</span></label>
+                  <label class="check-item"><input type="checkbox" onchange="updateChecklist('packing')"> <span>Toiletries</span></label>
+                  <label class="check-item"><input type="checkbox" onchange="updateChecklist('packing')"> <span>Phone charger & adapters</span></label>
+                  <label class="check-item"><input type="checkbox" onchange="updateChecklist('packing')"> <span>Medications</span></label>
+                  <label class="check-item"><input type="checkbox" onchange="updateChecklist('packing')"> <span>Camera equipment</span></label>
+                </div>
+                <button class="btn-outline full-width" style="margin-top:12px">+ Add Item</button>
+              </div>
+
+              <div class="card checklist-card">
+                <div class="checklist-header">
+                  <div class="checklist-icon">🛍️</div>
+                  <div>
+                    <h2>Shopping List</h2>
+                    <p id="shopping-count">1 of 4 completed</p>
+                  </div>
+                </div>
+                <div class="progress-bar" style="margin-bottom:16px"><div class="progress-fill" id="shopping-bar" style="width:25%"></div></div>
+                <div class="checklist-items" id="shopping-items">
+                  <label class="check-item"><input type="checkbox" checked onchange="updateChecklist('shopping')"> <span class="checked">Sunscreen SPF 50</span></label>
+                  <label class="check-item"><input type="checkbox" onchange="updateChecklist('shopping')"> <span>Travel pillow</span></label>
+                  <label class="check-item"><input type="checkbox" onchange="updateChecklist('shopping')"> <span>Portable battery pack</span></label>
+                  <label class="check-item"><input type="checkbox" onchange="updateChecklist('shopping')"> <span>First aid kit</span></label>
+                </div>
+                <button class="btn-outline full-width" style="margin-top:12px">+ Add Item</button>
+              </div>
+
+              <div class="card checklist-card">
+                <div class="checklist-header">
+                  <div class="checklist-icon">📋</div>
+                  <div>
+                    <h2>Pre-Trip Tasks</h2>
+                    <p id="pretrip-count">3 of 6 completed</p>
+                  </div>
+                </div>
+                <div class="progress-bar" style="margin-bottom:16px"><div class="progress-fill" id="pretrip-bar" style="width:50%"></div></div>
+                <div class="checklist-items" id="pretrip-items">
+                  <label class="check-item"><input type="checkbox" checked onchange="updateChecklist('pretrip')"> <span class="checked">Book accommodation</span></label>
+                  <label class="check-item"><input type="checkbox" checked onchange="updateChecklist('pretrip')"> <span class="checked">Purchase flight tickets</span></label>
+                  <label class="check-item"><input type="checkbox" checked onchange="updateChecklist('pretrip')"> <span class="checked">Get travel insurance</span></label>
+                  <label class="check-item"><input type="checkbox" onchange="updateChecklist('pretrip')"> <span>Notify bank of travel</span></label>
+                  <label class="check-item"><input type="checkbox" onchange="updateChecklist('pretrip')"> <span>Download offline maps</span></label>
+                  <label class="check-item"><input type="checkbox" onchange="updateChecklist('pretrip')"> <span>Book airport transfer</span></label>
+                </div>
+                <button class="btn-outline full-width" style="margin-top:12px">+ Add Item</button>
+              </div>
+            </div>
+
+            <div class="gradient-banner" style="margin-top:32px">
+              <div class="banner-icon">🛍️</div>
+              <div>
+                <h3>AI Shopping List Generator</h3>
+                <p>Let our AI analyze your itinerary and create a personalized shopping list based on your destination, activities, and weather.</p>
+                <button class="btn-white">Generate Shopping List</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Reminders -->
+        <div class="page" id="page-reminders">
+          <div class="page-content">
+            <div class="page-header flex-header">
+              <div><h1>Reminders</h1><p>Never miss an important travel task</p></div>
+              <button class="btn-primary">+ Add Reminder</button>
+            </div>
+
+            <div class="stats-grid three-col">
+              <div class="stat-card">
+                <div class="stat-icon" style="background:#fee2e2"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg></div>
+                <div><p class="stat-label">High Priority</p><p class="stat-value">2</p></div>
+              </div>
+              <div class="stat-card">
+                <div class="stat-icon" style="background:#fef9c3"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#ca8a04" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div>
+                <div><p class="stat-label">Due Today</p><p class="stat-value">1</p></div>
+              </div>
+              <div class="stat-card">
+                <div class="stat-icon" style="background:#dbeafe"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="2"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg></div>
+                <div><p class="stat-label">This Week</p><p class="stat-value">5</p></div>
+              </div>
+            </div>
+
+            <div class="card section">
+              <div class="card-header" style="border-bottom:1px solid #f1f5f9;padding-bottom:16px;margin-bottom:0">
+                <h2>Upcoming Reminders</h2>
+              </div>
+              <div class="reminder-list">
+                <div class="reminder-item">
+                  <div class="reminder-info">
+                    <div class="reminder-title-row">
+                      <h4>Check in for flight</h4>
+                      <span class="badge badge-high">high</span>
+                    </div>
+                    <p>Air France Flight AF123 to Paris</p>
+                    <div class="reminder-meta">
+                      <span>📅 Jun 14, 2026</span>
+                      <span>🕐 10:00 AM</span>
+                      <span class="tag">Flight</span>
+                    </div>
+                  </div>
+                  <div class="reminder-actions">
+                    <button class="btn-outline small-btn">Edit</button>
+                    <button class="btn-green small-btn">Mark Done</button>
+                  </div>
+                </div>
+                <div class="reminder-item">
+                  <div class="reminder-info">
+                    <div class="reminder-title-row">
+                      <h4>Hotel check-in</h4>
+                      <span class="badge badge-medium">medium</span>
+                    </div>
+                    <p>Le Grand Hotel Paris</p>
+                    <div class="reminder-meta">
+                      <span>📅 Jun 15, 2026</span>
+                      <span>🕐 3:00 PM</span>
+                      <span class="tag">Accommodation</span>
+                    </div>
+                  </div>
+                  <div class="reminder-actions">
+                    <button class="btn-outline small-btn">Edit</button>
+                    <button class="btn-green small-btn">Mark Done</button>
+                  </div>
+                </div>
+                <div class="reminder-item">
+                  <div class="reminder-info">
+                    <div class="reminder-title-row">
+                      <h4>Museum reservation</h4>
+                      <span class="badge badge-medium">medium</span>
+                    </div>
+                    <p>Louvre Museum tour</p>
+                    <div class="reminder-meta">
+                      <span>📅 Jun 16, 2026</span>
+                      <span>🕐 9:00 AM</span>
+                      <span class="tag">Activity</span>
+                    </div>
+                  </div>
+                  <div class="reminder-actions">
+                    <button class="btn-outline small-btn">Edit</button>
+                    <button class="btn-green small-btn">Mark Done</button>
+                  </div>
+                </div>
+                <div class="reminder-item">
+                  <div class="reminder-info">
+                    <div class="reminder-title-row">
+                      <h4>Restaurant booking</h4>
+                      <span class="badge badge-low">low</span>
+                    </div>
+                    <p>Le Jules Verne dinner reservation</p>
+                    <div class="reminder-meta">
+                      <span>📅 Jun 17, 2026</span>
+                      <span>🕐 7:30 PM</span>
+                      <span class="tag">Dining</span>
+                    </div>
+                  </div>
+                  <div class="reminder-actions">
+                    <button class="btn-outline small-btn">Edit</button>
+                    <button class="btn-green small-btn">Mark Done</button>
+                  </div>
+                </div>
+                <div class="reminder-item">
+                  <div class="reminder-info">
+                    <div class="reminder-title-row">
+                      <h4>Pack luggage</h4>
+                      <span class="badge badge-high">high</span>
+                    </div>
+                    <p>Complete packing for Paris trip</p>
+                    <div class="reminder-meta">
+                      <span>📅 Jun 13, 2026</span>
+                      <span>🕐 6:00 PM</span>
+                      <span class="tag">Preparation</span>
+                    </div>
+                  </div>
+                  <div class="reminder-actions">
+                    <button class="btn-outline small-btn">Edit</button>
+                    <button class="btn-green small-btn">Mark Done</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="gradient-banner green-banner" style="margin-top:32px">
+              <div class="banner-icon">🔔</div>
+              <div>
+                <h3>Voice Assistant</h3>
+                <p>Enable voice reminders to get hands-free notifications and updates while you're on the go.</p>
+                <button class="btn-white">Enable Voice Assistant</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 404 -->
+        <div class="page" id="page-notfound" style="display:none">
+          <div class="page-content center-page">
+            <h1 class="big-404">404</h1>
+            <h2>Page Not Found</h2>
+            <p>Oops! The page you're looking for doesn't exist. Let's get you back on track.</p>
+            <div class="btn-row centered">
+              <a href="#" class="btn-primary" data-page="dashboard">🏠 Go to Dashboard</a>
+              <button class="btn-outline" onclick="history.back()">← Go Back</button>
+            </div>
+          </div>
+        </div>
+
+      </div><!-- /pages -->
+    </div><!-- /main -->
+  </div><!-- /app -->
+
+  <script>
+    // ── Logout ───────────────────────────────────────────────────
+    document.getElementById('logoutBtn').addEventListener('click', () => {
+      sessionStorage.removeItem('tg_logged_in');
+      localStorage.removeItem('tg_token');
+      localStorage.removeItem('tg_user');
+      window.location.href = 'login.html';
+    });
+
+    // ── Navigation ──────────────────────────────────────────────
+    function navigate(page) {
+      document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+      const target = document.getElementById('page-' + page);
+      if (target) target.classList.add('active');
+      document.querySelectorAll('.nav-link').forEach(l => {
+        l.classList.toggle('active', l.getAttribute('data-page') === page);
+      });
+      window.scrollTo(0, 0);
+      closeSidebar();
+    }
+
+    document.addEventListener('click', function(e) {
+      const el = e.target.closest('[data-page]');
+      if (el) { e.preventDefault(); navigate(el.getAttribute('data-page')); }
+    });
+
+    // ── Sidebar ──────────────────────────────────────────────────
+    const sidebar = document.getElementById('sidebar');
+    const overlay = document.getElementById('overlay');
+    document.getElementById('menuBtn').addEventListener('click', () => {
+      sidebar.classList.add('open'); overlay.classList.add('show');
+    });
+    document.getElementById('sidebarClose').addEventListener('click', closeSidebar);
+    overlay.addEventListener('click', closeSidebar);
+    function closeSidebar() { sidebar.classList.remove('open'); overlay.classList.remove('show'); }
+
+    // ── Modal helpers ────────────────────────────────────────────
+    function openModal(id) { document.getElementById(id).classList.add('show'); }
+    function closeModal(id) { document.getElementById(id).classList.remove('show'); }
+
+    // Close on backdrop click
+    document.querySelectorAll('.modal-backdrop').forEach(bd => {
+      bd.addEventListener('click', e => { if (e.target === bd) bd.classList.remove('show'); });
+    });
+
+    // ── Toast ─────────────────────────────────────────────────────
+    function showToast(msg) {
+      const t = document.getElementById('toast');
+      t.textContent = msg; t.classList.add('show');
+      setTimeout(() => t.classList.remove('show'), 2800);
+    }
+
+    // ── DASHBOARD — View Details ──────────────────────────────────
+    document.querySelectorAll('#page-dashboard .btn-primary').forEach(btn => {
+      if (btn.textContent.trim() === 'View Details') {
+        btn.addEventListener('click', function() {
+          const card = this.closest('.trip-card');
+          const name = card.querySelector('h3').textContent;
+          const dates = card.querySelector('.trip-dates').textContent;
+          const budget = card.querySelector('.trip-budget span:last-child').textContent;
+          const pct = card.querySelector('.progress-row span:last-child').textContent;
+          const img = card.querySelector('img').src;
+          document.getElementById('detailTripName').textContent = name;
+          document.getElementById('detailTripImg').src = img;
+          document.getElementById('detailDates').textContent = dates;
+          document.getElementById('detailBudget').textContent = budget;
+          document.getElementById('detailProgress').textContent = pct + ' planned';
+          document.getElementById('detailStatus').textContent = 'Upcoming ✈️';
+          openModal('modalTripDetails');
+        });
+      }
+    });
+
+    // ── MY TRIPS — View Details ───────────────────────────────────
+    document.querySelectorAll('#page-mytrips .btn-primary').forEach(btn => {
+      if (btn.textContent.trim() === 'View Details') {
+        btn.addEventListener('click', function() {
+          const card = this.closest('.trip-card');
+          const name = card.querySelector('h3').textContent;
+          const dates = card.querySelector('.trip-dates').textContent;
+          const budget = card.querySelector('.trip-budget span:last-child').textContent;
+          const pct = card.querySelector('.progress-row span:last-child').textContent;
+          const img = card.querySelector('img').src;
+          document.getElementById('detailTripName').textContent = name;
+          document.getElementById('detailTripImg').src = img;
+          document.getElementById('detailDates').textContent = dates;
+          document.getElementById('detailBudget').textContent = budget;
+          document.getElementById('detailProgress').textContent = pct + ' planned';
+          document.getElementById('detailStatus').textContent = 'Upcoming ✈️';
+          openModal('modalTripDetails');
+        });
+      }
+    });
+
+    // ── MY TRIPS — Edit Trip ──────────────────────────────────────
+    document.querySelectorAll('#page-mytrips .btn-outline').forEach(btn => {
+      if (btn.textContent.trim() === 'Edit Trip') {
+        btn.addEventListener('click', function() {
+          const card = this.closest('.trip-card');
+          document.getElementById('editTripDest').value = card.querySelector('h3').textContent;
+          document.getElementById('editTripBudget').value = '';
+          document.getElementById('editTripNotes').value = '';
+          openModal('modalEditTrip');
+        });
+      }
+    });
+
+    function saveEditTrip() {
+      closeModal('modalEditTrip');
+      showToast('Trip updated successfully!');
+    }
+
+    // ── MY TRIPS — View Trip Summary ──────────────────────────────
+    document.querySelectorAll('.btn-outline.full-width').forEach(btn => {
+      if (btn.textContent.trim() === 'View Trip Summary') {
+        btn.addEventListener('click', function() {
+          const card = this.closest('.trip-card');
+          const name = card.querySelector('h3').textContent;
+          document.getElementById('summaryTripName').textContent = name + ' — Summary';
+          const summaries = {
+            'Bali, Indonesia':   { days:'10', spent:'$3,120', places:'18', desc:'10 days of temple visits, rice terraces, and breathtaking sunsets in the Island of Gods.' },
+            'Barcelona, Spain':  { days:'8',  spent:'$2,640', places:'14', desc:'8 days exploring Gothic quarters, Gaudí masterpieces, and incredible tapas bars.' },
+          };
+          const s = summaries[name] || { days:'7', spent:'$2,000', places:'10', desc:'An unforgettable adventure full of amazing memories.' };
+          document.getElementById('summaryDays').textContent   = s.days;
+          document.getElementById('summarySpent').textContent  = s.spent;
+          document.getElementById('summaryPlaces').textContent = s.places;
+          document.getElementById('summaryDesc').textContent   = s.desc;
+          openModal('modalTripSummary');
+        });
+      }
+    });
+
+    // ── PLAN TRIP — Generate AI Itinerary ────────────────────────
+    function setPace(btn) {
+      document.querySelectorAll('.pace-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+    }
+
+    function generateItinerary() {
+      const btn  = document.getElementById('generateBtn');
+      const card = document.getElementById('generatingCard');
+      const dest = document.getElementById('destination').value || 'your destination';
+      btn.innerHTML = '⏳ Generating Your Itinerary...';
+      btn.disabled  = true;
+      card.style.display = 'block';
+      setTimeout(() => {
+        btn.innerHTML  = '✨ Generate AI Itinerary';
+        btn.disabled   = false;
+        card.style.display = 'none';
+        // Update itinerary modal with destination name
+        document.querySelector('#itineraryContent .itinerary-day-header').textContent = 'Day 1 — Arrival in ' + dest;
+        openModal('modalItinerary');
+      }, 2500);
+    }
+
+    // ── BUDGET — Add Category ─────────────────────────────────────
+    document.querySelectorAll('#page-budget .btn-primary.small-btn').forEach(btn => {
+      if (btn.textContent.trim() === '+ Add Category') {
+        btn.addEventListener('click', () => {
+          document.getElementById('newCatName').value = '';
+          document.getElementById('newCatAmount').value = '';
+          openModal('modalAddCategory');
+        });
+      }
+    });
+
+    function selectColor(el) {
+      document.querySelectorAll('.color-swatch').forEach(s => s.classList.remove('selected'));
+      el.classList.add('selected');
+    }
+
+    function saveCategory() {
+      const name   = document.getElementById('newCatName').value.trim();
+      const amount = document.getElementById('newCatAmount').value;
+      const color  = document.querySelector('.color-swatch.selected').dataset.color;
+      if (!name) { alert('Please enter a category name.'); return; }
+      const list = document.querySelector('#page-budget .budget-list');
+      const pct  = 0;
+      list.insertAdjacentHTML('beforeend', `
+        <div class="budget-item">
+          <div class="budget-item-header">
+            <div class="budget-label"><span class="dot" style="background:${color}"></span>${name}</div>
+            <div class="budget-meta"><span>$0 / $${amount||0}</span><button class="edit-btn" onclick="openEditBudget(this,'${name}',${amount||0})">✏️</button></div>
+          </div>
+          <div class="budget-progress-row">
+            <div class="progress-bar flex1"><div class="progress-fill" style="width:0%;background:${color}"></div></div>
+            <span class="pct">0%</span>
+          </div>
+        </div>`);
+      closeModal('modalAddCategory');
+      showToast('Category "' + name + '" added!');
+    }
+
+    // ── BUDGET — Add Expense ──────────────────────────────────────
+    document.querySelectorAll('#page-budget .btn-outline.small-btn').forEach(btn => {
+      if (btn.textContent.trim() === '+ Add Expense') {
+        btn.addEventListener('click', () => {
+          document.getElementById('newExpDesc').value   = '';
+          document.getElementById('newExpAmount').value = '';
+          document.getElementById('newExpDate').value   = new Date().toISOString().split('T')[0];
+          openModal('modalAddExpense');
+        });
+      }
+    });
+
+    function saveExpense() {
+      const desc   = document.getElementById('newExpDesc').value.trim();
+      const cat    = document.getElementById('newExpCat').value;
+      const amount = document.getElementById('newExpAmount').value;
+      const date   = document.getElementById('newExpDate').value;
+      if (!desc || !amount) { alert('Please fill in description and amount.'); return; }
+      const list = document.querySelector('#page-budget .expense-list');
+      const d    = date ? new Date(date).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}) : 'Today';
+      list.insertAdjacentHTML('afterbegin', `
+        <div class="expense-item">
+          <div><h4>${desc}</h4><p>${cat} • ${d}</p></div>
+          <span class="expense-amount">$${parseFloat(amount).toFixed(2)}</span>
+        </div>`);
+      closeModal('modalAddExpense');
+      showToast('Expense added!');
+    }
+
+    // ── BUDGET — Edit Category (✏️ button) ───────────────────────
+    document.querySelectorAll('.edit-btn').forEach(btn => {
+      btn.addEventListener('click', function() {
+        const item = this.closest('.budget-item');
+        const name = item.querySelector('.budget-label').textContent.trim();
+        const meta = item.querySelector('.budget-meta span').textContent;
+        const alloc = meta.split('/')[1]?.replace('$','').trim() || '';
+        document.getElementById('editCatName').value   = name;
+        document.getElementById('editCatAmount').value = alloc;
+        openModal('modalEditBudget');
+      });
+    });
+
+    function openEditBudget(btn, name, amount) {
+      document.getElementById('editCatName').value   = name;
+      document.getElementById('editCatAmount').value = amount;
+      openModal('modalEditBudget');
+    }
+
+    function saveEditCategory() {
+      closeModal('modalEditBudget');
+      showToast('Category updated!');
+    }
+
+    // ── CHECKLISTS — New Checklist ────────────────────────────────
+    document.querySelectorAll('#page-checklists .btn-primary').forEach(btn => {
+      if (btn.textContent.trim() === '+ New Checklist') {
+        btn.addEventListener('click', () => {
+          document.getElementById('newChecklistTitle').value = '';
+          document.getElementById('newChecklistIcon').value  = '📋';
+          openModal('modalNewChecklist');
+        });
+      }
+    });
+
+    function saveChecklist() {
+      const title = document.getElementById('newChecklistTitle').value.trim();
+      const icon  = document.getElementById('newChecklistIcon').value || '📋';
+      if (!title) { alert('Please enter a checklist title.'); return; }
+      const grid = document.querySelector('#page-checklists .checklists-grid');
+      const id   = 'cl_' + Date.now();
+      grid.insertAdjacentHTML('beforeend', `
+        <div class="card checklist-card">
+          <div class="checklist-header">
+            <div class="checklist-icon">${icon}</div>
+            <div><h2>${title}</h2><p id="${id}-count">0 of 0 completed</p></div>
+          </div>
+          <div class="progress-bar" style="margin-bottom:16px"><div class="progress-fill" id="${id}-bar" style="width:0%"></div></div>
+          <div class="checklist-items" id="${id}-items"></div>
+          <button class="btn-outline full-width" style="margin-top:12px" onclick="openAddItem('${id}')">+ Add Item</button>
+        </div>`);
+      closeModal('modalNewChecklist');
+      showToast('Checklist "' + title + '" created!');
+    }
+
+    // ── CHECKLISTS — Add Item ─────────────────────────────────────
+    function openAddItem(targetId) {
+      document.getElementById('newItemLabel').value  = '';
+      document.getElementById('newItemTarget').value = targetId;
+      openModal('modalAddItem');
+    }
+
+    // Wire existing Add Item buttons
+    document.querySelectorAll('#page-checklists .btn-outline.full-width').forEach(btn => {
+      if (btn.textContent.trim() === '+ Add Item') {
+        const card   = btn.closest('.checklist-card');
+        const itemsEl = card.querySelector('.checklist-items');
+        const targetId = itemsEl ? itemsEl.id.replace('-items','') : '';
+        btn.addEventListener('click', () => openAddItem(targetId));
+      }
+    });
+
+    function saveItem() {
+      const label    = document.getElementById('newItemLabel').value.trim();
+      const targetId = document.getElementById('newItemTarget').value;
+      if (!label) { alert('Please enter an item label.'); return; }
+      const container = document.getElementById(targetId + '-items');
+      if (!container) { closeModal('modalAddItem'); return; }
+      const cb = document.createElement('label');
+      cb.className = 'check-item';
+      cb.innerHTML = `<input type="checkbox" onchange="updateChecklist('${targetId}')"> <span>${label}</span>`;
+      container.appendChild(cb);
+      updateChecklist(targetId);
+      closeModal('modalAddItem');
+      showToast('Item added!');
+    }
+
+    // ── CHECKLISTS — AI Shopping List ────────────────────────────
+    document.querySelectorAll('.btn-white').forEach(btn => {
+      if (btn.textContent.trim() === 'Generate Shopping List') {
+        btn.addEventListener('click', () => {
+          const items = ['Travel adapter (Type E)', 'Lightweight rain jacket', 'Comfortable walking shoes',
+            'Portable power bank 20,000mAh', 'Sunscreen SPF 50+', 'Reusable water bottle',
+            'Travel-size toiletries', 'French phrasebook / offline translator', 'Neck pillow for flights', 'Padlock for luggage'];
+          const html = items.map(i => `
+            <label class="check-item" style="border:1px solid #e8ecf0;border-radius:8px;margin-bottom:6px;padding:10px 12px">
+              <input type="checkbox"> <span>${i}</span>
+            </label>`).join('');
+          document.getElementById('aiShoppingItems').innerHTML = html;
+          openModal('modalShoppingList');
+        });
+      }
+    });
+
+    // ── REMINDERS — Add Reminder ──────────────────────────────────
+    document.querySelectorAll('#page-reminders .btn-primary').forEach(btn => {
+      if (btn.textContent.trim() === '+ Add Reminder') {
+        btn.addEventListener('click', () => {
+          document.getElementById('newReminderTitle').value = '';
+          document.getElementById('newReminderDesc').value  = '';
+          document.getElementById('newReminderDate').value  = new Date().toISOString().split('T')[0];
+          document.getElementById('newReminderTime').value  = '09:00';
+          document.getElementById('newReminderCat').value   = '';
+          openModal('modalAddReminder');
+        });
+      }
+    });
+
+    function saveReminder() {
+      const title = document.getElementById('newReminderTitle').value.trim();
+      const desc  = document.getElementById('newReminderDesc').value.trim();
+      const date  = document.getElementById('newReminderDate').value;
+      const time  = document.getElementById('newReminderTime').value;
+      const pri   = document.getElementById('newReminderPriority').value;
+      const cat   = document.getElementById('newReminderCat').value.trim() || 'General';
+      if (!title) { alert('Please enter a reminder title.'); return; }
+      const dateStr = date ? new Date(date).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}) : '';
+      const badgeClass = { low:'badge-low', medium:'badge-medium', high:'badge-high' }[pri];
+      const list = document.querySelector('#page-reminders .reminder-list');
+      const div  = document.createElement('div');
+      div.className = 'reminder-item';
+      div.innerHTML = `
+        <div class="reminder-info">
+          <div class="reminder-title-row">
+            <h4>${title}</h4>
+            <span class="badge ${badgeClass}">${pri}</span>
+          </div>
+          ${desc ? '<p>' + desc + '</p>' : ''}
+          <div class="reminder-meta">
+            ${dateStr ? '<span>📅 ' + dateStr + '</span>' : ''}
+            ${time ? '<span>🕐 ' + time + '</span>' : ''}
+            <span class="tag">${cat}</span>
+          </div>
+        </div>
+        <div class="reminder-actions">
+          <button class="btn-outline small-btn" onclick="openEditReminderModal(this)">Edit</button>
+          <button class="btn-green small-btn" onclick="markDone(this)">Mark Done</button>
+        </div>`;
+      list.insertBefore(div, list.firstChild);
+      closeModal('modalAddReminder');
+      showToast('Reminder added!');
+    }
+
+    // ── REMINDERS — Edit ─────────────────────────────────────────
+    function openEditReminderModal(btn) {
+      const item = btn.closest('.reminder-item');
+      document.getElementById('editReminderTitle').value = item.querySelector('h4').textContent;
+      document.getElementById('editReminderDesc').value  = item.querySelector('p') ? item.querySelector('p').textContent : '';
+      openModal('modalEditReminder');
+    }
+
+    document.querySelectorAll('.reminder-actions .btn-outline').forEach(btn => {
+      if (btn.textContent.trim() === 'Edit') {
+        btn.addEventListener('click', function() { openEditReminderModal(this); });
+      }
+    });
+
+    function saveEditReminder() {
+      closeModal('modalEditReminder');
+      showToast('Reminder updated!');
+    }
+
+    // ── REMINDERS — Mark Done ─────────────────────────────────────
+    function markDone(btn) {
+      const item = btn.closest('.reminder-item');
+      if (item) {
+        item.style.opacity = '0';
+        item.style.transition = 'opacity 0.3s';
+        setTimeout(() => item.remove(), 300);
+        showToast('Reminder marked as done ✓');
+      }
+    }
+
+    document.querySelectorAll('.btn-green').forEach(btn => {
+      if (btn.textContent.trim() === 'Mark Done') {
+        btn.addEventListener('click', function() { markDone(this); });
+      }
+    });
+
+    // ── REMINDERS — Voice Assistant ───────────────────────────────
+    document.querySelectorAll('.btn-white').forEach(btn => {
+      if (btn.textContent.trim() === 'Enable Voice Assistant') {
+        btn.addEventListener('click', () => openModal('modalVoice'));
+      }
+    });
+
+    // ── Checklists — update helper ────────────────────────────────
+    function updateChecklist(id) {
+      const container = document.getElementById(id + '-items');
+      if (!container) return;
+      container.querySelectorAll('.check-item').forEach(label => {
+        const cb   = label.querySelector('input[type=checkbox]');
+        const span = label.querySelector('span');
+        if (cb && span) span.classList.toggle('checked', cb.checked);
+      });
+      const boxes = container.querySelectorAll('input[type=checkbox]');
+      const done  = [...boxes].filter(c => c.checked).length;
+      const total = boxes.length;
+      const countEl = document.getElementById(id + '-count');
+      const barEl   = document.getElementById(id + '-bar');
+      if (countEl) countEl.textContent = done + ' of ' + total + ' completed';
+      if (barEl)   barEl.style.width   = (total ? Math.round(done / total * 100) : 0) + '%';
+    }
+
+    // ── Plan Trip pace buttons ────────────────────────────────────
+    function setPace(btn) {
+      document.querySelectorAll('.pace-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+    }
+  </script>
+
+  <!-- ============================================================
+       MODALS
+  ============================================================ -->
+  <style>
+    .modal-backdrop {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.45);
+      z-index: 200;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .modal-backdrop.show { display: flex; }
+    .modal {
+      background: #fff;
+      border-radius: 14px;
+      width: 100%;
+      max-width: 480px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+      animation: modalIn 0.22s ease;
+      max-height: 90vh;
+      overflow-y: auto;
+    }
+    @keyframes modalIn { from { opacity:0; transform:translateY(20px) scale(0.97); } to { opacity:1; transform:none; } }
+    .modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 22px 24px 0;
+      margin-bottom: 18px;
+    }
+    .modal-header h3 { font-family: "Sora",sans-serif; font-size: 18px; }
+    .modal-close {
+      background: none; border: none; font-size: 20px;
+      color: #64748b; cursor: pointer; padding: 4px 8px;
+      border-radius: 6px; line-height: 1;
+    }
+    .modal-close:hover { background: #f1f5f9; }
+    .modal-body { padding: 0 24px 24px; }
+    .modal-footer {
+      display: flex;
+      gap: 10px;
+      justify-content: flex-end;
+      padding: 16px 24px;
+      border-top: 1px solid #e8ecf0;
+    }
+    .modal label {
+      display: block;
+      font-weight: 600;
+      font-size: 13px;
+      color: #063937;
+      margin-bottom: 6px;
+      margin-top: 14px;
+    }
+    .modal label:first-of-type { margin-top: 0; }
+    .modal input[type=text],
+    .modal input[type=date],
+    .modal input[type=number],
+    .modal input[type=time],
+    .modal input[type=email],
+    .modal select,
+    .modal textarea {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1.5px solid #e8ecf0;
+      border-radius: 8px;
+      font-size: 14px;
+      font-family: inherit;
+      color: #063937;
+      background: #fff;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+    .modal input:focus,
+    .modal select:focus,
+    .modal textarea:focus { border-color: #068cdf; }
+    .modal textarea { resize: vertical; min-height: 80px; }
+    .modal .form-row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .modal .color-row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 6px; }
+    .color-swatch {
+      width: 28px; height: 28px; border-radius: 50%;
+      border: 3px solid transparent; cursor: pointer; transition: border-color 0.15s;
+    }
+    .color-swatch.selected { border-color: #063937; }
+    .toast {
+      position: fixed; bottom: 28px; left: 50%; transform: translateX(-50%);
+      background: #063937; color: #fff; padding: 12px 22px;
+      border-radius: 99px; font-size: 14px; font-weight: 500;
+      z-index: 999; opacity: 0; transition: opacity 0.3s;
+      pointer-events: none; white-space: nowrap;
+    }
+    .toast.show { opacity: 1; }
+    .trip-detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 4px; }
+    .trip-detail-item { background: #f8fafc; border-radius: 8px; padding: 12px; }
+    .trip-detail-item p:first-child { font-size: 12px; color: #64748b; margin-bottom: 2px; }
+    .trip-detail-item p:last-child { font-size: 14px; font-weight: 600; color: #063937; }
+    .summary-stat { text-align:center; padding: 16px; background: #f8fafc; border-radius: 10px; }
+    .summary-stat .val { font-size: 24px; font-weight: 700; font-family: "Sora",sans-serif; color: #068cdf; }
+    .summary-stat .lbl { font-size: 12px; color: #64748b; margin-top: 2px; }
+    .itinerary-day { border: 1px solid #e8ecf0; border-radius: 10px; overflow: hidden; margin-bottom: 12px; }
+    .itinerary-day-header { background: #e8f4fd; padding: 10px 16px; font-weight: 700; font-size: 14px; color: #068cdf; }
+    .itinerary-activity { padding: 10px 16px; border-bottom: 1px solid #f1f5f9; font-size: 14px; }
+    .itinerary-activity:last-child { border-bottom: none; }
+    .itinerary-activity span { color: #64748b; font-size: 13px; margin-right: 8px; }
+    .voice-steps { display: flex; flex-direction: column; gap: 12px; margin: 16px 0; }
+    .voice-step { display: flex; align-items: center; gap: 12px; font-size: 14px; }
+    .voice-step-num { width: 28px; height: 28px; border-radius: 50%; background: #068cdf; color: #fff;
+      display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; flex-shrink: 0; }
+  </style>
+
+  <!-- View Trip Details Modal -->
+  <div class="modal-backdrop" id="modalTripDetails">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 id="detailTripName">Trip Details</h3>
+        <button class="modal-close" onclick="closeModal('modalTripDetails')">✕</button>
+      </div>
+      <div class="modal-body">
+        <img id="detailTripImg" src="" alt="" style="width:100%;height:180px;object-fit:cover;border-radius:10px;margin-bottom:16px"/>
+        <div class="trip-detail-grid">
+          <div class="trip-detail-item"><p>📅 Dates</p><p id="detailDates">—</p></div>
+          <div class="trip-detail-item"><p>💵 Budget</p><p id="detailBudget">—</p></div>
+          <div class="trip-detail-item"><p>📊 Progress</p><p id="detailProgress">—</p></div>
+          <div class="trip-detail-item"><p>🌍 Status</p><p id="detailStatus">—</p></div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-outline" onclick="closeModal('modalTripDetails')">Close</button>
+        <button class="btn-primary" onclick="closeModal('modalTripDetails');navigate('plantrip')">Edit Trip</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Edit Trip Modal -->
+  <div class="modal-backdrop" id="modalEditTrip">
+    <div class="modal">
+      <div class="modal-header">
+        <h3>Edit Trip</h3>
+        <button class="modal-close" onclick="closeModal('modalEditTrip')">✕</button>
+      </div>
+      <div class="modal-body">
+        <label>Destination</label>
+        <input type="text" id="editTripDest" placeholder="e.g. Paris, France"/>
+        <div class="form-row-2" style="margin-top:14px">
+          <div><label>Start Date</label><input type="date" id="editTripStart"/></div>
+          <div><label>End Date</label><input type="date" id="editTripEnd"/></div>
+        </div>
+        <label>Budget (USD)</label>
+        <input type="number" id="editTripBudget" placeholder="e.g. 3000"/>
+        <label>Notes</label>
+        <textarea id="editTripNotes" placeholder="Any special notes..."></textarea>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-outline" onclick="closeModal('modalEditTrip')">Cancel</button>
+        <button class="btn-primary" onclick="saveEditTrip()">Save Changes</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Trip Summary Modal -->
+  <div class="modal-backdrop" id="modalTripSummary">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 id="summaryTripName">Trip Summary</h3>
+        <button class="modal-close" onclick="closeModal('modalTripSummary')">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="trip-detail-grid" style="margin-bottom:16px">
+          <div class="summary-stat"><div class="val" id="summaryDays">7</div><div class="lbl">Days</div></div>
+          <div class="summary-stat"><div class="val" id="summarySpent">$2,450</div><div class="lbl">Total Spent</div></div>
+          <div class="summary-stat"><div class="val" id="summaryPlaces">12</div><div class="lbl">Places Visited</div></div>
+          <div class="summary-stat"><div class="val" id="summaryMemories">📸</div><div class="lbl">Memories Made</div></div>
+        </div>
+        <p style="font-size:14px;color:#64748b;line-height:1.7" id="summaryDesc">An unforgettable journey full of incredible experiences.</p>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-outline" onclick="closeModal('modalTripSummary')">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- AI Itinerary Modal -->
+  <div class="modal-backdrop" id="modalItinerary">
+    <div class="modal" style="max-width:560px">
+      <div class="modal-header">
+        <h3>✨ Your AI Itinerary</h3>
+        <button class="modal-close" onclick="closeModal('modalItinerary')">✕</button>
+      </div>
+      <div class="modal-body" id="itineraryContent">
+        <div class="itinerary-day">
+          <div class="itinerary-day-header">Day 1 — Arrival & Orientation</div>
+          <div class="itinerary-activity"><span>🕙 10:00 AM</span> Arrive & check in to hotel</div>
+          <div class="itinerary-activity"><span>🕑 2:00 PM</span> Explore the city centre on foot</div>
+          <div class="itinerary-activity"><span>🕖 6:00 PM</span> Welcome dinner at a local restaurant</div>
+        </div>
+        <div class="itinerary-day">
+          <div class="itinerary-day-header">Day 2 — Culture & Landmarks</div>
+          <div class="itinerary-activity"><span>🕘 9:00 AM</span> Visit the main museum</div>
+          <div class="itinerary-activity"><span>🕛 12:00 PM</span> Lunch at a hidden gem café</div>
+          <div class="itinerary-activity"><span>🕒 3:00 PM</span> Historic old town walking tour</div>
+          <div class="itinerary-activity"><span>🕗 7:00 PM</span> Sunset viewpoint & dinner</div>
+        </div>
+        <div class="itinerary-day">
+          <div class="itinerary-day-header">Day 3 — Adventure & Leisure</div>
+          <div class="itinerary-activity"><span>🕙 10:00 AM</span> Morning excursion (bike tour / hike)</div>
+          <div class="itinerary-activity"><span>🕐 1:00 PM</span> Local market lunch</div>
+          <div class="itinerary-activity"><span>🕓 4:00 PM</span> Free time & shopping</div>
+          <div class="itinerary-activity"><span>🕗 7:30 PM</span> Farewell dinner</div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-outline" onclick="closeModal('modalItinerary')">Close</button>
+        <button class="btn-primary" onclick="closeModal('modalItinerary');showToast('Itinerary saved to My Trips!')">Save to My Trips</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Add Category Modal -->
+  <div class="modal-backdrop" id="modalAddCategory">
+    <div class="modal">
+      <div class="modal-header">
+        <h3>Add Budget Category</h3>
+        <button class="modal-close" onclick="closeModal('modalAddCategory')">✕</button>
+      </div>
+      <div class="modal-body">
+        <label>Category Name</label>
+        <input type="text" id="newCatName" placeholder="e.g. Activities, Shopping…"/>
+        <label>Allocated Budget (USD)</label>
+        <input type="number" id="newCatAmount" placeholder="e.g. 500"/>
+        <label>Colour</label>
+        <div class="color-row" id="catColorRow">
+          <div class="color-swatch selected" style="background:#068cdf" data-color="#068cdf" onclick="selectColor(this)"></div>
+          <div class="color-swatch" style="background:#22c55e" data-color="#22c55e" onclick="selectColor(this)"></div>
+          <div class="color-swatch" style="background:#f97316" data-color="#f97316" onclick="selectColor(this)"></div>
+          <div class="color-swatch" style="background:#a855f7" data-color="#a855f7" onclick="selectColor(this)"></div>
+          <div class="color-swatch" style="background:#ec4899" data-color="#ec4899" onclick="selectColor(this)"></div>
+          <div class="color-swatch" style="background:#eab308" data-color="#eab308" onclick="selectColor(this)"></div>
+          <div class="color-swatch" style="background:#ef4444" data-color="#ef4444" onclick="selectColor(this)"></div>
+          <div class="color-swatch" style="background:#3b82f6" data-color="#3b82f6" onclick="selectColor(this)"></div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-outline" onclick="closeModal('modalAddCategory')">Cancel</button>
+        <button class="btn-primary" onclick="saveCategory()">Add Category</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Add Expense Modal -->
+  <div class="modal-backdrop" id="modalAddExpense">
+    <div class="modal">
+      <div class="modal-header">
+        <h3>Add Expense</h3>
+        <button class="modal-close" onclick="closeModal('modalAddExpense')">✕</button>
+      </div>
+      <div class="modal-body">
+        <label>Description</label>
+        <input type="text" id="newExpDesc" placeholder="e.g. Hotel Booking"/>
+        <label>Category</label>
+        <select id="newExpCat">
+          <option>Accommodation</option>
+          <option>Transportation</option>
+          <option>Food & Dining</option>
+          <option>Activities</option>
+          <option>Shopping</option>
+          <option>Miscellaneous</option>
+        </select>
+        <div class="form-row-2" style="margin-top:14px">
+          <div><label>Amount (USD)</label><input type="number" id="newExpAmount" placeholder="0.00"/></div>
+          <div><label>Date</label><input type="date" id="newExpDate"/></div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-outline" onclick="closeModal('modalAddExpense')">Cancel</button>
+        <button class="btn-primary" onclick="saveExpense()">Add Expense</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Edit Budget Category Modal -->
+  <div class="modal-backdrop" id="modalEditBudget">
+    <div class="modal">
+      <div class="modal-header">
+        <h3>Edit Category</h3>
+        <button class="modal-close" onclick="closeModal('modalEditBudget')">✕</button>
+      </div>
+      <div class="modal-body">
+        <label>Category Name</label>
+        <input type="text" id="editCatName"/>
+        <label>Allocated Budget (USD)</label>
+        <input type="number" id="editCatAmount"/>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-outline" onclick="closeModal('modalEditBudget')">Cancel</button>
+        <button class="btn-primary" onclick="saveEditCategory()">Save Changes</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- New Checklist Modal -->
+  <div class="modal-backdrop" id="modalNewChecklist">
+    <div class="modal">
+      <div class="modal-header">
+        <h3>New Checklist</h3>
+        <button class="modal-close" onclick="closeModal('modalNewChecklist')">✕</button>
+      </div>
+      <div class="modal-body">
+        <label>Checklist Title</label>
+        <input type="text" id="newChecklistTitle" placeholder="e.g. Visa Documents"/>
+        <label>Icon (emoji)</label>
+        <input type="text" id="newChecklistIcon" placeholder="e.g. 📋" maxlength="2"/>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-outline" onclick="closeModal('modalNewChecklist')">Cancel</button>
+        <button class="btn-primary" onclick="saveChecklist()">Create Checklist</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Add Checklist Item Modal -->
+  <div class="modal-backdrop" id="modalAddItem">
+    <div class="modal">
+      <div class="modal-header">
+        <h3>Add Item</h3>
+        <button class="modal-close" onclick="closeModal('modalAddItem')">✕</button>
+      </div>
+      <div class="modal-body">
+        <label>Item Label</label>
+        <input type="text" id="newItemLabel" placeholder="e.g. Pack sunscreen"/>
+        <input type="hidden" id="newItemTarget"/>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-outline" onclick="closeModal('modalAddItem')">Cancel</button>
+        <button class="btn-primary" onclick="saveItem()">Add Item</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- AI Shopping List Modal -->
+  <div class="modal-backdrop" id="modalShoppingList">
+    <div class="modal">
+      <div class="modal-header">
+        <h3>🛍️ AI Shopping List</h3>
+        <button class="modal-close" onclick="closeModal('modalShoppingList')">✕</button>
+      </div>
+      <div class="modal-body">
+        <p style="font-size:14px;color:#64748b;margin-bottom:16px">Based on your Paris trip itinerary, here's what we recommend:</p>
+        <div id="aiShoppingItems"></div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-outline" onclick="closeModal('modalShoppingList')">Close</button>
+        <button class="btn-primary" onclick="closeModal('modalShoppingList');showToast('Shopping list added to Checklists!')">Add to Checklists</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Add Reminder Modal -->
+  <div class="modal-backdrop" id="modalAddReminder">
+    <div class="modal">
+      <div class="modal-header">
+        <h3>Add Reminder</h3>
+        <button class="modal-close" onclick="closeModal('modalAddReminder')">✕</button>
+      </div>
+      <div class="modal-body">
+        <label>Title</label>
+        <input type="text" id="newReminderTitle" placeholder="e.g. Check in for flight"/>
+        <label>Description</label>
+        <input type="text" id="newReminderDesc" placeholder="Optional details…"/>
+        <div class="form-row-2" style="margin-top:14px">
+          <div><label>Date</label><input type="date" id="newReminderDate"/></div>
+          <div><label>Time</label><input type="time" id="newReminderTime"/></div>
+        </div>
+        <label>Priority</label>
+        <select id="newReminderPriority">
+          <option value="low">Low</option>
+          <option value="medium" selected>Medium</option>
+          <option value="high">High</option>
+        </select>
+        <label>Category</label>
+        <input type="text" id="newReminderCat" placeholder="e.g. Flight, Accommodation…"/>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-outline" onclick="closeModal('modalAddReminder')">Cancel</button>
+        <button class="btn-primary" onclick="saveReminder()">Add Reminder</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Edit Reminder Modal -->
+  <div class="modal-backdrop" id="modalEditReminder">
+    <div class="modal">
+      <div class="modal-header">
+        <h3>Edit Reminder</h3>
+        <button class="modal-close" onclick="closeModal('modalEditReminder')">✕</button>
+      </div>
+      <div class="modal-body">
+        <label>Title</label>
+        <input type="text" id="editReminderTitle"/>
+        <label>Description</label>
+        <input type="text" id="editReminderDesc"/>
+        <div class="form-row-2" style="margin-top:14px">
+          <div><label>Date</label><input type="date" id="editReminderDate"/></div>
+          <div><label>Time</label><input type="time" id="editReminderTime"/></div>
+        </div>
+        <label>Priority</label>
+        <select id="editReminderPriority">
+          <option value="low">Low</option>
+          <option value="medium">Medium</option>
+          <option value="high">High</option>
+        </select>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-outline" onclick="closeModal('modalEditReminder')">Cancel</button>
+        <button class="btn-primary" onclick="saveEditReminder()">Save Changes</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Voice Assistant Modal -->
+  <div class="modal-backdrop" id="modalVoice">
+    <div class="modal">
+      <div class="modal-header">
+        <h3>🔔 Enable Voice Assistant</h3>
+        <button class="modal-close" onclick="closeModal('modalVoice')">✕</button>
+      </div>
+      <div class="modal-body">
+        <p style="font-size:14px;color:#64748b;margin-bottom:4px">Get hands-free reminders and travel updates with TripGenie's Voice Assistant.</p>
+        <div class="voice-steps">
+          <div class="voice-step"><div class="voice-step-num">1</div>Allow microphone access when prompted</div>
+          <div class="voice-step"><div class="voice-step-num">2</div>Say "Hey TripGenie" to activate</div>
+          <div class="voice-step"><div class="voice-step-num">3</div>Ask about your trips, reminders, or budget</div>
+        </div>
+        <label style="margin-top:8px">Notification Preference</label>
+        <select>
+          <option>Voice + App notifications</option>
+          <option>Voice only</option>
+          <option>App notifications only</option>
+        </select>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-outline" onclick="closeModal('modalVoice')">Not Now</button>
+        <button class="btn-primary" onclick="closeModal('modalVoice');showToast('Voice Assistant enabled! Say \'Hey TripGenie\'')">Enable Now</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast notification -->
+  <div class="toast" id="toast"></div>
+
+</body>
+</html>
