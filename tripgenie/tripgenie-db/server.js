@@ -12,14 +12,20 @@ const assistantRoutes = require('./routes/assistant');
 const app  = express();
 const PORT = process.env.PORT || 3000;
 
+// ── CORS — allow all origins (frontend on Netlify + local dev) ─
 app.use(cors({
   origin: '*',
   methods: ['GET', 'POST', 'PATCH', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization']
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: false
 }));
+
+// Handle preflight requests
+app.options('*', cors());
+
 app.use(express.json());
 
-// ── Health check FIRST (before auth middleware) ───────────────
+// ── Health check FIRST ────────────────────────────────────────
 app.get('/api/health', async (_req, res) => {
   try {
     await pool.query('SELECT 1');
@@ -29,14 +35,14 @@ app.get('/api/health', async (_req, res) => {
   }
 });
 
-// ── Routes ───────────────────────────────────────────────────
+// ── Routes ────────────────────────────────────────────────────
 app.use('/api/auth',      authRoutes);
 app.use('/api/trips',     tripRoutes);
 app.use('/api/budget',    budgetRoutes);
 app.use('/api',           checklistRoutes);
 app.use('/api/assistant', assistantRoutes);
 
-// ── 404 fallback ─────────────────────────────────────────────
+// ── 404 fallback ──────────────────────────────────────────────
 app.use((_req, res) => res.status(404).json({ error: 'Route not found' }));
 
 app.listen(PORT, () => {
