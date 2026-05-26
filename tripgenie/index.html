@@ -10,7 +10,7 @@
 <body>
   <script>
     if (!sessionStorage.getItem('tg_logged_in')) {
-      window.location.replace('login.html');
+      window.location.replace('/login');
     }
   </script>
   
@@ -1258,7 +1258,7 @@
       localStorage.removeItem('tg_token');
       localStorage.removeItem('tg_user');
       localStorage.removeItem('tg_currency');
-      window.location.href = 'login.html';
+      window.location.href = '/login';
     }
     document.getElementById('logoutBtn').addEventListener('click', doLogout);
 
@@ -1354,7 +1354,7 @@
 
   <script>
     // ── Voice Assistant ──────────────────────────────────────────
-const API_BASE = 'https://ui-production-e419.up.railway.app/api';
+    const API_BASE = 'https://ui-production-e419.up.railway.app/api';
     let recognition = null;
     let isListening = false;
     let panelOpen   = false;
