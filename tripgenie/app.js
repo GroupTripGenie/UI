@@ -255,6 +255,8 @@ function hubCategoryHTML(cat) {
         <div class="budget-meta" style="gap:6px">
           <span>${fmtMoney(cat.spent)} / ${fmtMoney(cat.allocated)}</span>
           <button class="edit-btn" onclick="openAddExpenseForCat('${catId}','${cat.name}')">+ Expense</button>
+        <button class="edit-btn" onclick="openEditCategoryModal('${catId}','${cat.name}',${cat.allocated},'${color}')" title="Edit">✏️</button>
+        <button class="edit-btn" style="color:#ef4444" onclick="deleteHubCategory('${catId}')" title="Delete">🗑</button>
         </div>
       </div>
       <div class="budget-progress-row" style="margin-top:8px">
@@ -270,8 +272,9 @@ function hubCategoryHTML(cat) {
             <span>${e.description}</span>
             <span style="color:#94a3b8;font-size:11px;margin-left:8px">${fmtDate(e.spent_on)}</span>
           </div>
-          <div style="display:flex;align-items:center;gap:8px">
+          <div style="display:flex;align-items:center;gap:6px">
             <strong>${fmtMoney(e.amount)}</strong>
+            <button onclick="openEditExpenseModal('${e.id}','${e.description}',${e.amount},'${catId}')" style="background:none;border:none;color:#068cdf;cursor:pointer;font-size:13px;padding:2px 4px" title="Edit">✏️</button>
             <button onclick="deleteExpense('${e.id}','${catId}')" style="background:none;border:none;color:#ef4444;cursor:pointer;font-size:13px;padding:2px 4px" title="Delete">🗑</button>
           </div>
         </div>`).join('')}
@@ -405,15 +408,18 @@ function renderHubChecklists() {
           <span style="font-size:20px">${cl.icon||'📋'}</span>
           <div><strong style="font-size:15px">${cl.title}</strong><p style="font-size:12px;color:#64748b;margin:0">${done} of ${total} completed</p></div>
         </div>
-        <button class="btn-primary small-btn" onclick="openAddItem('${cl.id}')">+ Add Item</button>
+        <button class="btn-primary small-btn" onclick="openAddItem('${cl.id}')">+ Item</button>
+        <button class="btn-outline small-btn" onclick="openEditChecklistModal('${cl.id}','${cl.title}','${cl.icon||'📋'}')" title="Edit">✏️</button>
       </div>
       <div style="padding:4px 0;background:#fff">
         <div class="progress-bar" style="margin:0;border-radius:0;height:3px"><div class="progress-fill" style="width:${pct}%"></div></div>
         ${items.map(item=>`
-          <label style="display:flex;align-items:center;gap:10px;padding:10px 16px;border-bottom:1px solid #f8fafc;cursor:pointer">
-            <input type="checkbox" ${item.is_checked?'checked':''} onchange="toggleItem('${item.id}',this.checked,'${cl.id}')" style="accent-color:#068cdf">
-            <span style="${item.is_checked?'text-decoration:line-through;color:#94a3b8':''}">${item.label}</span>
-          </label>`).join('')}
+          <div style="display:flex;align-items:center;padding:8px 16px;border-bottom:1px solid #f8fafc;gap:8px">
+            <input type="checkbox" ${item.is_checked?'checked':''} onchange="toggleItem('${item.id}',this.checked,'${cl.id}')" style="accent-color:#068cdf;flex-shrink:0">
+            <span style="flex:1;${item.is_checked?'text-decoration:line-through;color:#94a3b8':''}">${item.label}</span>
+            <button onclick="openEditItemModal('${item.id}','${item.label}','${cl.id}')" style="background:none;border:none;color:#068cdf;cursor:pointer;font-size:13px;padding:2px 4px;flex-shrink:0" title="Edit">✏️</button>
+            <button onclick="deleteChecklistItem('${item.id}','${cl.id}')" style="background:none;border:none;color:#ef4444;cursor:pointer;font-size:13px;padding:2px 4px;flex-shrink:0" title="Delete">🗑</button>
+          </div>`).join('')}
         ${!items.length?'<p style="text-align:center;color:#94a3b8;font-size:13px;padding:12px">No items yet</p>':''}
       </div>
     </div>`;
@@ -811,7 +817,8 @@ document.addEventListener('DOMContentLoaded', () => {
   window.openManualItinerary= openManualItinerary;
   window.closeManualItinerary=closeManualItinerary;
   window.saveManualItinerary= saveManualItinerary;
-  window.addItineraryDay    = addItineraryDay;
+  window.addItineraryDay          = addItineraryDay;
+  window.renderItineraryEditorDays = renderItineraryEditorDays;
   window.removeDay          = removeDay;
   window.addActivity        = addActivity;
   window.removeActivity     = removeActivity;
@@ -978,7 +985,8 @@ function budgetCatRow(cat, tripId, fmt) {
       <div style="display:flex;align-items:center;gap:8px">
         <span style="color:#64748b;font-size:13px">${fmt(cat.spent)} / ${fmt(cat.allocated)}</span>
         <button class="edit-btn" onclick="openAddExpenseForCat('${cat.category_id}','${cat.name}');currentTripId='${tripId}'" title="Add expense">+ Expense</button>
-        <button class="edit-btn" style="color:#ef4444" onclick="deleteBudgetCategory('${cat.category_id}','${tripId}')" title="Delete category">🗑</button>
+        <button class="edit-btn" onclick="openEditCategoryModal('${cat.category_id}','${cat.name}',${cat.allocated},'${cat.color||'#068cdf'}');currentTripId='${tripId}'" title="Edit">✏️</button>
+        <button class="edit-btn" style="color:#ef4444" onclick="deleteBudgetCategory('${cat.category_id}','${tripId}')" title="Delete">🗑</button>
       </div>
     </div>
     <div style="display:flex;align-items:center;gap:8px">
@@ -1149,6 +1157,7 @@ function checklistCard(cl, tripId) {
       </div>
       <div style="display:flex;gap:6px">
         <button class="btn-outline small-btn" onclick="openAddItemForChecklist('${cl.id}')">+ Item</button>
+        <button class="btn-outline small-btn" onclick="openEditChecklistModal('${cl.id}','${cl.title}','${cl.icon||'📋'}')" title="Edit">✏️</button>
         <button class="btn-outline small-btn" onclick="archiveChecklist('${cl.id}','${tripId}')" title="Archive">📦</button>
         <button class="btn-outline small-btn" style="color:#ef4444;border-color:#ef4444" onclick="deleteChecklistFromPage('${cl.id}','${tripId}')" title="Delete">🗑</button>
       </div>
@@ -1157,9 +1166,11 @@ function checklistCard(cl, tripId) {
     <div style="padding:4px 0;background:#fff">
       ${items.map(item=>`
         <label style="display:flex;align-items:center;gap:10px;padding:10px 16px;border-bottom:1px solid #f8fafc;cursor:pointer">
-          <input type="checkbox" ${item.is_checked?'checked':''} onchange="togglePageItem('${item.id}',this.checked,'${cl.id}','${tripId}')" style="accent-color:#068cdf">
-          <span style="${item.is_checked?'text-decoration:line-through;color:#94a3b8':''}">${item.label}</span>
-        </label>`).join('')}
+          <input type="checkbox" ${item.is_checked?'checked':''} onchange="togglePageItem('${item.id}',this.checked,'${cl.id}','${tripId}')" style="accent-color:#068cdf;flex-shrink:0">
+          <span style="flex:1;${item.is_checked?'text-decoration:line-through;color:#94a3b8':''}">${item.label}</span>
+          <button onclick="openEditItemModal('${item.id}','${item.label}','${cl.id}')" style="background:none;border:none;color:#068cdf;cursor:pointer;font-size:13px;padding:2px 4px;flex-shrink:0" title="Edit">✏️</button>
+          <button onclick="deleteChecklistItem('${item.id}','${cl.id}')" style="background:none;border:none;color:#ef4444;cursor:pointer;font-size:13px;padding:2px 4px;flex-shrink:0" title="Delete">🗑</button>
+        </div>`).join('')}
       ${!items.length?'<p style="text-align:center;color:#94a3b8;font-size:13px;padding:12px">No items yet</p>':''}
     </div>
   </div>`;
@@ -1483,160 +1494,111 @@ if (_origNavigate) {
 // When user saves profile with PHP, getCurrency() returns 'PHP' everywhere.
 
 // ============================================================
-//  MANUAL ITINERARY EDITOR
+//  IN-PLACE ITINERARY EDITOR
 // ============================================================
-let itineraryDays = []; // [{title, activities:[{time,desc}]}]
+let itineraryDays    = [];
+let itineraryEditing = false;
 
 function openManualItinerary() {
-  const el = document.getElementById('manualItineraryEditor');
-  if (!el) return;
-
-  // Load existing itinerary from localStorage
   const saved = localStorage.getItem('itinerary_raw_'+currentTripId);
-  if (saved) {
-    try { itineraryDays = JSON.parse(saved); } catch { itineraryDays = []; }
-  }
-  if (!itineraryDays.length) itineraryDays = [{ title:'Day 1', activities:[{time:'9:00 AM', desc:''}] }];
-
-  renderItineraryEditor();
-  el.style.display = 'block';
-  el.scrollIntoView({behavior:'smooth', block:'start'});
+  if (saved) { try { itineraryDays = JSON.parse(saved); } catch { itineraryDays = []; } }
+  if (!itineraryDays.length) itineraryDays = [{ title:'Day 1', activities:[{time:'9:00 AM',desc:''}] }];
+  itineraryEditing = true;
+  renderInPlaceEditor();
 }
 
 function closeManualItinerary() {
-  const el = document.getElementById('manualItineraryEditor');
-  if (el) el.style.display = 'none';
+  itineraryEditing = false;
+  const saved = localStorage.getItem('itinerary_'+currentTripId);
+  const el = document.getElementById('hubItinerary');
+  if (el) el.innerHTML = saved || '<p style="color:#64748b;font-size:14px">No itinerary yet.</p>';
 }
 
-function renderItineraryEditor() {
+function renderInPlaceEditor() {
+  const el = document.getElementById('hubItinerary');
+  if (!el) return;
+  el.innerHTML = `
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:2px solid #068cdf;margin-bottom:16px">
+      <button onclick="addItineraryDay()" class="btn-primary small-btn">+ Add Day</button>
+      <div style="display:flex;gap:8px">
+        <button onclick="saveManualItinerary()" class="btn-primary small-btn">💾 Save</button>
+        <button onclick="closeManualItinerary()" class="btn-outline small-btn">Cancel</button>
+      </div>
+    </div>
+    <div id="itineraryDaysList"></div>`;
+  renderItineraryEditorDays();
+}
+
+function renderItineraryEditorDays() {
   const el = document.getElementById('itineraryDaysList');
   if (!el) return;
   el.innerHTML = itineraryDays.map((day, di) => `
     <div style="border:1px solid #e8ecf0;border-radius:10px;margin-bottom:12px;overflow:hidden">
       <div style="background:#e8f4fd;padding:10px 14px;display:flex;align-items:center;gap:8px">
-        <input type="text" value="${day.title}" onchange="itineraryDays[${di}].title=this.value"
+        <input type="text" value="${day.title.replace(/"/g,'&quot;')}"
+          oninput="itineraryDays[${di}].title=this.value"
           style="flex:1;background:transparent;border:none;font-weight:700;font-size:14px;color:#068cdf;outline:none;font-family:inherit"/>
-        <button onclick="addActivity(${di})" style="background:#068cdf;color:white;border:none;border-radius:6px;padding:4px 10px;font-size:12px;cursor:pointer">+ Activity</button>
-        <button onclick="removeDay(${di})" style="background:none;border:none;color:#ef4444;cursor:pointer;font-size:16px">🗑</button>
+        <button onclick="addActivity(${di})" style="background:#068cdf;color:white;border:none;border-radius:6px;padding:4px 10px;font-size:12px;cursor:pointer;white-space:nowrap">+ Activity</button>
+        <button onclick="removeDay(${di})" style="background:none;border:none;color:#ef4444;cursor:pointer;font-size:18px;line-height:1">×</button>
       </div>
       <div style="padding:8px 14px">
         ${day.activities.map((act, ai) => `
           <div style="display:flex;gap:8px;align-items:center;padding:6px 0;border-bottom:1px solid #f8fafc">
-            <input type="text" value="${act.time}" placeholder="Time" onchange="itineraryDays[${di}].activities[${ai}].time=this.value"
-              style="width:90px;padding:6px 8px;border:1px solid #e8ecf0;border-radius:6px;font-size:13px;font-family:inherit;outline:none;flex-shrink:0"/>
-            <input type="text" value="${act.desc}" placeholder="Activity description…" onchange="itineraryDays[${di}].activities[${ai}].desc=this.value"
+            <input type="text" value="${(act.time||'').replace(/"/g,'&quot;')}" placeholder="Time"
+              oninput="itineraryDays[${di}].activities[${ai}].time=this.value"
+              style="width:85px;padding:6px 8px;border:1px solid #e8ecf0;border-radius:6px;font-size:13px;font-family:inherit;outline:none;flex-shrink:0"/>
+            <input type="text" value="${(act.desc||'').replace(/"/g,'&quot;')}" placeholder="Activity…"
+              oninput="itineraryDays[${di}].activities[${ai}].desc=this.value"
               style="flex:1;padding:6px 8px;border:1px solid #e8ecf0;border-radius:6px;font-size:13px;font-family:inherit;outline:none"/>
-            <button onclick="removeActivity(${di},${ai})" style="background:none;border:none;color:#94a3b8;cursor:pointer;font-size:14px;flex-shrink:0">✕</button>
+            <button onclick="removeActivity(${di},${ai})" style="background:none;border:none;color:#94a3b8;cursor:pointer;font-size:16px;flex-shrink:0">×</button>
           </div>`).join('')}
-        ${!day.activities.length?'<p style="color:#94a3b8;font-size:13px;padding:8px 0">No activities yet. Click "+ Activity"</p>':''}
+        ${!day.activities.length?'<p style="color:#94a3b8;font-size:13px;padding:8px 0">No activities. Click "+ Activity"</p>':''}
       </div>
     </div>`).join('');
 }
 
 function addItineraryDay() {
-  itineraryDays.push({ title:`Day ${itineraryDays.length+1}`, activities:[{time:'9:00 AM',desc:''}] });
-  renderItineraryEditor();
+  itineraryDays.push({title:`Day ${itineraryDays.length+1}`,activities:[{time:'9:00 AM',desc:''}]});
+  renderItineraryEditorDays();
 }
 
 function removeDay(di) {
-  if (itineraryDays.length <= 1) { showToast('Keep at least one day'); return; }
-  itineraryDays.splice(di, 1);
-  // Rename days
-  itineraryDays.forEach((d,i) => { if (d.title.match(/^Day \d+$/)) d.title=`Day ${i+1}`; });
-  renderItineraryEditor();
+  if (itineraryDays.length<=1){showToast('Keep at least one day');return;}
+  itineraryDays.splice(di,1);
+  itineraryDays.forEach((d,i)=>{if(/^Day \d+$/.test(d.title))d.title=`Day ${i+1}`;});
+  renderItineraryEditorDays();
 }
 
 function addActivity(di) {
-  itineraryDays[di].activities.push({time:'', desc:''});
-  renderItineraryEditor();
-  // Focus the new time input
-  setTimeout(() => {
-    const inputs = document.querySelectorAll('#itineraryDaysList input[placeholder="Time"]');
-    if (inputs.length) inputs[inputs.length-1].focus();
-  }, 50);
+  itineraryDays[di].activities.push({time:'',desc:''});
+  renderItineraryEditorDays();
+  setTimeout(()=>{
+    const inputs=[...document.querySelectorAll('#itineraryDaysList input[placeholder="Time"]')];
+    if(inputs.length) inputs[inputs.length-1].focus();
+  },50);
 }
 
-function removeActivity(di, ai) {
-  itineraryDays[di].activities.splice(ai, 1);
-  renderItineraryEditor();
+function removeActivity(di,ai) {
+  itineraryDays[di].activities.splice(ai,1);
+  renderItineraryEditorDays();
 }
 
 function saveManualItinerary() {
-  // Save raw data for editing later
   localStorage.setItem('itinerary_raw_'+currentTripId, JSON.stringify(itineraryDays));
-
-  // Build HTML for display
-  const rawHtml = itineraryDays.map(day => `
+  const rawHtml = itineraryDays.map(day=>`
     <div class="itinerary-day">
       <div class="itinerary-day-header">${day.title}</div>
-      ${day.activities.map(act => `
-        <div class="itinerary-activity">
-          ${act.time?`<span>${act.time}</span>`:''}
-          ${act.desc||'—'}
-        </div>`).join('')}
+      ${day.activities.map(act=>`
+        <div class="itinerary-activity">${act.time?`<span>${act.time}</span>`:''} ${act.desc||'—'}</div>`).join('')}
     </div>`).join('');
-
   const html = `<div style="text-align:right;margin-bottom:10px">
     <button class="btn-outline small-btn" onclick="openManualItinerary()" style="font-size:12px">✏️ Edit Itinerary</button>
   </div>` + rawHtml;
-
   localStorage.setItem('itinerary_'+currentTripId, html);
-  const itinEl = document.getElementById('hubItinerary');
-  if (itinEl) itinEl.innerHTML = html;
-  closeManualItinerary();
+  itineraryEditing = false;
+  const el = document.getElementById('hubItinerary');
+  if (el) el.innerHTML = html;
   showToast('Itinerary saved! ✓');
-}
-
-// Also update generateHubItinerary to save raw data
-const _origGenHub = window.generateHubItinerary;
-async function generateHubItinerary() {
-  const trip = allTrips.find(t=>t.id===currentTripId);
-  if (!trip) return;
-  const btn = document.getElementById('hubGenBtn');
-  if (btn) { btn.disabled=true; btn.textContent='Generating…'; }
-  const days = trip.start_date&&trip.end_date
-    ? Math.max(1,Math.ceil((new Date(trip.end_date)-new Date(trip.start_date))/86400000))
-    : 3;
-  try {
-    const res = await apiFetch('/assistant/chat', {
-      method:'POST',
-      body:JSON.stringify({
-        message:`Create a detailed ${days}-day travel itinerary for ${trip.destination}.
-Format EXACTLY like this:
-Day 1 — [Theme]
-🕘 9:00 AM - [Specific activity]
-🕛 12:00 PM - [Lunch]
-🕒 3:00 PM - [Activity]
-🕖 7:00 PM - [Dinner]
-Day 2 — [Theme]
-...continue for all ${days} days. Use real places in ${trip.destination}.`
-      })
-    });
-    const html = parseItinerary(res.reply, trip.destination);
-    localStorage.setItem('itinerary_'+currentTripId, html);
-
-    // Also parse into raw format for manual editing
-    const lines = res.reply.split('\n').filter(l=>l.trim());
-    let rawDays=[], currentDay=null;
-    lines.forEach(line => {
-      const l = line.trim().replace(/\*\*/g,'');
-      if (l.match(/^day\s*\d+/i)) {
-        if (currentDay) rawDays.push(currentDay);
-        currentDay = {title:l, activities:[]};
-      } else if (l && currentDay) {
-        const match = l.match(/^([\d🕐🕑🕒🕓🕔🕕🕖🕗🕘🕙🕚🕛]?\s*\d+:\d+\s*[APMapm]*)\s*[-–]\s*(.+)$/);
-        if (match) currentDay.activities.push({time:match[1].trim(), desc:match[2].trim()});
-        else currentDay.activities.push({time:'', desc:l});
-      }
-    });
-    if (currentDay) rawDays.push(currentDay);
-    if (rawDays.length) localStorage.setItem('itinerary_raw_'+currentTripId, JSON.stringify(rawDays));
-
-    const el = document.getElementById('hubItinerary');
-    if (el) el.innerHTML = html;
-    showToast('Itinerary generated! Click "Write My Own" to edit it.');
-  } catch(e) { showToast('Error: '+e.message); }
-  finally { if(btn){btn.disabled=false;btn.textContent='✨ Generate with AI';} }
 }
 
 // ============================================================
@@ -1782,41 +1744,56 @@ function renderMonthView(titleEl, bodyEl) {
   const daysInMonth = new Date(year, month+1, 0).getDate();
   const dayNames = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
 
-  let html = `<div style="display:grid;grid-template-columns:repeat(7,1fr);border-bottom:1px solid #e8ecf0">
-    ${dayNames.map(d=>`<div style="padding:10px;text-align:center;font-size:12px;font-weight:700;color:#64748b;background:#f8fafc">${d}</div>`).join('')}
-  </div>
-  <div style="display:grid;grid-template-columns:repeat(7,1fr);grid-auto-rows:minmax(90px,auto)">`;
+  // Build calendar using table for reliable equal-width columns
+  const isDark = document.body.classList.contains('dark');
+  const borderCol = isDark ? '#2d3748' : '#e8ecf0';
+  const altBg     = isDark ? '#141824' : '#fafafa';
+  const hoverBg   = isDark ? '#252d3d' : '#f8fafc';
+  const baseBg    = isDark ? '#1a1f2e' : 'white';
+  const textCol   = isDark ? '#f1f5f9' : '#063937';
 
-  // Empty cells before month starts
-  for (let i=0; i<firstDay; i++) {
-    html += `<div style="border-right:1px solid #f1f5f9;border-bottom:1px solid #f1f5f9;background:#fafafa"></div>`;
-  }
+  let html = `<div style="overflow-x:auto;-webkit-overflow-scrolling:touch">
+  <table style="width:100%;border-collapse:collapse;table-layout:fixed;min-width:560px">
+    <thead>
+      <tr>${dayNames.map(d=>`<th style="padding:10px 4px;text-align:center;font-size:12px;font-weight:700;color:#64748b;background:${altBg};border-bottom:2px solid ${borderCol}">${d}</th>`).join('')}</tr>
+    </thead>
+    <tbody>`;
 
+  let cells = [];
+  // Empty cells before month
+  for (let i=0; i<firstDay; i++) cells.push({empty:true, before:true});
+  // Month days
   for (let d=1; d<=daysInMonth; d++) {
     const dateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
-    const isToday = dateStr===today;
-    const events  = getEventsForDate(dateStr);
-    const maxShow = 3;
+    cells.push({ d, dateStr, isToday: dateStr===today, events: getEventsForDate(dateStr) });
+  }
+  // Pad to complete last row
+  while (cells.length % 7 !== 0) cells.push({empty:true, after:true});
 
-    html += `
-    <div onclick="openDayDetail('${dateStr}')" style="border-right:1px solid #f1f5f9;border-bottom:1px solid #f1f5f9;padding:6px 8px;cursor:pointer;transition:background 0.1s;min-height:90px" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='white'">
-      <div style="display:flex;justify-content:center;margin-bottom:4px">
-        <span style="width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:${isToday?'700':'500'};background:${isToday?'#068cdf':'transparent'};color:${isToday?'white':'#063937'}">${d}</span>
-      </div>
-      ${events.slice(0,maxShow).map(e=>`
-        <div style="background:${e.color};color:white;border-radius:4px;padding:2px 6px;font-size:11px;margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="${e.title}">${e.title}</div>`).join('')}
-      ${events.length>maxShow?`<div style="font-size:11px;color:#64748b;padding:2px 0">+${events.length-maxShow} more</div>`:''}
-    </div>`;
+  // Build rows
+  for (let r=0; r<cells.length/7; r++) {
+    html += '<tr>';
+    for (let c=0; c<7; c++) {
+      const cell = cells[r*7+c];
+      if (cell.empty) {
+        html += `<td style="height:90px;background:${altBg};border:1px solid ${borderCol}"></td>`;
+      } else {
+        const maxShow = 2;
+        html += `<td onclick="openDayDetail('${cell.dateStr}')"
+          style="height:90px;vertical-align:top;padding:6px 6px;border:1px solid ${borderCol};cursor:pointer;background:${baseBg};transition:background 0.1s"
+          onmouseover="this.style.background='${hoverBg}'" onmouseout="this.style.background='${baseBg}'">
+          <div style="display:flex;justify-content:center;margin-bottom:4px">
+            <span style="width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:${cell.isToday?'700':'500'};background:${cell.isToday?'#068cdf':'transparent'};color:${cell.isToday?'white':textCol}">${cell.d}</span>
+          </div>
+          ${cell.events.slice(0,maxShow).map(e=>`<div style="background:${e.color};color:white;border-radius:4px;padding:2px 5px;font-size:10px;margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="${e.title}">${e.title}</div>`).join('')}
+          ${cell.events.length>maxShow?`<div style="font-size:10px;color:#64748b">+${cell.events.length-maxShow} more</div>`:''}
+        </td>`;
+      }
+    }
+    html += '</tr>';
   }
 
-  // Fill remaining cells
-  const totalCells = firstDay + daysInMonth;
-  const remaining  = (7 - (totalCells % 7)) % 7;
-  for (let i=0; i<remaining; i++) {
-    html += `<div style="border-right:1px solid #f1f5f9;border-bottom:1px solid #f1f5f9;background:#fafafa"></div>`;
-  }
-
-  html += '</div>';
+  html += '</tbody></table></div>';
   bodyEl.innerHTML = html;
 }
 
@@ -1966,3 +1943,194 @@ function openDayDetail(dateStr) {
   panel.style.display='block';
   panel.scrollIntoView({behavior:'smooth',block:'nearest'});
 }
+
+// ============================================================
+//  EDIT / DELETE FUNCTIONS FOR ALL ITEMS
+// ============================================================
+
+// ── BUDGET CATEGORY: Edit ─────────────────────────────────────
+function openEditCategoryModal(catId, name, allocated, color) {
+  window._editingCatId    = catId;
+  window._editingCatColor = color;
+  document.getElementById('editCatName').value   = name;
+  document.getElementById('editCatAmount').value = allocated;
+  // Pre-select color swatch
+  document.querySelectorAll('.color-swatch').forEach(s => {
+    s.classList.toggle('selected', s.dataset.color === color);
+  });
+  openModal('modalEditBudget');
+}
+
+async function saveEditCategory() {
+  const name   = document.getElementById('editCatName').value.trim();
+  const amount = parseFloat(document.getElementById('editCatAmount').value) || 0;
+  const color  = document.querySelector('.color-swatch.selected')?.dataset.color || window._editingCatColor || '#068cdf';
+  if (!name) { showToast('Please enter a category name'); return; }
+
+  // Optimistically update local state
+  if (tripBudget?.categories) {
+    const cat = tripBudget.categories.find(c => c.category_id === window._editingCatId);
+    if (cat) { cat.name = name; cat.allocated = amount; cat.color = color; }
+  }
+  if (allBudgets[currentTripId]?.categories) {
+    const cat = allBudgets[currentTripId].categories.find(c => c.category_id === window._editingCatId);
+    if (cat) { cat.name = name; cat.allocated = amount; cat.color = color; }
+  }
+
+  closeModal('modalEditBudget');
+  showToast('Category updated!');
+
+  // Refresh views
+  if (document.getElementById('page-tripHub')?.classList.contains('active')) renderHubBudget();
+  if (document.getElementById('page-budget')?.classList.contains('active')) {
+    renderBudgetPage(document.getElementById('budgetTripFilter')?.value || 'all');
+  }
+}
+
+// ── BUDGET CATEGORY: Delete from hub ─────────────────────────
+async function deleteHubCategory(catId) {
+  if (!confirm('Delete this category and all its expenses?')) return;
+  if (tripBudget?.categories) {
+    tripBudget.categories = tripBudget.categories.filter(c => c.category_id !== catId);
+    if (tripBudget.expenses) tripBudget.expenses = tripBudget.expenses.filter(e => e.category_id !== catId);
+  }
+  renderHubBudget();
+  showToast('Category deleted');
+}
+
+// ── EXPENSE: Edit ─────────────────────────────────────────────
+function openEditExpenseModal(expId, desc, amount, catId) {
+  window._editingExpId  = expId;
+  window._editingExpCat = catId;
+  document.getElementById('editExpDesc').value   = desc;
+  document.getElementById('editExpAmount').value = amount;
+  openModal('modalEditExpense');
+}
+
+async function saveEditExpense() {
+  const desc   = document.getElementById('editExpDesc').value.trim();
+  const amount = parseFloat(document.getElementById('editExpAmount').value);
+  if (!desc || !amount) { showToast('Please fill in all fields'); return; }
+
+  // Update local state optimistically
+  const updateExp = arr => {
+    if (!arr) return;
+    const e = arr.find(e => e.id === window._editingExpId);
+    if (e) { e.description = desc; e.amount = amount; }
+  };
+  updateExp(tripBudget?.expenses);
+  updateExp(allBudgets[currentTripId]?.expenses);
+
+  // Recalculate category spent
+  if (tripBudget?.categories && tripBudget?.expenses) {
+    tripBudget.categories.forEach(cat => {
+      cat.spent = tripBudget.expenses
+        .filter(e => e.category_id === cat.category_id)
+        .reduce((s, e) => s + parseFloat(e.amount), 0);
+    });
+  }
+
+  closeModal('modalEditExpense');
+  showToast('Expense updated!');
+  if (document.getElementById('page-tripHub')?.classList.contains('active')) renderHubBudget();
+  if (document.getElementById('page-budget')?.classList.contains('active')) {
+    renderBudgetPage(document.getElementById('budgetTripFilter')?.value || 'all');
+  }
+}
+
+// ── CHECKLIST ITEM: Edit ──────────────────────────────────────
+function openEditItemModal(itemId, label, clId) {
+  window._editingItemId = itemId;
+  window._editingItemCl = clId;
+  document.getElementById('editItemLabel').value = label;
+  openModal('modalEditItem');
+}
+
+async function saveEditItem() {
+  const label = document.getElementById('editItemLabel').value.trim();
+  if (!label) { showToast('Please enter a label'); return; }
+  try {
+    await apiFetch('/checklists/items/' + window._editingItemId, {
+      method: 'PATCH', body: JSON.stringify({ label })
+    });
+    // Update all local state
+    const updateItems = arr => {
+      if (!arr) return;
+      const item = arr.find(i => i.id === window._editingItemId);
+      if (item) item.label = label;
+    };
+    tripChecklists.forEach(cl => updateItems(cl.items));
+    Object.values(allChecklistsByTrip).forEach(cls => cls.forEach(cl => updateItems(cl.items)));
+
+    closeModal('modalEditItem');
+    showToast('Item updated!');
+    if (document.getElementById('page-tripHub')?.classList.contains('active')) renderHubChecklists();
+    if (document.getElementById('page-checklists')?.classList.contains('active')) {
+      renderChecklistPage(document.getElementById('checklistTripFilter')?.value || 'all');
+    }
+  } catch(e) { showToast('Error: ' + e.message); }
+}
+
+// ── CHECKLIST ITEM: Delete ────────────────────────────────────
+async function deleteChecklistItem(itemId, clId) {
+  if (!confirm('Delete this item?')) return;
+  try {
+    await apiFetch('/checklists/items/' + itemId, { method: 'DELETE' });
+  } catch {}
+  // Remove from local state
+  const removeItem = arr => {
+    if (!arr) return;
+    arr.forEach(cl => {
+      if (cl.id === clId) cl.items = (cl.items || []).filter(i => i.id !== itemId);
+    });
+  };
+  removeItem(tripChecklists);
+  Object.values(allChecklistsByTrip).forEach(cls => removeItem(cls));
+
+  showToast('Item deleted');
+  if (document.getElementById('page-tripHub')?.classList.contains('active')) renderHubChecklists();
+  if (document.getElementById('page-checklists')?.classList.contains('active')) {
+    renderChecklistPage(document.getElementById('checklistTripFilter')?.value || 'all');
+  }
+}
+
+// ── CHECKLIST: Edit title/icon ────────────────────────────────
+function openEditChecklistModal(clId, title, icon) {
+  window._editingClId = clId;
+  document.getElementById('editClTitle').value = title;
+  document.getElementById('editClIcon').value  = icon || '📋';
+  openModal('modalEditChecklist');
+}
+
+async function saveEditChecklist() {
+  const title = document.getElementById('editClTitle').value.trim();
+  const icon  = document.getElementById('editClIcon').value || '📋';
+  if (!title) { showToast('Please enter a title'); return; }
+
+  const updateCl = arr => {
+    if (!arr) return;
+    const cl = arr.find(c => c.id === window._editingClId);
+    if (cl) { cl.title = title; cl.icon = icon; }
+  };
+  updateCl(tripChecklists);
+  Object.values(allChecklistsByTrip).forEach(cls => updateCl(cls));
+
+  closeModal('modalEditChecklist');
+  showToast('Checklist updated!');
+  if (document.getElementById('page-tripHub')?.classList.contains('active')) renderHubChecklists();
+  if (document.getElementById('page-checklists')?.classList.contains('active')) {
+    renderChecklistPage(document.getElementById('checklistTripFilter')?.value || 'all');
+  }
+}
+
+// Export all new functions
+window.openEditCategoryModal  = openEditCategoryModal;
+window.saveEditCategory       = saveEditCategory;
+window.deleteHubCategory      = deleteHubCategory;
+window.openEditExpenseModal   = openEditExpenseModal;
+window.saveEditExpense        = saveEditExpense;
+window.openEditItemModal      = openEditItemModal;
+window.saveEditItem           = saveEditItem;
+window.deleteChecklistItem    = deleteChecklistItem;
+window.openEditChecklistModal = openEditChecklistModal;
+window.saveEditChecklist      = saveEditChecklist;

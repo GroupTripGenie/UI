@@ -173,4 +173,20 @@ router.delete('/reminders/:id', async (req, res) => {
   }
 });
 
+
+// ── DELETE /api/checklists/items/:itemId ──────────────────────
+router.delete('/checklists/items/:itemId', async (req, res) => {
+  try {
+    const { rowCount } = await pool.query(
+      'DELETE FROM checklist_items WHERE id = $1',
+      [req.params.itemId]
+    );
+    if (!rowCount) return res.status(404).json({ error: 'Item not found' });
+    res.json({ message: 'Item deleted' });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
 module.exports = router;

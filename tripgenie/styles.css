@@ -885,3 +885,103 @@ input:focus, select:focus { border-color: var(--primary); }
 
   .big-404 { font-size: 80px; }
 }
+
+
+/* ============================================================
+   DARK MODE
+============================================================ */
+body.dark {
+  --bg:           #0f1117;
+  --dark:         #f1f5f9;
+  --text-muted:   #94a3b8;
+  --border:       #2d3748;
+  --primary:      #068cdf;
+  --primary-dark: #0578c4;
+  --radius:       12px;
+  --radius-sm:    8px;
+}
+
+body.dark .sidebar        { background: #1a1f2e; border-right-color: #2d3748; }
+body.dark .nav-link       { color: #94a3b8; }
+body.dark .nav-link:hover,
+body.dark .nav-link.active{ background: #2d3748; color: #f1f5f9; }
+body.dark .logo-text      { color: #f1f5f9; }
+
+body.dark .topbar         { background: #1a1f2e; border-bottom-color: #2d3748; }
+body.dark .topbar h2,
+body.dark .topbar .page-title { color: #f1f5f9; }
+
+body.dark .card           { background: #1a1f2e; border-color: #2d3748; }
+body.dark .stat-card      { background: #1a1f2e; border-color: #2d3748; }
+body.dark .stat-label     { color: #94a3b8; }
+body.dark .stat-value     { color: #f1f5f9; }
+
+body.dark .trip-card      { background: #1a1f2e; border-color: #2d3748; }
+body.dark .trip-body h3   { color: #f1f5f9; }
+body.dark .trip-dates     { color: #94a3b8; }
+body.dark .progress-bar   { background: #2d3748; }
+
+body.dark .page-header h1 { color: #f1f5f9; }
+body.dark .page-header p  { color: #94a3b8; }
+
+body.dark .section-title  { color: #94a3b8; }
+
+body.dark .btn-outline    { border-color: #2d3748; color: #f1f5f9; background: transparent; }
+body.dark .btn-outline:hover { background: #2d3748; }
+
+body.dark input,
+body.dark select,
+body.dark textarea        { background: #252d3d; border-color: #2d3748; color: #f1f5f9; }
+body.dark input::placeholder,
+body.dark textarea::placeholder { color: #4a5568; }
+body.dark input:focus,
+body.dark select:focus,
+body.dark textarea:focus  { border-color: #068cdf; }
+
+body.dark .modal          { background: #1a1f2e; }
+body.dark .modal-header h3{ color: #f1f5f9; }
+body.dark .modal label    { color: #94a3b8; }
+body.dark .modal-footer   { border-top-color: #2d3748; }
+body.dark .modal-close    { color: #94a3b8; }
+body.dark .modal-close:hover { background: #2d3748; }
+
+body.dark .budget-item,
+body.dark .reminder-item,
+body.dark .checklist-card { background: #1a1f2e; border-color: #2d3748; }
+body.dark .expense-item   { border-bottom-color: #2d3748; }
+body.dark .expense-item h4{ color: #f1f5f9; }
+body.dark .expense-item p { color: #94a3b8; }
+
+body.dark .voice-panel    { background: #1a1f2e; }
+body.dark .voice-msg.ai .voice-msg-bubble { background: #252d3d; color: #f1f5f9; }
+body.dark .voice-text-input { background: #252d3d; border-color: #2d3748; color: #f1f5f9; }
+body.dark .voice-status   { color: #94a3b8; border-top-color: #2d3748; }
+
+body.dark .generating-card { background: #1a1f2e; border-color: #2d3748; }
+
+body.dark .itinerary-day  { border-color: #2d3748; }
+body.dark .itinerary-day-header { background: #252d3d; }
+body.dark .itinerary-activity  { border-bottom-color: #2d3748; color: #f1f5f9; }
+body.dark .itinerary-activity span { color: #94a3b8; }
+
+/* Calendar dark mode */
+body.dark #calBody        { background: #1a1f2e; }
+body.dark #calHeader      { background: #1a1f2e; border-bottom-color: #2d3748; }
+body.dark #calTitle       { color: #f1f5f9; }
+
+/* Dark mode toggle icon */
+body.dark #darkModeBtn    { border-color: #2d3748; color: #f1f5f9; }
+
+/* Forms in plan trip */
+body.dark .form-group label { color: #94a3b8; }
+body.dark .interest-btn   { background: #252d3d; border-color: #2d3748; color: #94a3b8; }
+body.dark .interest-btn.active { background: #068cdf; color: white; border-color: #068cdf; }
+body.dark .pace-btn       { background: #252d3d; border-color: #2d3748; color: #94a3b8; }
+body.dark .pace-btn.active{ background: #068cdf; color: white; }
+
+body.dark .gradient-banner { background: linear-gradient(135deg, #1a2a4a, #063937); }
+body.dark .card-header    { border-bottom-color: #2d3748; }
+
+/* Overlay */
+body.dark .overlay        { background: rgba(0,0,0,0.7); }
+body.dark .sidebar        { background: #1a1f2e; }

@@ -94,6 +94,8 @@
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
         </button>
         <div class="topbar-right">
+          <button id="darkModeBtn" onclick="toggleDarkMode()" title="Toggle dark mode"
+            style="background:none;border:1.5px solid var(--border);border-radius:8px;padding:6px 10px;cursor:pointer;font-size:16px;color:var(--dark);margin-right:8px">🌙</button>
 
           <div class="avatar" id="userAvatar">?</div>
         </div>
@@ -221,18 +223,7 @@
                 </div>
               </div>
               <div id="hubItinerary"></div>
-              <!-- Manual itinerary editor (hidden by default) -->
-              <div id="manualItineraryEditor" style="display:none;margin-top:16px">
-                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
-                  <strong style="font-size:14px">Edit Itinerary</strong>
-                  <div style="display:flex;gap:6px">
-                    <button class="btn-primary small-btn" onclick="addItineraryDay()">+ Add Day</button>
-                    <button class="btn-outline small-btn" onclick="saveManualItinerary()">💾 Save</button>
-                    <button class="btn-outline small-btn" onclick="closeManualItinerary()">Cancel</button>
-                  </div>
-                </div>
-                <div id="itineraryDaysList"></div>
-              </div>
+
             </div>
 
             <!-- Budget section -->
@@ -358,7 +349,7 @@
                 </div>
               </div>
             </div>
-            <div class="card" style="padding:0;overflow:hidden">
+            <div class="card" style="padding:0;overflow:hidden;overflow-x:auto">
               <div id="calHeader" style="padding:16px 20px;border-bottom:1px solid #e8ecf0;display:flex;justify-content:space-between;align-items:center">
                 <h2 id="calTitle" style="font-size:18px">—</h2>
                 <div id="calLegend" style="display:flex;gap:12px;font-size:12px;color:#64748b;flex-wrap:wrap">
@@ -767,9 +758,20 @@
       </div>
       <div class="modal-body">
         <label>Category Name</label>
-        <input type="text" id="editCatName"/>
-        <label>Allocated Budget (USD)</label>
-        <input type="number" id="editCatAmount"/>
+        <input type="text" id="editCatName" placeholder="e.g. Food, Hotel…"/>
+        <label>Allocated Budget Amount</label>
+        <input type="number" id="editCatAmount" placeholder="e.g. 10000" style="font-size:18px;padding:14px;font-weight:600"/>
+        <label>Colour</label>
+        <div class="color-row">
+          <div class="color-swatch selected" style="background:#068cdf" data-color="#068cdf" onclick="selectColor(this)"></div>
+          <div class="color-swatch" style="background:#22c55e" data-color="#22c55e" onclick="selectColor(this)"></div>
+          <div class="color-swatch" style="background:#f97316" data-color="#f97316" onclick="selectColor(this)"></div>
+          <div class="color-swatch" style="background:#a855f7" data-color="#a855f7" onclick="selectColor(this)"></div>
+          <div class="color-swatch" style="background:#ec4899" data-color="#ec4899" onclick="selectColor(this)"></div>
+          <div class="color-swatch" style="background:#eab308" data-color="#eab308" onclick="selectColor(this)"></div>
+          <div class="color-swatch" style="background:#ef4444" data-color="#ef4444" onclick="selectColor(this)"></div>
+          <div class="color-swatch" style="background:#3b82f6" data-color="#3b82f6" onclick="selectColor(this)"></div>
+        </div>
       </div>
       <div class="modal-footer">
         <button class="btn-outline" onclick="closeModal('modalEditBudget')">Cancel</button>
@@ -921,6 +923,65 @@
       <div class="modal-footer">
         <button class="btn-outline" onclick="closeModal('modalVoice')">Not Now</button>
         <button class="btn-primary" onclick="closeModal('modalVoice');showToast('Voice Assistant enabled! Say \'Hey TripGenie\'')">Enable Now</button>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- Edit Expense Modal -->
+  <div class="modal-backdrop" id="modalEditExpense">
+    <div class="modal">
+      <div class="modal-header">
+        <h3>Edit Expense</h3>
+        <button class="modal-close" onclick="closeModal('modalEditExpense')">✕</button>
+      </div>
+      <div class="modal-body">
+        <label>Description</label>
+        <input type="text" id="editExpDesc" placeholder="e.g. Coffee at Day 1"/>
+        <label>Amount</label>
+        <input type="number" id="editExpAmount" placeholder="e.g. 500" style="font-size:22px;padding:14px;font-weight:700"/>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-outline" onclick="closeModal('modalEditExpense')">Cancel</button>
+        <button class="btn-primary" onclick="saveEditExpense()">Save Changes</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Edit Checklist Item Modal -->
+  <div class="modal-backdrop" id="modalEditItem">
+    <div class="modal">
+      <div class="modal-header">
+        <h3>Edit Item</h3>
+        <button class="modal-close" onclick="closeModal('modalEditItem')">✕</button>
+      </div>
+      <div class="modal-body">
+        <label>Item Label</label>
+        <input type="text" id="editItemLabel" placeholder="e.g. Pack sunscreen"/>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-outline" onclick="closeModal('modalEditItem')">Cancel</button>
+        <button class="btn-primary" onclick="saveEditItem()">Save Changes</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Edit Checklist Modal -->
+  <div class="modal-backdrop" id="modalEditChecklist">
+    <div class="modal">
+      <div class="modal-header">
+        <h3>Edit Checklist</h3>
+        <button class="modal-close" onclick="closeModal('modalEditChecklist')">✕</button>
+      </div>
+      <div class="modal-body">
+        <label>Title</label>
+        <input type="text" id="editClTitle" placeholder="e.g. Visa Documents"/>
+        <label>Icon (emoji)</label>
+        <input type="text" id="editClIcon" placeholder="e.g. 📋" maxlength="2"/>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-outline" onclick="closeModal('modalEditChecklist')">Cancel</button>
+        <button class="btn-primary" onclick="saveEditChecklist()">Save Changes</button>
       </div>
     </div>
   </div>
@@ -1118,7 +1179,11 @@
         <h4>🧞 TripGenie AI</h4>
         <span>Your travel assistant</span>
       </div>
-      <button class="voice-close-btn" onclick="toggleVoicePanel()">✕</button>
+      <div style="display:flex;align-items:center;gap:6px">
+        <button id="speakerToggle" onclick="toggleSpeaker()" title="Toggle voice response"
+          style="background:rgba(255,255,255,0.15);border:none;border-radius:6px;padding:5px 8px;cursor:pointer;font-size:14px;color:white">🔊</button>
+        <button class="voice-close-btn" onclick="toggleVoicePanel()">✕</button>
+      </div>
     </div>
 
     <div class="voice-messages" id="voiceMessages">
@@ -1262,6 +1327,25 @@
       btn.classList.add('active');
     }
 
+    // ── Dark Mode ─────────────────────────────────────────────
+    let darkMode = localStorage.getItem('tg_dark') === '1';
+    function applyDarkMode() {
+      document.body.classList.toggle('dark', darkMode);
+      const btn = document.getElementById('darkModeBtn');
+      if (btn) btn.textContent = darkMode ? '☀️' : '🌙';
+    }
+    function toggleDarkMode() {
+      darkMode = !darkMode;
+      localStorage.setItem('tg_dark', darkMode ? '1' : '0');
+      applyDarkMode();
+      // Re-render calendar if open (needs dark-aware colors)
+      if (document.getElementById('page-calendar')?.classList.contains('active')) {
+        if (typeof renderCalendar === 'function') renderCalendar();
+      }
+    }
+    // Apply on load
+    applyDarkMode();
+
     // Trip Details modal helpers (called from app.js rendered cards)
     function openTripDetailsFromCard(id)   { if (typeof openTripDetails   !== 'undefined') openTripDetails(id); }
     function openEditTripFromCard(id)      { if (typeof openEditTripModal !== 'undefined') openEditTripModal(id); }
@@ -1280,6 +1364,22 @@
       const el = document.getElementById('voiceStatus');
       if (el) el.innerHTML = html;
     }
+
+    // ── Speaker toggle ────────────────────────────────────────────
+    let speakerOn = localStorage.getItem('tg_speaker') !== '0'; // default ON
+    function toggleSpeaker() {
+      speakerOn = !speakerOn;
+      localStorage.setItem('tg_speaker', speakerOn ? '1' : '0');
+      const btn = document.getElementById('speakerToggle');
+      if (btn) btn.textContent = speakerOn ? '🔊' : '🔇';
+      if (!speakerOn) window.speechSynthesis?.cancel();
+      showToast(speakerOn ? 'Voice responses ON' : 'Voice responses OFF');
+    }
+    // Apply on load
+    (function() {
+      const btn = document.getElementById('speakerToggle');
+      if (btn) btn.textContent = speakerOn ? '🔊' : '🔇';
+    })();
 
     function toggleVoicePanel() {
       panelOpen = !panelOpen;
@@ -1422,26 +1522,36 @@
 
     // ── Text to speech ────────────────────────────────────────────
     function speak(text) {
+      if (typeof speakerOn !== 'undefined' && !speakerOn) return;
       if (!window.speechSynthesis) return;
       window.speechSynthesis.cancel();
       const utter = new SpeechSynthesisUtterance(text);
       utter.lang  = 'en-US';
-      utter.rate  = 0.95;
+      utter.rate  = 0.88;
       utter.pitch = 1.0;
       const trySpeak = () => {
         const voices   = window.speechSynthesis.getVoices();
         const enVoices = voices.filter(v => v.lang && v.lang.startsWith('en'));
         const preferred = enVoices.find(v =>
-          v.name.includes('Samantha') || v.name.includes('Karen') ||
-          v.name.includes('Zira')     || v.name.includes('Jenny') ||
-          v.name.includes('Google US English') || v.name.includes('Google UK English')
-        ) || enVoices.find(v => v.lang === 'en-US') || enVoices[0];
+          v.name === 'Samantha' ||
+          v.name === 'Karen' ||
+          v.name === 'Moira' ||
+          v.name === 'Google US English' ||
+          v.name === 'Google UK English Female' ||
+          v.name === 'Microsoft Aria Online' ||
+          v.name === 'Microsoft Jenny Online' ||
+          v.name.includes('Natural') ||
+          v.name.includes('Neural') ||
+          v.name.includes('Enhanced')
+        ) || enVoices.find(v => v.lang === 'en-US' && v.localService)
+          || enVoices.find(v => v.lang === 'en-US')
+          || enVoices[0];
         if (preferred) { utter.voice = preferred; utter.lang = preferred.lang; }
         window.speechSynthesis.speak(utter);
       };
       if (window.speechSynthesis.getVoices().length > 0) trySpeak();
       else window.speechSynthesis.addEventListener('voiceschanged', trySpeak, { once: true });
-    };
+    }
       async function generateShoppingList() {
       const dest = activeTripId ? (allTrips.find(t => t.id === activeTripId)?.destination || 'your trip') : 'your trip';
       document.getElementById('aiShoppingItems').innerHTML = loadingHTML ? '<p style="text-align:center;padding:20px;color:#64748b">Generating list…</p>' : '…';
