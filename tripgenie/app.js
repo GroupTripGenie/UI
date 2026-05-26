@@ -4,7 +4,7 @@
 //  checklists and reminders. My Trips → click → Trip Hub page.
 // ============================================================
 
-const API = 'https://ui-production-e419.up.railway.app';
+const API = 'https://ui-production-e419.up.railway.app/api';
 
 // ── Helpers ──────────────────────────────────────────────────
 function getToken()    { return localStorage.getItem('tg_token'); }
