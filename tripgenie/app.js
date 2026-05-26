@@ -656,7 +656,11 @@ async function generateItinerary() {
       method:'POST',
       body:JSON.stringify({
         message:`Create a detailed ${days}-day travel itinerary for ${dest}.
-Travel pace: ${pace}. Interests: ${interests}.
+Travel pace: ${pace}.
+Interests: ${interests}.
+${budget>0 ? `Total budget: ${getCurrency()} ${budget}.` : ''}
+${notes ? `Special requirements: ${notes}` : ''}
+Important: Strictly follow any special requirements mentioned above (e.g. family-friendly activities, dietary restrictions, mobility limitations, etc.)
 Format EXACTLY like this for each day:
 Day 1 — [Theme]
 🕘 9:00 AM - [Specific activity with real place name]
@@ -664,7 +668,7 @@ Day 1 — [Theme]
 🕒 3:00 PM - [Activity]
 🕖 7:00 PM - [Dinner recommendation]
 Day 2 — [Theme]
-...continue for all ${days} days. Use real places in ${dest}.`
+...continue for all ${days} days. Use real places in ${dest}. Be specific and practical.`
       })
     });
 
@@ -782,14 +786,16 @@ async function generateHubItinerary() {
       method:'POST',
       body:JSON.stringify({
         message:`Create a detailed ${days}-day travel itinerary for ${trip.destination}.
+${trip.notes ? `Special requirements: ${trip.notes}` : ''}
+${trip.notes ? 'Important: Strictly follow any special requirements above.' : ''}
 Format EXACTLY like this:
 Day 1 — [Theme]
-🕘 9:00 AM - [Specific activity]
-🕛 12:00 PM - [Lunch]
+🕘 9:00 AM - [Specific activity with real place name]
+🕛 12:00 PM - [Lunch recommendation]
 🕒 3:00 PM - [Activity]
-🕖 7:00 PM - [Dinner]
+🕖 7:00 PM - [Dinner recommendation]
 Day 2 — [Theme]
-...continue for all ${days} days. Use real places in ${trip.destination}.`
+...continue for all ${days} days. Use real places in ${trip.destination}. Be specific and practical.`
       })
     });
     const html = parseItinerary(res.reply, trip.destination);
