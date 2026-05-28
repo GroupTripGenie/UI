@@ -21,6 +21,9 @@ app.use(cors({
 app.options('*', cors());
 app.use(express.json());
 
+// ── Root ──────────────────────────────────────────────────────
+app.get('/', (_req, res) => res.json({ name: 'TripGenie API', status: 'ok' }));
+
 // ── Health check FIRST (no auth) ──────────────────────────────
 app.get('/api/health', async (_req, res) => {
   try {

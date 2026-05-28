@@ -16,6 +16,13 @@ async function apiFetch(path, opts = {}) {
     ...opts,
     headers: { 'Content-Type':'application/json', 'Authorization':'Bearer '+getToken(), ...(opts.headers||{}) }
   });
+  if (res.status === 401) {
+    localStorage.removeItem('tg_token');
+    localStorage.removeItem('tg_user');
+    sessionStorage.removeItem('tg_logged_in');
+    window.location.href = '/login';
+    return;
+  }
   const data = await res.json();
   if (!res.ok) throw new Error(data.error || 'Request failed');
   return data;

@@ -76,6 +76,58 @@ router.post('/:tripId/categories', async (req, res) => {
   }
 });
 
+// ── PATCH /api/budget/:tripId/categories/:catId ───────────────
+router.patch('/:tripId/categories/:catId', async (req, res) => {
+  const { name, allocated, color } = req.body;
+  if (!name && allocated === undefined && !color) {
+    return res.status(400).json({ error: 'Nothing to update' });
+  }
+
+  try {
+    // Verify the category belongs to this trip's budget (security check)
+    const check = await pool.query(
+      `SELECT bc.id FROM budget_categories bc
+       JOIN budgets b ON b.id = bc.budget_id
+       WHERE bc.id = $1 AND b.trip_id = $2`,
+      [req.params.catId, req.params.tripId]
+    );
+    if (!check.rows[0]) return res.status(404).json({ error: 'Category not found' });
+
+    const { rows } = await pool.query(
+      `UPDATE budget_categories
+       SET name      = COALESCE($1, name),
+           allocated = COALESCE($2, allocated),
+           color     = COALESCE($3, color)
+       WHERE id = $4
+       RETURNING *`,
+      [name || null, allocated ?? null, color || null, req.params.catId]
+    );
+    res.json(rows[0]);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// ── DELETE /api/budget/:tripId/categories/:catId ──────────────
+router.delete('/:tripId/categories/:catId', async (req, res) => {
+  try {
+    const check = await pool.query(
+      `SELECT bc.id FROM budget_categories bc
+       JOIN budgets b ON b.id = bc.budget_id
+       WHERE bc.id = $1 AND b.trip_id = $2`,
+      [req.params.catId, req.params.tripId]
+    );
+    if (!check.rows[0]) return res.status(404).json({ error: 'Category not found' });
+
+    await pool.query('DELETE FROM budget_categories WHERE id = $1', [req.params.catId]);
+    res.json({ message: 'Category deleted' });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
 // ── GET /api/budget/:tripId/expenses ─────────────────────────
 router.get('/:tripId/expenses', async (req, res) => {
   try {
@@ -108,6 +160,33 @@ router.post('/:tripId/expenses', async (req, res) => {
       [category_id, req.params.tripId, description, amount, spent_on || new Date(), receipt_url]
     );
     res.status(201).json(rows[0]);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// ── PATCH /api/budget/:tripId/expenses/:expenseId ─────────────
+router.patch('/:tripId/expenses/:expenseId', async (req, res) => {
+  const { description, amount, spent_on, category_id } = req.body;
+  if (!description && amount === undefined && !spent_on && !category_id) {
+    return res.status(400).json({ error: 'Nothing to update' });
+  }
+
+  try {
+    const { rows } = await pool.query(
+      `UPDATE expenses
+       SET description = COALESCE($1, description),
+           amount      = COALESCE($2, amount),
+           spent_on    = COALESCE($3, spent_on),
+           category_id = COALESCE($4, category_id)
+       WHERE id = $5 AND trip_id = $6
+       RETURNING *`,
+      [description || null, amount ?? null, spent_on || null, category_id || null,
+       req.params.expenseId, req.params.tripId]
+    );
+    if (!rows[0]) return res.status(404).json({ error: 'Expense not found' });
+    res.json(rows[0]);
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Server error' });
