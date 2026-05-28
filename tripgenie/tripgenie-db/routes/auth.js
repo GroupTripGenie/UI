@@ -136,7 +136,7 @@ router.post('/forgot-password', async (req, res) => {
     const resetLink   = `${frontendUrl}/reset-password.html?token=${token}`;
 
     // Send email via Resend
-    await fetch('https://api.resend.com/emails', {
+    const resendRes = await fetch('https://api.resend.com/emails', {
       method: 'POST',
       headers: {
         'Content-Type':  'application/json',
@@ -159,11 +159,18 @@ router.post('/forgot-password', async (req, res) => {
                 Reset Password →
               </a>
             </div>
-            <p style="color:#94a3b8;font-size:12px;text-align:center">If you didn't request this, you can safely ignore this email.<br/>Your password won't change.</p>
+            <p style="color:#94a3b8;font-size:12px;text-align:center">If you did not request this, you can safely ignore this email.<br/>Your password will not change.</p>
           </div>
         `
       })
     });
+
+    const resendData = await resendRes.json();
+    if (!resendRes.ok) {
+      console.error('Resend error:', JSON.stringify(resendData));
+    } else {
+      console.log('Email sent successfully:', resendData.id);
+    }
 
     res.json({ message: 'If that email exists, a reset link has been sent.' });
   } catch (err) {
