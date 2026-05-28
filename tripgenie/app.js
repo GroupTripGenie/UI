@@ -195,12 +195,19 @@ async function openTripHub(tripId) {
   document.getElementById('hubTripNotes').textContent = trip.notes || 'No notes yet.';
   document.getElementById('hubTripStatus').textContent = trip.status.charAt(0).toUpperCase()+trip.status.slice(1);
 
-  // Show itinerary if saved
+  // Show itinerary — prefer DB value, fall back to localStorage
   const itinEl = document.getElementById('hubItinerary');
   if (itinEl) {
-    const saved = localStorage.getItem('itinerary_'+tripId);
+    const trip   = allTrips.find(t => t.id === tripId);
+    const dbItinerary = trip?.itinerary;
+    const dbHtml = dbItinerary?.html;
+    const localHtml = localStorage.getItem('itinerary_'+tripId);
+    const saved  = dbHtml || localHtml;
+    if (dbItinerary?.days) {
+      // Sync DB itinerary days to local state
+      localStorage.setItem('itinerary_raw_'+tripId, JSON.stringify(dbItinerary.days));
+    }
     if (saved) {
-      // Check if it already has the edit button
       itinEl.innerHTML = saved.includes('openManualItinerary') ? saved :
         `<div style="text-align:right;margin-bottom:10px"><button class="btn-outline small-btn" onclick="openManualItinerary()" style="font-size:12px">✏️ Edit Itinerary</button></div>` + saved;
     } else {
@@ -1744,8 +1751,7 @@ function removeActivity(di,ai) {
   renderItineraryEditorDays();
 }
 
-function saveManualItinerary() {
-  localStorage.setItem('itinerary_raw_'+currentTripId, JSON.stringify(itineraryDays));
+async function saveManualItinerary() {
   const rawHtml = itineraryDays.map(day=>`
     <div class="itinerary-day">
       <div class="itinerary-day-header">${day.title}</div>
@@ -1755,7 +1761,23 @@ function saveManualItinerary() {
   const html = `<div style="text-align:right;margin-bottom:10px">
     <button class="btn-outline small-btn" onclick="openManualItinerary()" style="font-size:12px">✏️ Edit Itinerary</button>
   </div>` + rawHtml;
-  localStorage.setItem('itinerary_'+currentTripId, html);
+
+  // Save to DB (itinerary JSON + rendered HTML in notes)
+  try {
+    await apiFetch('/trips/'+currentTripId, {
+      method: 'PATCH',
+      body: JSON.stringify({ itinerary: { days: itineraryDays, html } })
+    });
+    // Also cache locally as fallback
+    localStorage.setItem('itinerary_raw_'+currentTripId, JSON.stringify(itineraryDays));
+    localStorage.setItem('itinerary_'+currentTripId, html);
+  } catch(e) {
+    // If API fails, still save locally
+    localStorage.setItem('itinerary_raw_'+currentTripId, JSON.stringify(itineraryDays));
+    localStorage.setItem('itinerary_'+currentTripId, html);
+    showToast('Saved locally (sync failed)');
+  }
+
   itineraryEditing = false;
   const el = document.getElementById('hubItinerary');
   if (el) el.innerHTML = html;

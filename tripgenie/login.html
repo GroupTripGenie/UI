@@ -505,7 +505,6 @@
 
         localStorage.setItem('tg_token', data.token);
         localStorage.setItem('tg_user',  JSON.stringify(data.user));
-        sessionStorage.setItem('tg_logged_in', '1');
         window.location.href = "/";
 
       } catch (err) {

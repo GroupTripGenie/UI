@@ -62,7 +62,7 @@ router.post('/', async (req, res) => {
 
 // ── PATCH /api/trips/:id ──────────────────────────────────────
 router.patch('/:id', async (req, res) => {
-  const allowed = ['title','destination','cover_image','start_date','end_date','status','planning_pct','notes'];
+  const allowed = ['title','destination','cover_image','start_date','end_date','status','planning_pct','notes','itinerary'];
   const fields  = Object.keys(req.body).filter(k => allowed.includes(k));
 
   if (!fields.length) return res.status(400).json({ error: 'No valid fields to update' });

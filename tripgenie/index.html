@@ -9,7 +9,7 @@
 </head>
 <body>
   <script>
-    if (!sessionStorage.getItem('tg_logged_in')) {
+    if (!localStorage.getItem('tg_token')) {
       window.location.replace('/login');
     }
     // Override browser back button to stay in app
@@ -1321,7 +1321,11 @@
 
     // Logout
     function doLogout() {
-      sessionStorage.removeItem('tg_logged_in');
+      localStorage.removeItem('tg_token');
+      localStorage.removeItem('tg_user');
+      localStorage.removeItem('tg_currency');
+      localStorage.removeItem('tg_avatar_url');
+      localStorage.removeItem('tg_timezone');
       localStorage.removeItem('tg_token');
       localStorage.removeItem('tg_user');
       localStorage.removeItem('tg_currency');
@@ -1339,25 +1343,48 @@
         const greeting = hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening';
         const avatarEl = document.getElementById('userAvatar');
         const greetEl  = document.getElementById('dashGreeting');
-        const savedPhoto = localStorage.getItem('tg_avatar_url');
+        const savedPhoto = user.avatar_url || localStorage.getItem('tg_avatar_url');
         if (avatarEl) {
           if (savedPhoto) avatarEl.innerHTML = `<img src="${savedPhoto}" style="width:36px;height:36px;border-radius:50%;object-fit:cover"/>`;
           else avatarEl.textContent = initials;
         }
-        if (greetEl)  greetEl.textContent  = greeting + ', ' + name.split(' ')[0] + '! ✈️';
+        if (greetEl) greetEl.textContent = greeting + ', ' + name.split(' ')[0] + '! ✈️';
+
+        // Fetch latest profile from API to sync preferences
+        try {
+          const me = await apiFetch('/auth/me');
+          if (me) {
+            // Update local cache with server values
+            Object.assign(user, me);
+            localStorage.setItem('tg_user', JSON.stringify(user));
+            if (me.preferred_currency) localStorage.setItem('tg_currency', me.preferred_currency);
+            if (me.preferred_timezone) localStorage.setItem('tg_timezone', me.preferred_timezone);
+            if (me.avatar_url)         localStorage.setItem('tg_avatar_url', me.avatar_url);
+          }
+        } catch(e) { /* use cached values if offline */ }
+
+        const freshUser  = JSON.parse(localStorage.getItem('tg_user') || '{}');
+        const freshName  = freshUser.full_name || name;
+        const freshPhoto = freshUser.avatar_url || localStorage.getItem('tg_avatar_url');
+        const freshInits = freshName.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);
+
         const profAvatar  = document.getElementById('profileAvatar');
         const profName    = document.getElementById('profileName');
         const profEmail   = document.getElementById('profileEmail');
         const profNameIn  = document.getElementById('profileNameInput');
         const profEmailIn = document.getElementById('profileEmailInput');
         if (profAvatar) {
-          if (savedPhoto) profAvatar.innerHTML = `<img src="${savedPhoto}" style="width:80px;height:80px;border-radius:50%;object-fit:cover;border:3px solid #e8ecf0"/>`;
-          else profAvatar.textContent = initials;
+          if (freshPhoto) profAvatar.innerHTML = `<img src="${freshPhoto}" style="width:80px;height:80px;border-radius:50%;object-fit:cover;border:3px solid #e8ecf0"/>`;
+          else profAvatar.textContent = freshInits;
         }
-        if (profName)    profName.textContent     = name;
-        if (profEmail)   profEmail.textContent    = user.email || '—';
-        if (profNameIn)  profNameIn.value         = name;
-        if (profEmailIn) profEmailIn.value        = user.email || '';
+        if (avatarEl && !freshPhoto) avatarEl.textContent = freshInits;
+        if (avatarEl && freshPhoto)  avatarEl.innerHTML = `<img src="${freshPhoto}" style="width:36px;height:36px;border-radius:50%;object-fit:cover"/>`;
+        if (greetEl)     greetEl.textContent  = greeting + ', ' + freshName.split(' ')[0] + '! ✈️';
+        if (profName)    profName.textContent  = freshName;
+        if (profEmail)   profEmail.textContent = freshUser.email || '—';
+        if (profNameIn)  profNameIn.value      = freshName;
+        if (profEmailIn) profEmailIn.value     = freshUser.email || '';
+
         const savedCurrency = localStorage.getItem('tg_currency') || 'USD';
         const currencyEl = document.getElementById('profileCurrency');
         if (currencyEl) currencyEl.value = savedCurrency;
@@ -1367,29 +1394,41 @@
       } catch(e) { console.error('loadUser error', e); }
     })();
 
-    // Profile save
-    function saveProfile() {
+    // Profile save — persists to database
+    async function saveProfile() {
       const name     = document.getElementById('profileNameInput').value.trim();
       const currency = document.getElementById('profileCurrency').value;
       const timezone = document.getElementById('profileTimezone')?.value || 'Asia/Manila';
       if (!name) { showToast('Please enter your name'); return; }
-      const user = JSON.parse(localStorage.getItem('tg_user') || '{}');
-      user.full_name = name;
-      localStorage.setItem('tg_user', JSON.stringify(user));
-      localStorage.setItem('tg_currency', currency);
-      localStorage.setItem('tg_timezone', timezone);
-      const initials = name.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);
-      const avatarEl = document.getElementById('userAvatar');
-      const profAv   = document.getElementById('profileAvatar');
-      const profNm   = document.getElementById('profileName');
-      // Only show initials if no photo
-      const hasPhoto = localStorage.getItem('tg_avatar_url');
-      if (!hasPhoto) {
-        if (avatarEl) avatarEl.textContent = initials;
-        if (profAv)   profAv.textContent   = initials;
+
+      try {
+        const updated = await apiFetch('/auth/me', {
+          method: 'PATCH',
+          body: JSON.stringify({ full_name: name, preferred_currency: currency, preferred_timezone: timezone })
+        });
+        // Update localStorage cache
+        const user = JSON.parse(localStorage.getItem('tg_user') || '{}');
+        user.full_name = name;
+        user.preferred_currency = currency;
+        user.preferred_timezone = timezone;
+        localStorage.setItem('tg_user', JSON.stringify(user));
+        localStorage.setItem('tg_currency', currency);
+        localStorage.setItem('tg_timezone', timezone);
+
+        const initials = name.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);
+        const avatarEl = document.getElementById('userAvatar');
+        const profAv   = document.getElementById('profileAvatar');
+        const profNm   = document.getElementById('profileName');
+        const hasPhoto = updated.avatar_url || localStorage.getItem('tg_avatar_url');
+        if (!hasPhoto) {
+          if (avatarEl) avatarEl.textContent = initials;
+          if (profAv)   profAv.textContent   = initials;
+        }
+        if (profNm) profNm.textContent = name;
+        showToast('✅ Profile saved!');
+      } catch(e) {
+        showToast('Error saving profile: ' + e.message);
       }
-      if (profNm) profNm.textContent = name;
-      showToast('✅ Profile saved! Currency set to ' + currency);
     }
 
     // Profile photo upload via Cloudinary
@@ -1399,8 +1438,8 @@
       const statusEl = document.getElementById('profilePhotoStatus');
       if (statusEl) statusEl.textContent = 'Uploading…';
 
-      const CLOUD_NAME = 'YOUR_CLOUDINARY_CLOUD_NAME'; // ← replace with yours
-      const UPLOAD_PRESET = 'tripgenie_unsigned';       // ← create unsigned preset in Cloudinary
+      const CLOUD_NAME    = 'YOUR_CLOUDINARY_CLOUD_NAME'; // ← replace with yours
+      const UPLOAD_PRESET = 'tripgenie_unsigned';          // ← create unsigned preset in Cloudinary
 
       const formData = new FormData();
       formData.append('file', file);
@@ -1409,13 +1448,13 @@
 
       try {
         const res  = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`, {
-          method: 'POST',
-          body: formData
+          method: 'POST', body: formData
         });
         const data = await res.json();
         if (data.secure_url) {
+          // Save URL to database
+          await apiFetch('/auth/me', { method:'PATCH', body: JSON.stringify({ avatar_url: data.secure_url }) });
           localStorage.setItem('tg_avatar_url', data.secure_url);
-          // Show as circular image
           const imgStyle = 'width:80px;height:80px;border-radius:50%;object-fit:cover;border:3px solid #e8ecf0';
           const profAv   = document.getElementById('profileAvatar');
           const avatarEl = document.getElementById('userAvatar');
@@ -1423,9 +1462,7 @@
           if (avatarEl) avatarEl.innerHTML = `<img src="${data.secure_url}" style="width:36px;height:36px;border-radius:50%;object-fit:cover"/>`;
           if (statusEl) statusEl.textContent = '✅ Photo updated!';
           setTimeout(() => { if (statusEl) statusEl.textContent = ''; }, 3000);
-        } else {
-          throw new Error('Upload failed');
-        }
+        } else { throw new Error('Upload failed'); }
       } catch(e) {
         if (statusEl) statusEl.textContent = '❌ Upload failed. Try again.';
         showToast('Photo upload failed: ' + e.message);

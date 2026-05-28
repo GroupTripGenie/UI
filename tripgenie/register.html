@@ -511,10 +511,9 @@
         // Save token and redirect
         localStorage.setItem('tg_token', data.token);
         localStorage.setItem('tg_user',  JSON.stringify(data.user));
-        sessionStorage.setItem('tg_logged_in', '1');
 
         showSuccess(`Welcome, ${data.user.full_name}! Redirecting to your dashboard…`);
-        setTimeout(() => window.location.href = '/app', 1500);
+        setTimeout(() => window.location.href = '/', 1500);
 
       } catch (err) {
         btn.classList.remove('loading');
