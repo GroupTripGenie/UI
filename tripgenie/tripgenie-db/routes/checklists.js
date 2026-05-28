@@ -138,17 +138,18 @@ router.post('/reminders', async (req, res) => {
 
 // ── PATCH /api/reminders/:id ──────────────────────────────────
 router.patch('/reminders/:id', async (req, res) => {
-  const { is_done, title, remind_at, priority } = req.body;
+  const { is_done, title, remind_at, priority, description } = req.body;
   try {
     const { rows } = await pool.query(
       `UPDATE reminders
-       SET is_done   = COALESCE($1, is_done),
-           done_at   = CASE WHEN $1 = true THEN NOW() ELSE done_at END,
-           title     = COALESCE($2, title),
-           remind_at = COALESCE($3, remind_at),
-           priority  = COALESCE($4, priority)
-       WHERE id = $5 AND user_id = $6 RETURNING *`,
-      [is_done ?? null, title || null, remind_at || null, priority || null, req.params.id, req.user.id]
+       SET is_done     = COALESCE($1, is_done),
+           done_at     = CASE WHEN $1 = true THEN NOW() ELSE done_at END,
+           title       = COALESCE($2, title),
+           remind_at   = COALESCE($3, remind_at),
+           priority    = COALESCE($4, priority),
+           description = COALESCE($5, description)
+       WHERE id = $6 AND user_id = $7 RETURNING *`,
+      [is_done ?? null, title || null, remind_at || null, priority || null, description || null, req.params.id, req.user.id]
     );
     if (!rows[0]) return res.status(404).json({ error: 'Reminder not found' });
     res.json(rows[0]);

@@ -146,6 +146,38 @@ function renderMyTripsPage() {
     : '<p style="color:#64748b;font-size:14px;padding:20px 0">No completed trips yet.</p>';
 }
 
+
+// ── Trip Progress Calculator ──────────────────────────────────
+async function calculateAndSaveProgress(tripId) {
+  let score = 0;
+  const trip = allTrips.find(t=>t.id===tripId);
+  if (!trip) return;
+
+  // +20 if dates are set
+  if (trip.start_date && trip.end_date) score += 20;
+  // +20 if notes/description added
+  if (trip.notes && trip.notes.length > 5) score += 20;
+  // +20 if itinerary exists
+  if (localStorage.getItem('itinerary_'+tripId)) score += 20;
+  // +20 if budget exists
+  if (allBudgets[tripId] || tripBudget) score += 20;
+  // +20 if has checklists with items
+  const cls = allChecklistsByTrip[tripId]||[];
+  if (cls.some(cl=>(cl.items||[]).length>0)) score += 20;
+
+  score = Math.min(score, 100);
+
+  // Save to backend
+  try {
+    await apiFetch('/trips/'+tripId, {method:'PATCH', body:JSON.stringify({planning_pct:score})});
+    const idx = allTrips.findIndex(t=>t.id===tripId);
+    if (idx>-1) allTrips[idx].planning_pct = score;
+    // Update hub progress display
+    const progEl = document.getElementById('hubProgress');
+    if (progEl) progEl.textContent = score + '% planned';
+  } catch {}
+}
+
 // ============================================================
 //  TRIP HUB — the per-trip page
 // ============================================================
@@ -183,6 +215,9 @@ async function openTripHub(tripId) {
   loadHubBudget();
   loadHubChecklists();
   loadHubReminders();
+
+  // Calculate and update progress
+  setTimeout(() => calculateAndSaveProgress(tripId), 1500);
 }
 
 // ── Hub Budget ────────────────────────────────────────────────
@@ -339,12 +374,21 @@ async function saveCategory() {
   const name   = document.getElementById('newCatName').value.trim();
   const amount = parseFloat(document.getElementById('newCatAmount').value)||0;
   const color  = document.querySelector('.color-swatch.selected')?.dataset.color||'#068cdf';
-  if (!name) { showToast('Please enter a category name'); return; }
+  if (!name)   { showToast('Please enter a category name'); return; }
+  if (!amount) { showToast('Please enter a budget amount for this category'); return; }
   try {
+    // Create budget first if it doesn't exist — use allocated amount as initial total
     if (!tripBudget) {
       tripBudget = await apiFetch('/budget/'+currentTripId, {
-        method:'POST', body:JSON.stringify({total_amount:0, currency:getCurrency()})
+        method:'POST', body:JSON.stringify({total_amount:amount, currency:getCurrency()})
       });
+    } else {
+      // Update total_amount to include new category allocation
+      const newTotal = parseFloat(tripBudget.total_amount||0) + amount;
+      await apiFetch('/budget/'+currentTripId, {
+        method:'POST', body:JSON.stringify({total_amount:newTotal, currency:getCurrency()})
+      });
+      tripBudget.total_amount = newTotal;
     }
     await apiFetch('/budget/'+currentTripId+'/categories', {
       method:'POST', body:JSON.stringify({name, allocated:amount, color})
@@ -600,7 +644,18 @@ async function createMyOwnTrip() {
   const end   = document.getElementById('endDate')?.value;
   const budget= parseFloat(document.getElementById('budgetAmount')?.value)||0;
   const notes = document.getElementById('tripNotes')?.value?.trim()||'';
-  if (!dest) { showToast('Please enter a destination'); return; }
+
+  // Proper validation with specific messages
+  const errors = [];
+  if (!dest)          errors.push('📍 Please enter a destination');
+  if (!start)         errors.push('📅 Please select a start date');
+  if (!end)           errors.push('📅 Please select an end date');
+  if (start && end && new Date(end) < new Date(start)) errors.push('📅 End date must be after start date');
+
+  if (errors.length) {
+    showValidationErrors(errors);
+    return;
+  }
   try {
     const trip = await apiFetch('/trips', {
       method:'POST', body:JSON.stringify({title:dest,destination:dest,start_date:start||null,end_date:end||null,notes})
@@ -632,7 +687,13 @@ async function generateItinerary() {
   const interests = [...document.querySelectorAll('.interest-btn.active')].map(b=>b.textContent.trim()).join(', ')||'general sightseeing';
   const budget= parseFloat(document.getElementById('budgetAmount')?.value)||0;
 
-  if (!dest) { showToast('Please enter a destination first!'); return; }
+  // Proper validation
+  const errs = [];
+  if (!dest)  errs.push('📍 Please enter a destination');
+  if (!start) errs.push('📅 Please select a start date');
+  if (!end)   errs.push('📅 Please select an end date');
+  if (start && end && new Date(end) < new Date(start)) errs.push('📅 End date must be after start date');
+  if (errs.length) { showValidationErrors(errs); return; }
 
   let days = 3;
   if (start&&end) days=Math.max(1,Math.ceil((new Date(end)-new Date(start))/86400000));
@@ -714,6 +775,18 @@ function parseItinerary(reply, dest) {
   </div>` + html;
 }
 
+
+function showValidationErrors(errors) {
+  const el = document.getElementById('planValidation');
+  if (el) {
+    el.innerHTML = errors.map(e=>`<div style="padding:4px 0">${e}</div>`).join('');
+    el.style.display = 'block';
+    setTimeout(() => { el.style.display='none'; }, 5000);
+  } else {
+    showToast(errors[0]);
+  }
+}
+
 function clearPlanForm() {
   ['destination','startDate','endDate','budgetAmount','tripNotes'].forEach(id=>{
     const el=document.getElementById(id); if(el) el.value='';
@@ -740,9 +813,19 @@ async function saveEditTrip() {
   const end   = document.getElementById('editTripEnd').value;
   const notes = document.getElementById('editTripNotes').value;
   if (!dest) { showToast('Please enter a destination'); return; }
+  // Auto-calculate status based on dates
+  let status = 'upcoming';
+  if (start && end) {
+    const now   = new Date();
+    const startD= new Date(start);
+    const endD  = new Date(end);
+    if (endD < now)        status = 'completed';
+    else if (startD <= now) status = 'ongoing';
+    else                    status = 'upcoming';
+  }
   try {
     const updated = await apiFetch('/trips/'+currentTripId, {
-      method:'PATCH', body:JSON.stringify({destination:dest,start_date:start||null,end_date:end||null,notes})
+      method:'PATCH', body:JSON.stringify({destination:dest,start_date:start||null,end_date:end||null,notes,status})
     });
     const idx = allTrips.findIndex(t=>t.id===currentTripId);
     if (idx>-1) allTrips[idx]={...allTrips[idx],...updated};
@@ -810,6 +893,10 @@ Day 2 — [Theme]
 // ============================================================
 //  INIT
 // ============================================================
+// ── Page History for back button ─────────────────────────────
+let pageHistory = ['dashboard'];
+const _navOrig  = window.navigate;
+
 document.addEventListener('DOMContentLoaded', () => {
   loadTrips();
   // Expose functions to global scope for onclick handlers
@@ -853,7 +940,9 @@ document.addEventListener('DOMContentLoaded', () => {
   window.togglePageItem           = togglePageItem;
   window.openEditPageReminder     = openEditPageReminder;
   window.openEditReminderModal    = openEditReminderModal;
-  window.deleteExpense            = deleteExpense;
+  window.deleteExpense              = deleteExpense;
+  window.calculateAndSaveProgress  = calculateAndSaveProgress;
+  window.showValidationErrors       = showValidationErrors;
   window.loadCalendar             = loadCalendar;
   window.renderCalendar           = renderCalendar;
   window.setCalView               = setCalView;
