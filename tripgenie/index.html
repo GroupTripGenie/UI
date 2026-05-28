@@ -18,11 +18,9 @@
       history.pushState(null, '', window.location.href);
       if (typeof navigate === 'function') {
         if (window.pageHistory && window.pageHistory.length > 1) {
-          // Pop current page and go to the previous one
           window.pageHistory.pop();
           navigate(window.pageHistory[window.pageHistory.length - 1]);
         } else {
-          // Nothing in history — stay on dashboard instead of falling through to /login
           navigate('dashboard');
         }
       }
@@ -103,7 +101,7 @@
         <div class="topbar-right">
 
 
-          <div class="avatar" id="userAvatar">?</div>
+          <div class="avatar" id="userAvatar" onclick="navigate('profile')" style="cursor:pointer" title="View Profile">?</div>
         </div>
       </header>
 
@@ -280,11 +278,11 @@
 
               <div class="form-group">
                 <label>💵 Total Budget</label>
-                <div style="display:flex;gap:8px">
-                  <input type="number" placeholder="e.g., 5000" id="budgetAmount" style="flex:1"/>
-                  <select id="budgetCurrency" style="padding:10px 12px;border:1.5px solid #e8ecf0;border-radius:8px;font-size:14px;font-family:inherit">
+                <div style="display:flex;gap:8px;align-items:center">
+                  <select id="budgetCurrency" style="padding:10px 12px;border:1.5px solid #e8ecf0;border-radius:8px;font-size:14px;font-family:inherit;width:90px;flex-shrink:0;outline:none">
                     <option>USD</option><option>PHP</option><option>EUR</option><option>GBP</option><option>JPY</option><option>SGD</option>
                   </select>
+                  <input type="number" placeholder="e.g., 5000" id="budgetAmount" style="flex:1;min-width:0;padding:10px 12px;border:1.5px solid #e8ecf0;border-radius:8px;font-size:14px;font-family:inherit;outline:none"/>
                 </div>
               </div>
 
@@ -386,15 +384,23 @@
 
         <!-- Profile -->
         <div class="page" id="page-profile">
-          <div class="page-header">
-            <h1>My Profile</h1>
-            <p>Manage your account and preferences</p>
-          </div>
+          <div class="page-content">
+            <div class="page-header" style="padding-left:4px">
+              <h1>My Profile</h1>
+              <p>Manage your account and preferences</p>
+            </div>
           <div class="card" style="max-width:480px;margin:0 auto">
-            <div style="text-align:center;margin-bottom:24px">
-              <div class="avatar" id="profileAvatar" style="width:72px;height:72px;font-size:28px;margin:0 auto 12px;display:flex;align-items:center;justify-content:center">?</div>
+            <div style="text-align:center;margin-bottom:24px;padding:8px 0">
+              <div style="position:relative;display:inline-block;margin-bottom:12px">
+                <div class="avatar" id="profileAvatar" style="width:80px;height:80px;font-size:30px;margin:0 auto;display:flex;align-items:center;justify-content:center;border:3px solid #e8ecf0">?</div>
+                <label for="profilePhotoInput" title="Upload photo" style="position:absolute;bottom:0;right:0;width:26px;height:26px;background:#068cdf;border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;border:2px solid white">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                </label>
+                <input type="file" id="profilePhotoInput" accept="image/*" style="display:none" onchange="uploadProfilePhoto(this)" />
+              </div>
               <h2 id="profileName" style="font-size:20px;margin-bottom:4px">—</h2>
               <p id="profileEmail" style="color:#64748b;font-size:14px">—</p>
+              <p id="profilePhotoStatus" style="font-size:12px;color:#068cdf;margin-top:4px"></p>
             </div>
             <div style="border-top:1px solid #e8ecf0;padding-top:20px">
               <label style="font-size:13px;font-weight:600;color:#063937;display:block;margin-bottom:6px">Full Name</label>
@@ -402,7 +408,7 @@
               <label style="font-size:13px;font-weight:600;color:#063937;display:block;margin-bottom:6px">Email</label>
               <input type="email" id="profileEmailInput" style="width:100%;padding:10px 12px;border:1.5px solid #e8ecf0;border-radius:8px;font-size:14px;margin-bottom:14px;font-family:inherit;outline:none;background:#f8fafc;box-sizing:border-box" readonly/>
               <label style="font-size:13px;font-weight:600;color:#063937;display:block;margin-bottom:6px">Preferred Currency</label>
-              <select id="profileCurrency" style="width:100%;padding:10px 12px;border:1.5px solid #e8ecf0;border-radius:8px;font-size:14px;margin-bottom:20px;font-family:inherit;outline:none">
+              <select id="profileCurrency" style="width:100%;padding:10px 12px;border:1.5px solid #e8ecf0;border-radius:8px;font-size:14px;margin-bottom:14px;font-family:inherit;outline:none">
                 <option value="USD">🇺🇸 USD — US Dollar</option>
                 <option value="PHP">🇵🇭 PHP — Philippine Peso</option>
                 <option value="EUR">🇪🇺 EUR — Euro</option>
@@ -412,9 +418,21 @@
                 <option value="SGD">🇸🇬 SGD — Singapore Dollar</option>
                 <option value="KRW">🇰🇷 KRW — Korean Won</option>
               </select>
+              <label style="font-size:13px;font-weight:600;color:#063937;display:block;margin-bottom:6px">Time Zone</label>
+              <select id="profileTimezone" style="width:100%;padding:10px 12px;border:1.5px solid #e8ecf0;border-radius:8px;font-size:14px;margin-bottom:20px;font-family:inherit;outline:none">
+                <option value="Asia/Manila">🇵🇭 Asia/Manila (PHT)</option>
+                <option value="America/New_York">🇺🇸 America/New_York (EST)</option>
+                <option value="America/Los_Angeles">🇺🇸 America/Los_Angeles (PST)</option>
+                <option value="Europe/London">🇬🇧 Europe/London (GMT)</option>
+                <option value="Europe/Paris">🇪🇺 Europe/Paris (CET)</option>
+                <option value="Asia/Tokyo">🇯🇵 Asia/Tokyo (JST)</option>
+                <option value="Asia/Singapore">🇸🇬 Asia/Singapore (SGT)</option>
+                <option value="Australia/Sydney">🇦🇺 Australia/Sydney (AEDT)</option>
+              </select>
               <button class="btn-primary full-width" onclick="saveProfile()" style="margin-bottom:10px">Save Changes</button>
               <button class="btn-outline full-width" id="logoutBtn2" style="color:#ef4444;border-color:#ef4444">Log Out</button>
             </div>
+          </div>
           </div>
         </div>
 
@@ -424,12 +442,19 @@
           <div class="page-content">
             <div class="page-header flex-header">
               <div><h1>Budget</h1><p>Track spending across all your trips</p></div>
-              <div style="display:flex;gap:8px;align-items:center">
-                <select id="budgetTripFilter" onchange="filterBudgetByTrip()" style="padding:8px 12px;border:1.5px solid #e8ecf0;border-radius:8px;font-family:inherit;font-size:14px;outline:none">
-                  <option value="all">All Trips</option>
-                </select>
-                <button class="btn-primary small-btn" onclick="openModal('modalAddCategory')">+ Add Category</button>
-              </div>
+              <button class="btn-primary small-btn" onclick="openModal('modalAddCategory')" style="white-space:nowrap">+ Add Category</button>
+            </div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;align-items:center">
+              <select id="budgetTripFilter" onchange="filterBudgetByTrip()" style="padding:8px 12px;border:1.5px solid #e8ecf0;border-radius:8px;font-family:inherit;font-size:14px;outline:none;flex:1;min-width:140px">
+                <option value="all">All Trips</option>
+              </select>
+              <input type="text" id="budgetSearch" placeholder="Search trips…" oninput="filterBudgetByTrip()" style="padding:8px 12px;border:1.5px solid #e8ecf0;border-radius:8px;font-size:14px;font-family:inherit;outline:none;flex:1;min-width:140px"/>
+              <select id="budgetSort" onchange="filterBudgetByTrip()" style="padding:8px 12px;border:1.5px solid #e8ecf0;border-radius:8px;font-family:inherit;font-size:14px;outline:none">
+                <option value="date-asc">Date ↑</option>
+                <option value="date-desc">Date ↓</option>
+                <option value="name-asc">Name A–Z</option>
+                <option value="name-desc">Name Z–A</option>
+              </select>
             </div>
             <div id="budgetPageContent"></div>
           </div>
@@ -440,12 +465,19 @@
           <div class="page-content">
             <div class="page-header flex-header">
               <div><h1>Checklists</h1><p>Stay organized across all your trips</p></div>
-              <div style="display:flex;gap:8px;align-items:center">
-                <select id="checklistTripFilter" onchange="filterChecklistByTrip()" style="padding:8px 12px;border:1.5px solid #e8ecf0;border-radius:8px;font-family:inherit;font-size:14px;outline:none">
-                  <option value="all">All Trips</option>
-                </select>
-                <button class="btn-primary small-btn" onclick="openNewChecklistFromPage()">+ New Checklist</button>
-              </div>
+              <button class="btn-primary small-btn" onclick="openNewChecklistFromPage()" style="white-space:nowrap">+ New Checklist</button>
+            </div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;align-items:center">
+              <select id="checklistTripFilter" onchange="filterChecklistByTrip()" style="padding:8px 12px;border:1.5px solid #e8ecf0;border-radius:8px;font-family:inherit;font-size:14px;outline:none;flex:1;min-width:140px">
+                <option value="all">All Trips</option>
+              </select>
+              <input type="text" id="checklistSearch" placeholder="Search checklists…" oninput="filterChecklistByTrip()" style="padding:8px 12px;border:1.5px solid #e8ecf0;border-radius:8px;font-size:14px;font-family:inherit;outline:none;flex:1;min-width:140px"/>
+              <select id="checklistSort" onchange="filterChecklistByTrip()" style="padding:8px 12px;border:1.5px solid #e8ecf0;border-radius:8px;font-family:inherit;font-size:14px;outline:none">
+                <option value="date-asc">Date ↑</option>
+                <option value="date-desc">Date ↓</option>
+                <option value="name-asc">Name A–Z</option>
+                <option value="name-desc">Name Z–A</option>
+              </select>
             </div>
             <div id="checklistPageContent"></div>
           </div>
@@ -456,12 +488,22 @@
           <div class="page-content">
             <div class="page-header flex-header">
               <div><h1>Reminders</h1><p>Never miss an important travel task</p></div>
-              <div style="display:flex;gap:8px;align-items:center">
-                <select id="reminderTripFilter" onchange="filterReminderByTrip()" style="padding:8px 12px;border:1.5px solid #e8ecf0;border-radius:8px;font-family:inherit;font-size:14px;outline:none">
-                  <option value="all">All Trips</option>
-                </select>
-                <button class="btn-primary small-btn" onclick="openModal('modalAddReminder')">+ Add Reminder</button>
-              </div>
+              <button class="btn-primary small-btn" onclick="openModal('modalAddReminder')" style="white-space:nowrap">+ Add Reminder</button>
+            </div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;align-items:center">
+              <select id="reminderTripFilter" onchange="filterReminderByTrip()" style="padding:8px 12px;border:1.5px solid #e8ecf0;border-radius:8px;font-family:inherit;font-size:14px;outline:none;flex:1;min-width:140px">
+                <option value="all">All Trips</option>
+              </select>
+              <input type="text" id="reminderSearch" placeholder="Search reminders…" oninput="filterReminderByTrip()" style="padding:8px 12px;border:1.5px solid #e8ecf0;border-radius:8px;font-size:14px;font-family:inherit;outline:none;flex:1;min-width:140px"/>
+              <select id="reminderCategoryFilter" onchange="filterReminderByTrip()" style="padding:8px 12px;border:1.5px solid #e8ecf0;border-radius:8px;font-family:inherit;font-size:14px;outline:none">
+                <option value="all">All Categories</option>
+                <option value="Flight">✈️ Flight</option>
+                <option value="Hotel">🏨 Hotel</option>
+                <option value="General">📌 General</option>
+                <option value="High Priority">🔴 High Priority</option>
+                <option value="Documents">📄 Documents</option>
+                <option value="Money">💰 Money</option>
+              </select>
             </div>
             <div class="stats-grid three-col" style="margin-bottom:20px">
               <div class="stat-card"><div><p class="stat-label">High Priority</p><p class="stat-value" id="statHighPriority">—</p></div></div>
@@ -706,7 +748,7 @@
         <label>Category Name</label>
         <input type="text" id="newCatName" placeholder="e.g. Hotel, Food, Activities…"/>
         <label>Allocated Budget Amount</label>
-        <input type="number" id="newCatAmount" placeholder="e.g. 10,000" style="width:100%;font-size:24px;padding:16px 14px;font-weight:700;letter-spacing:1px;box-sizing:border-box"/>
+        <input type="number" id="newCatAmount" placeholder="e.g. 10,000" style="width:100%;font-size:14px;padding:10px 12px;font-weight:400;box-sizing:border-box"/>
         <p style="font-size:12px;color:#94a3b8;margin-top:6px">How much do you plan to spend on this category?</p>
         <label>Colour Tag</label>
         <div class="color-row" id="catColorRow">
@@ -870,7 +912,16 @@
           <option value="high">High</option>
         </select>
         <label>Category</label>
-        <input type="text" id="newReminderCat" placeholder="e.g. Flight, Accommodation…"/>
+        <select id="newReminderCat" style="width:100%;padding:10px 12px;border:1.5px solid #e8ecf0;border-radius:8px;font-size:14px;font-family:inherit;outline:none;margin-bottom:4px">
+          <option value="General">📌 General</option>
+          <option value="Flight">✈️ Flight</option>
+          <option value="Hotel">🏨 Hotel</option>
+          <option value="High Priority">🔴 High Priority</option>
+          <option value="Documents">📄 Documents</option>
+          <option value="Money">💰 Money</option>
+          <option value="Packing">🧳 Packing</option>
+          <option value="Health">💊 Health</option>
+        </select>
       </div>
       <div class="modal-footer">
         <button class="btn-outline" onclick="closeModal('modalAddReminder')">Cancel</button>
@@ -1288,14 +1339,21 @@
         const greeting = hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening';
         const avatarEl = document.getElementById('userAvatar');
         const greetEl  = document.getElementById('dashGreeting');
-        if (avatarEl) avatarEl.textContent = initials;
+        const savedPhoto = localStorage.getItem('tg_avatar_url');
+        if (avatarEl) {
+          if (savedPhoto) avatarEl.innerHTML = `<img src="${savedPhoto}" style="width:36px;height:36px;border-radius:50%;object-fit:cover"/>`;
+          else avatarEl.textContent = initials;
+        }
         if (greetEl)  greetEl.textContent  = greeting + ', ' + name.split(' ')[0] + '! ✈️';
         const profAvatar  = document.getElementById('profileAvatar');
         const profName    = document.getElementById('profileName');
         const profEmail   = document.getElementById('profileEmail');
         const profNameIn  = document.getElementById('profileNameInput');
         const profEmailIn = document.getElementById('profileEmailInput');
-        if (profAvatar)  profAvatar.textContent  = initials;
+        if (profAvatar) {
+          if (savedPhoto) profAvatar.innerHTML = `<img src="${savedPhoto}" style="width:80px;height:80px;border-radius:50%;object-fit:cover;border:3px solid #e8ecf0"/>`;
+          else profAvatar.textContent = initials;
+        }
         if (profName)    profName.textContent     = name;
         if (profEmail)   profEmail.textContent    = user.email || '—';
         if (profNameIn)  profNameIn.value         = name;
@@ -1303,6 +1361,9 @@
         const savedCurrency = localStorage.getItem('tg_currency') || 'USD';
         const currencyEl = document.getElementById('profileCurrency');
         if (currencyEl) currencyEl.value = savedCurrency;
+        const savedTz = localStorage.getItem('tg_timezone') || 'Asia/Manila';
+        const tzEl = document.getElementById('profileTimezone');
+        if (tzEl) tzEl.value = savedTz;
       } catch(e) { console.error('loadUser error', e); }
     })();
 
@@ -1310,19 +1371,65 @@
     function saveProfile() {
       const name     = document.getElementById('profileNameInput').value.trim();
       const currency = document.getElementById('profileCurrency').value;
+      const timezone = document.getElementById('profileTimezone')?.value || 'Asia/Manila';
       if (!name) { showToast('Please enter your name'); return; }
       const user = JSON.parse(localStorage.getItem('tg_user') || '{}');
       user.full_name = name;
       localStorage.setItem('tg_user', JSON.stringify(user));
       localStorage.setItem('tg_currency', currency);
+      localStorage.setItem('tg_timezone', timezone);
       const initials = name.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);
       const avatarEl = document.getElementById('userAvatar');
       const profAv   = document.getElementById('profileAvatar');
       const profNm   = document.getElementById('profileName');
-      if (avatarEl) avatarEl.textContent = initials;
-      if (profAv)   profAv.textContent   = initials;
-      if (profNm)   profNm.textContent   = name;
-      showToast('Profile saved! Currency set to ' + currency);
+      // Only show initials if no photo
+      const hasPhoto = localStorage.getItem('tg_avatar_url');
+      if (!hasPhoto) {
+        if (avatarEl) avatarEl.textContent = initials;
+        if (profAv)   profAv.textContent   = initials;
+      }
+      if (profNm) profNm.textContent = name;
+      showToast('✅ Profile saved! Currency set to ' + currency);
+    }
+
+    // Profile photo upload via Cloudinary
+    async function uploadProfilePhoto(input) {
+      const file = input.files[0];
+      if (!file) return;
+      const statusEl = document.getElementById('profilePhotoStatus');
+      if (statusEl) statusEl.textContent = 'Uploading…';
+
+      const CLOUD_NAME = 'YOUR_CLOUDINARY_CLOUD_NAME'; // ← replace with yours
+      const UPLOAD_PRESET = 'tripgenie_unsigned';       // ← create unsigned preset in Cloudinary
+
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('upload_preset', UPLOAD_PRESET);
+      formData.append('folder', 'tripgenie/avatars');
+
+      try {
+        const res  = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`, {
+          method: 'POST',
+          body: formData
+        });
+        const data = await res.json();
+        if (data.secure_url) {
+          localStorage.setItem('tg_avatar_url', data.secure_url);
+          // Show as circular image
+          const imgStyle = 'width:80px;height:80px;border-radius:50%;object-fit:cover;border:3px solid #e8ecf0';
+          const profAv   = document.getElementById('profileAvatar');
+          const avatarEl = document.getElementById('userAvatar');
+          if (profAv)   profAv.innerHTML   = `<img src="${data.secure_url}" style="${imgStyle}"/>`;
+          if (avatarEl) avatarEl.innerHTML = `<img src="${data.secure_url}" style="width:36px;height:36px;border-radius:50%;object-fit:cover"/>`;
+          if (statusEl) statusEl.textContent = '✅ Photo updated!';
+          setTimeout(() => { if (statusEl) statusEl.textContent = ''; }, 3000);
+        } else {
+          throw new Error('Upload failed');
+        }
+      } catch(e) {
+        if (statusEl) statusEl.textContent = '❌ Upload failed. Try again.';
+        showToast('Photo upload failed: ' + e.message);
+      }
     }
 
     // Logout btn in profile page

@@ -149,6 +149,9 @@
       border-radius: 4px;
       transition: color 0.15s;
       display: flex;
+      align-items: center;
+      justify-content: center;
+      line-height: 1;
     }
     .toggle-pw:hover { color: var(--dark); }
 
@@ -405,7 +408,7 @@
         <div class="terms-row">
           <input type="checkbox" id="terms" />
           <label for="terms">
-            I agree to the <a href="#">Terms of Service</a> and <a href="#">Privacy Policy</a>
+            I agree to the <a href="terms.html" target="_blank">Terms of Service</a> and <a href="privacy.html" target="_blank">Privacy Policy</a>
           </label>
         </div>
 
@@ -486,6 +489,8 @@
       if (!fullName)                          return showError('Please enter your full name.');
       if (!email || !/\S+@\S+\.\S+/.test(email)) return showError('Please enter a valid email address.');
       if (password.length < 8)               return showError('Password must be at least 8 characters.');
+      if (!/[A-Za-z]/.test(password))        return showError('Password must contain at least one letter.');
+      if (!/[0-9]/.test(password))           return showError('Password must contain at least one number.');
       if (password !== confirmPassword)      return showError('Passwords do not match.');
       if (!termsChecked)                     return showError('Please agree to the Terms of Service.');
 

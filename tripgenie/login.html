@@ -202,6 +202,9 @@
       border-radius: 4px;
       transition: color 0.15s;
       display: flex;
+      align-items: center;
+      justify-content: center;
+      line-height: 1;
     }
 
     .toggle-pw:hover { color: var(--dark); }
@@ -431,7 +434,7 @@
               </button>
             </div>
             <div class="forgot-row">
-              <a href="#" class="forgot-link">Forgot password?</a>
+              <a href="forgot.html" class="forgot-link">Forgot password?</a>
             </div>
           </div>
 
@@ -503,7 +506,7 @@
         localStorage.setItem('tg_token', data.token);
         localStorage.setItem('tg_user',  JSON.stringify(data.user));
         sessionStorage.setItem('tg_logged_in', '1');
-        window.location.href = '/app';
+        window.location.href = "/";
 
       } catch (err) {
         btn.classList.remove('loading');

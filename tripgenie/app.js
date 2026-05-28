@@ -16,13 +16,6 @@ async function apiFetch(path, opts = {}) {
     ...opts,
     headers: { 'Content-Type':'application/json', 'Authorization':'Bearer '+getToken(), ...(opts.headers||{}) }
   });
-  if (res.status === 401) {
-    localStorage.removeItem('tg_token');
-    localStorage.removeItem('tg_user');
-    sessionStorage.removeItem('tg_logged_in');
-    window.location.href = '/login';
-    return;
-  }
   const data = await res.json();
   if (!res.ok) throw new Error(data.error || 'Request failed');
   return data;
@@ -1002,17 +995,34 @@ async function loadBudgetPage() {
 }
 
 function filterBudgetByTrip() {
-  const val = document.getElementById('budgetTripFilter')?.value || 'all';
-  // Set currentTripId so Add Category modal knows which trip
+  const val    = document.getElementById('budgetTripFilter')?.value || 'all';
+  const search = (document.getElementById('budgetSearch')?.value || '').toLowerCase();
+  const sort   = document.getElementById('budgetSort')?.value || 'date-asc';
   if (val !== 'all') currentTripId = val;
-  renderBudgetPage(val);
+  renderBudgetPage(val, search, sort);
 }
 
-function renderBudgetPage(tripFilter) {
+function renderBudgetPage(tripFilter, search='', sort='date-asc') {
   const el = document.getElementById('budgetPageContent');
   if (!el) return;
 
-  const trips = tripFilter === 'all' ? allTrips : allTrips.filter(t=>t.id===tripFilter);
+  let trips = tripFilter === 'all' ? [...allTrips] : allTrips.filter(t=>t.id===tripFilter);
+
+  // Search filter
+  if (search) trips = trips.filter(t =>
+    t.destination?.toLowerCase().includes(search) ||
+    t.title?.toLowerCase().includes(search) ||
+    (t.start_date && t.start_date.includes(search))
+  );
+
+  // Sort
+  trips.sort((a,b) => {
+    if (sort === 'date-asc')  return new Date(a.start_date||0) - new Date(b.start_date||0);
+    if (sort === 'date-desc') return new Date(b.start_date||0) - new Date(a.start_date||0);
+    if (sort === 'name-asc')  return (a.destination||'').localeCompare(b.destination||'');
+    if (sort === 'name-desc') return (b.destination||'').localeCompare(a.destination||'');
+    return 0;
+  });
 
   if (!trips.length) {
     el.innerHTML = emptyHTML('💰','No trips yet','Create a trip first to track its budget','+ Plan a Trip',"navigate('plantrip')");
@@ -1029,11 +1039,17 @@ function renderBudgetPage(tripFilter) {
     const currency = b?.currency || getCurrency();
     const sym  = {USD:'$',PHP:'₱',EUR:'€',GBP:'£',JPY:'¥',AUD:'A$',SGD:'S$',KRW:'₩'}[currency]||'$';
     const fmt  = n => sym + Number(n||0).toLocaleString();
+    const dateStr = trip.start_date
+      ? `${fmtDate(new Date(trip.start_date))}${trip.end_date ? ' – ' + fmtDate(new Date(trip.end_date)) : ''}`
+      : null;
 
     html += `
     <div class="card section" style="margin-bottom:20px">
       <div class="card-header" style="flex-wrap:wrap;gap:8px">
-        <h2 style="font-size:16px">✈️ ${trip.destination}</h2>
+        <div>
+          <h2 style="font-size:16px;margin-bottom:2px">✈️ ${trip.destination}</h2>
+          ${dateStr ? `<p style="font-size:12px;color:#94a3b8;margin:0">📅 ${dateStr}</p>` : ''}
+        </div>
         <div style="display:flex;gap:8px;align-items:center;margin-left:auto">
           <button class="btn-primary small-btn" onclick="openAddCategoryForTrip('${trip.id}')">+ Category</button>
           <button class="btn-outline small-btn" onclick="openTripHub('${trip.id}')">Open Trip →</button>
@@ -1205,9 +1221,11 @@ async function loadChecklistPage() {
 }
 
 function filterChecklistByTrip() {
-  const val = document.getElementById('checklistTripFilter')?.value||'all';
-  if (val!=='all') currentTripId=val;
-  renderChecklistPage(val);
+  const val    = document.getElementById('checklistTripFilter')?.value || 'all';
+  const search = (document.getElementById('checklistSearch')?.value || '').toLowerCase();
+  const sort   = document.getElementById('checklistSort')?.value || 'date-asc';
+  if (val !== 'all') currentTripId = val;
+  renderChecklistPage(val, search, sort);
 }
 
 function openNewChecklistFromPage() {
@@ -1219,10 +1237,24 @@ function openNewChecklistFromPage() {
   openModal('modalNewChecklist');
 }
 
-function renderChecklistPage(tripFilter) {
+function renderChecklistPage(tripFilter, search='', sort='date-asc') {
   const el = document.getElementById('checklistPageContent');
   if (!el) return;
-  const trips = tripFilter==='all' ? allTrips : allTrips.filter(t=>t.id===tripFilter);
+  let trips = tripFilter==='all' ? [...allTrips] : allTrips.filter(t=>t.id===tripFilter);
+
+  if (search) trips = trips.filter(t =>
+    t.destination?.toLowerCase().includes(search) ||
+    t.title?.toLowerCase().includes(search)
+  );
+
+  trips.sort((a,b) => {
+    if (sort === 'date-asc')  return new Date(a.start_date||0) - new Date(b.start_date||0);
+    if (sort === 'date-desc') return new Date(b.start_date||0) - new Date(a.start_date||0);
+    if (sort === 'name-asc')  return (a.destination||'').localeCompare(b.destination||'');
+    if (sort === 'name-desc') return (b.destination||'').localeCompare(a.destination||'');
+    return 0;
+  });
+
   if (!trips.length) {
     el.innerHTML = emptyHTML('📋','No trips yet','Create a trip first!','+ Plan a Trip',"navigate('plantrip')");
     return;
@@ -1230,11 +1262,17 @@ function renderChecklistPage(tripFilter) {
   let html='';
   trips.forEach(trip => {
     const cls = allChecklistsByTrip[trip.id]||[];
+    const dateStr = trip.start_date
+      ? `${fmtDate(new Date(trip.start_date))}${trip.end_date ? ' – ' + fmtDate(new Date(trip.end_date)) : ''}`
+      : null;
     html+=`
     <div class="card section" style="margin-bottom:20px">
       <div class="card-header">
-        <h2 style="font-size:16px">✈️ ${trip.destination}</h2>
-        <button class="btn-primary small-btn" onclick="openNewChecklistForTrip('${trip.id}')">+ New Checklist</button>
+        <div>
+          <h2 style="font-size:16px;margin-bottom:2px">✈️ ${trip.destination}</h2>
+          ${dateStr ? `<p style="font-size:12px;color:#94a3b8;margin:0">📅 ${dateStr}</p>` : ''}
+        </div>
+        <button class="btn-primary small-btn" onclick="openNewChecklistForTrip('${trip.id}')" style="white-space:nowrap">+ New Checklist</button>
       </div>
       ${cls.length ? cls.map(cl=>checklistCard(cl,trip.id)).join('') : '<p style="color:#94a3b8;font-size:14px;padding:12px 0">No checklists yet.</p>'}
     </div>`;
@@ -1408,12 +1446,14 @@ function updateReminderStats() {
 }
 
 function filterReminderByTrip() {
-  const val=document.getElementById('reminderTripFilter')?.value||'all';
-  if(val!=='all') currentTripId=val;
-  renderReminderPage(val);
+  const val      = document.getElementById('reminderTripFilter')?.value || 'all';
+  const search   = (document.getElementById('reminderSearch')?.value || '').toLowerCase();
+  const category = document.getElementById('reminderCategoryFilter')?.value || 'all';
+  if (val !== 'all') currentTripId = val;
+  renderReminderPage(val, search, category);
 }
 
-function renderReminderPage(tripFilter) {
+function renderReminderPage(tripFilter, search='', categoryFilter='all') {
   const el=document.getElementById('reminderPageContent');
   if(!el) return;
 
@@ -1424,29 +1464,41 @@ function renderReminderPage(tripFilter) {
     reminders=(allRemindersByTrip[tripFilter]||[]).concat(allRemindersByTrip['none']||[]);
   }
 
+  // Search filter
+  if(search) reminders=reminders.filter(r=>
+    r.title?.toLowerCase().includes(search) ||
+    r.description?.toLowerCase().includes(search) ||
+    r.category?.toLowerCase().includes(search)
+  );
+
+  // Category filter
+  if(categoryFilter && categoryFilter!=='all') {
+    reminders=reminders.filter(r=>r.category===categoryFilter);
+  }
+
   if(!reminders.length) {
     el.innerHTML=emptyHTML('🔔',"You're all caught up!",'No pending reminders.','','');
     return;
   }
 
-  // Group by trip name for display
+  // Group by category for display
   const tripMap={};
   allTrips.forEach(t=>tripMap[t.id]=t.destination);
 
   if(tripFilter==='all') {
-    // Show grouped by trip
     const grouped={};
     reminders.forEach(r=>{
-      const key=r.trip_id||'none';
+      const key=r.category||'General';
       if(!grouped[key]) grouped[key]=[];
       grouped[key].push(r);
     });
+    const catIcons={'Flight':'✈️','Hotel':'🏨','High Priority':'🔴','Documents':'📄','Money':'💰','Packing':'🧳','Health':'💊','General':'📌'};
     let html='';
-    Object.entries(grouped).forEach(([tid,rems])=>{
-      const tripName=tid==='none'?'General':tripMap[tid]||'Unknown Trip';
+    Object.entries(grouped).forEach(([cat,rems])=>{
+      const icon=catIcons[cat]||'📌';
       html+=`<div style="margin-bottom:20px">
         <h3 style="font-size:14px;color:#64748b;margin-bottom:10px;display:flex;align-items:center;gap:6px">
-          ${tid==='none'?'📌':'✈️'} ${tripName}
+          ${icon} ${cat}
         </h3>
         ${rems.map(r=>reminderRow(r)).join('')}
       </div>`;
@@ -1506,9 +1558,10 @@ async function saveReminder() {
   const date=document.getElementById('newReminderDate').value;
   const time=document.getElementById('newReminderTime').value;
   const pri=document.getElementById('newReminderPriority').value;
-  const cat=document.getElementById('newReminderCat').value.trim()||'General';
+  const catEl=document.getElementById('newReminderCat');
+  const cat=catEl?.value || 'General';
   if(!title){showToast('Please enter a title');return;}
-  const remind_at=date&&time?new Date(date+'T'+time).toISOString():date?new Date(date).toISOString():new Date().toISOString();
+  const remind_at=date&&time?new Date(date+'T'+time).toISOString():date?new Date(date+'T00:00').toISOString():new Date().toISOString();
   try {
     const r=await apiFetch('/reminders',{method:'POST',body:JSON.stringify({title,description:desc,remind_at,priority:pri,category:cat,trip_id:currentTripId||null})});
     globalReminders.unshift(r);
@@ -1517,11 +1570,17 @@ async function saveReminder() {
     allRemindersByTrip[tid].unshift(r);
     tripReminders.unshift(r);
     closeModal('modalAddReminder');
-    ['newReminderTitle','newReminderDesc','newReminderCat'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});
+    // Reset form
+    document.getElementById('newReminderTitle').value='';
+    document.getElementById('newReminderDesc').value='';
+    document.getElementById('newReminderDate').value='';
+    document.getElementById('newReminderTime').value='';
+    if(catEl) catEl.value='General';
     showToast('Reminder added!');
     updateReminderStats();
+    // Re-render without page refresh
     if(document.getElementById('page-reminders')?.classList.contains('active')){
-      renderReminderPage(document.getElementById('reminderTripFilter')?.value||'all');
+      filterReminderByTrip();
     }
     if(document.getElementById('page-tripHub')?.classList.contains('active')) renderHubReminders();
   } catch(e){showToast('Error: '+e.message);}
