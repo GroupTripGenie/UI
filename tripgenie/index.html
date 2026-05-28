@@ -1326,15 +1326,13 @@
       localStorage.removeItem('tg_currency');
       localStorage.removeItem('tg_avatar_url');
       localStorage.removeItem('tg_timezone');
-      localStorage.removeItem('tg_token');
-      localStorage.removeItem('tg_user');
       localStorage.removeItem('tg_currency');
       window.location.href = '/login';
     }
     document.getElementById('logoutBtn').addEventListener('click', doLogout);
 
     // Load user info
-    (function loadUser() {
+    (async function loadUser() {
       try {
         const user     = JSON.parse(localStorage.getItem('tg_user') || '{}');
         const name     = user.full_name || 'Traveler';
@@ -1505,6 +1503,7 @@
         if (typeof renderCalendar === 'function') renderCalendar();
       }
     }
+    window.toggleDarkMode = toggleDarkMode;
     // Apply on load
     applyDarkMode();
 
@@ -1552,7 +1551,7 @@
     function setupRecognition() {
       const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
       if (!SpeechRecognition) {
-        setStatus('⚠️ Your browser doesn't support voice input. Use text instead.');
+        setStatus('⚠️ Your browser does not support voice input. Use text instead.');
         return null;
       }
       const r = new SpeechRecognition();
