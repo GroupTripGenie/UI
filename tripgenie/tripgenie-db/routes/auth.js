@@ -5,28 +5,6 @@ const crypto  = require('crypto');
 const pool    = require('../db');
 const auth    = require('../middleware/auth');
 
-// ── GET /api/auth/test-email (debug) ─────────────────────────
-router.get('/test-email', async (req, res) => {
-  const key = process.env.RESEND_API_KEY;
-  if (!key) return res.json({ error: 'RESEND_API_KEY is NOT set on this server' });
-  try {
-    const r = await fetch('https://api.resend.com/emails', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${key}` },
-      body: JSON.stringify({
-        from: 'onboarding@resend.dev',
-        to:   ['mjalzona@gmail.com'],
-        subject: 'TripGenie Test',
-        html: '<p>Test from TripGenie!</p>'
-      })
-    });
-    const data = await r.json();
-    res.json({ status: r.status, key_starts_with: key.slice(0,10)+'...', resend_response: data });
-  } catch(e) {
-    res.json({ error: e.message });
-  }
-});
-
 // ── Helper ────────────────────────────────────────────────────
 function signToken(user) {
   return jwt.sign(
