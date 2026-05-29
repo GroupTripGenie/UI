@@ -158,6 +158,9 @@
                 <h2 class="section-title">Upcoming Trips</h2>
                 <a href="#" class="view-all" data-page="mytrips">View All →</a>
               </div>
+              <div style="margin-bottom:16px">
+                <input type="text" id="dashSearch" placeholder="🔍 Search trips by destination…" oninput="filterDashTrips()" style="width:100%;padding:10px 16px;border:1.5px solid #e8ecf0;border-radius:10px;font-size:14px;font-family:inherit;outline:none;box-sizing:border-box"/>
+              </div>
               <div class="trips-grid" id="dashTripsGrid"></div>
             </div>
           </div>
@@ -186,7 +189,7 @@
         <div class="page" id="page-tripHub">
           <div class="page-content">
             <!-- Back + actions bar -->
-            <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px;flex-wrap:wrap">
+            <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;flex-wrap:wrap">
               <button class="btn-outline" onclick="navigate('mytrips')" style="display:flex;align-items:center;gap:6px">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
                 My Trips
@@ -199,8 +202,23 @@
               <button class="btn-outline small-btn" onclick="openAIPackingList()">🧳 Packing List</button>
               <button class="btn-outline small-btn" onclick="openSmartReminders()">🔔 Smart Reminders</button>
               <button class="btn-outline small-btn" onclick="downloadTripPDF()" style="color:#068cdf;border-color:#068cdf">📄 Export PDF</button>
+              <button id="hubCompleteBtn" class="btn-outline small-btn" onclick="toggleTripComplete()" style="color:#22c55e;border-color:#22c55e">✅ Mark Complete</button>
               <button class="btn-outline small-btn" style="color:#ef4444;border-color:#ef4444;margin-left:auto" onclick="deleteCurrentTrip()">🗑 Delete Trip</button>
             </div>
+
+            <!-- Countdown banner -->
+            <div id="hubCountdown" style="display:none;margin-bottom:16px;padding:14px 20px;border-radius:12px;background:linear-gradient(135deg,rgba(6,57,55,0.06),rgba(6,140,223,0.06));border:1px solid rgba(6,140,223,0.15)">
+              <div style="display:flex;align-items:center;gap:12px">
+                <span style="font-size:28px" id="hubCountdownEmoji">✈️</span>
+                <div>
+                  <p id="hubCountdownText" style="font-size:16px;font-weight:700;color:#063937;margin:0"></p>
+                  <p id="hubCountdownSub" style="font-size:13px;color:#64748b;margin:0;margin-top:2px"></p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Confetti canvas -->
+            <canvas id="confettiCanvas" style="position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:9998;display:none"></canvas>
 
             <!-- Trip header card -->
             <div class="card" style="margin-bottom:24px;overflow:hidden;padding:0">

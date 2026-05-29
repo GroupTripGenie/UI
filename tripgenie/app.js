@@ -163,6 +163,12 @@ function renderDashboardTrips() {
 function smallTripCard(trip) {
   const hasCover  = !!trip.cover_image;
   const pastel    = getPastelForDest(trip.destination);
+  const now       = new Date(); now.setHours(0,0,0,0);
+  const start     = trip.start_date ? new Date(trip.start_date) : null;
+  const end       = trip.end_date   ? new Date(trip.end_date)   : null;
+  let tripStatus  = trip.status || 'upcoming';
+  if (start && end && now >= start && now <= end) tripStatus = 'ongoing';
+  else if (end && now > end && trip.status !== 'upcoming') tripStatus = 'completed';
   const dates = trip.start_date
     ? `📅 ${fmtDate(trip.start_date)}${trip.end_date?' – '+fmtDate(trip.end_date):''}`
     : '📅 Dates not set';
@@ -175,7 +181,10 @@ function smallTripCard(trip) {
   <div class="trip-card" onclick="openTripHub('${trip.id}')" style="cursor:pointer;overflow:hidden;border-radius:16px">
     ${coverHTML}
     <div class="trip-body">
-      <h3>${trip.destination}</h3>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
+        <h3 style="margin:0">${trip.destination}</h3>
+        <span class="badge badge-${tripStatus}" style="font-size:11px;padding:2px 8px">${tripStatus.charAt(0).toUpperCase()+tripStatus.slice(1)}</span>
+      </div>
       <p class="trip-dates">${dates}</p>
       <button class="btn-primary full-width" style="margin-top:12px" onclick="event.stopPropagation();openTripHub('${trip.id}')">Open Trip →</button>
     </div>
@@ -250,7 +259,17 @@ async function openTripHub(tripId) {
     if (hubImgWrap) hubImgWrap.style.background = getPastelForDest(trip.destination);
   }
   document.getElementById('hubTripNotes').textContent = trip.notes || 'No notes yet.';
-  document.getElementById('hubTripStatus').textContent = trip.status.charAt(0).toUpperCase()+trip.status.slice(1);
+  const statusBadge = document.getElementById('hubTripStatus');
+  if (statusBadge) {
+    const now   = new Date(); now.setHours(0,0,0,0);
+    const start = trip.start_date ? new Date(trip.start_date) : null;
+    const end   = trip.end_date   ? new Date(trip.end_date)   : null;
+    let status = trip.status || 'upcoming';
+    if (start && end && now >= start && now <= end) status = 'ongoing';
+    else if (end && now > end) status = 'completed';
+    statusBadge.textContent = status.charAt(0).toUpperCase() + status.slice(1);
+    statusBadge.className   = `badge badge-${status}`;
+  }
 
   // Show itinerary — prefer DB value, fall back to localStorage
   const itinEl = document.getElementById('hubItinerary');
@@ -280,6 +299,7 @@ async function openTripHub(tripId) {
   loadHubChecklists();
   loadHubReminders();
   loadHubNotes();
+  renderHubCountdown(trip);
 
   // Calculate and update progress
   setTimeout(() => calculateAndSaveProgress(tripId), 1500);
@@ -2984,3 +3004,143 @@ async function downloadTripPDF() {
   if (!win) showToast('Please allow popups to download the PDF');
 }
 window.downloadTripPDF = downloadTripPDF;
+
+// ============================================================
+//  COUNTDOWN + TRIP STATUS
+// ============================================================
+function renderHubCountdown(trip) {
+  const el      = document.getElementById('hubCountdown');
+  const textEl  = document.getElementById('hubCountdownText');
+  const subEl   = document.getElementById('hubCountdownSub');
+  const emojiEl = document.getElementById('hubCountdownEmoji');
+  const btn     = document.getElementById('hubCompleteBtn');
+  if (!el || !trip.start_date) { if (el) el.style.display='none'; return; }
+
+  const now       = new Date(); now.setHours(0,0,0,0);
+  const start     = new Date(trip.start_date); start.setHours(0,0,0,0);
+  const end       = trip.end_date ? new Date(trip.end_date) : new Date(start); end.setHours(0,0,0,0);
+  const daysUntil = Math.ceil((start - now) / 86400000);
+  const daysLeft  = Math.ceil((end - now) / 86400000);
+  const isOngoing = now >= start && now <= end;
+  const isPast    = now > end;
+
+  el.style.display = 'block';
+
+  if (isPast || trip.status === 'completed') {
+    emojiEl.textContent = '🏁';
+    textEl.textContent  = 'Trip completed!';
+    subEl.textContent   = `${trip.destination} · ${fmtDate(trip.start_date)}${trip.end_date ? ' – ' + fmtDate(trip.end_date) : ''}`;
+    el.style.background = 'linear-gradient(135deg,rgba(100,116,139,0.06),rgba(100,116,139,0.06))';
+    el.style.borderColor = 'rgba(100,116,139,0.2)';
+    if (btn) { btn.textContent = '↩️ Mark Upcoming'; btn.style.color='#64748b'; btn.style.borderColor='#64748b'; }
+  } else if (isOngoing) {
+    emojiEl.textContent = '🗺️';
+    textEl.textContent  = `Day ${Math.ceil((now - start) / 86400000) + 1} of ${Math.ceil((end - start) / 86400000) + 1} — You\'re on your trip!`;
+    subEl.textContent   = `${daysLeft} day${daysLeft !== 1 ? 's' : ''} remaining · Enjoy every moment! 🌟`;
+    el.style.background = 'linear-gradient(135deg,rgba(34,197,94,0.06),rgba(6,140,223,0.06))';
+    el.style.borderColor = 'rgba(34,197,94,0.2)';
+    if (btn) { btn.textContent = '✅ Mark Complete'; btn.style.color='#22c55e'; btn.style.borderColor='#22c55e'; }
+  } else {
+    emojiEl.textContent = '✈️';
+    if (daysUntil === 0) {
+      textEl.textContent = 'Today\'s the day! Have an amazing trip! 🎉';
+      subEl.textContent  = `Departing to ${trip.destination} today`;
+    } else if (daysUntil === 1) {
+      textEl.textContent = 'Tomorrow! Almost time to go! 🎒';
+      subEl.textContent  = `1 day until your ${trip.destination} adventure`;
+    } else {
+      textEl.textContent = `${daysUntil} days to go! ✈️`;
+      subEl.textContent  = `Your ${trip.destination} trip starts ${fmtDate(trip.start_date)}`;
+    }
+    el.style.background = 'linear-gradient(135deg,rgba(6,57,55,0.06),rgba(6,140,223,0.06))';
+    el.style.borderColor = 'rgba(6,140,223,0.15)';
+    if (btn) { btn.textContent = '✅ Mark Complete'; btn.style.color='#22c55e'; btn.style.borderColor='#22c55e'; }
+  }
+}
+
+async function toggleTripComplete() {
+  const trip = allTrips.find(t=>t.id===currentTripId);
+  if (!trip) return;
+  const newStatus = trip.status === 'completed' ? 'upcoming' : 'completed';
+  try {
+    await apiFetch('/trips/'+currentTripId, { method:'PATCH', body: JSON.stringify({ status: newStatus }) });
+    trip.status = newStatus;
+    const badge = document.getElementById('hubTripStatus');
+    if (badge) {
+      badge.textContent = newStatus.charAt(0).toUpperCase() + newStatus.slice(1);
+      badge.className = `badge badge-${newStatus}`;
+    }
+    renderHubCountdown(trip);
+    renderMyTripsPage();
+    renderDashboardStats();
+    if (newStatus === 'completed') launchConfetti();
+    else showToast('Trip marked as upcoming!');
+  } catch(e) { showToast('Error: '+e.message); }
+}
+window.toggleTripComplete = toggleTripComplete;
+
+// ============================================================
+//  CONFETTI 🎉
+// ============================================================
+function launchConfetti() {
+  const canvas = document.getElementById('confettiCanvas');
+  if (!canvas) return;
+  canvas.style.display = 'block';
+  const ctx = canvas.getContext('2d');
+  canvas.width  = window.innerWidth;
+  canvas.height = window.innerHeight;
+
+  const colors = ['#068cdf','#063937','#fbbf24','#34d399','#f472b6','#a78bfa','#fb923c'];
+  const pieces = Array.from({length:150}, () => ({
+    x: Math.random() * canvas.width,
+    y: Math.random() * -canvas.height,
+    w: Math.random() * 12 + 6,
+    h: Math.random() * 6 + 4,
+    color: colors[Math.floor(Math.random()*colors.length)],
+    rot: Math.random() * 360,
+    vx: (Math.random()-0.5)*4,
+    vy: Math.random()*4+2,
+    vr: (Math.random()-0.5)*6,
+  }));
+
+  let frame = 0;
+  function draw() {
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    pieces.forEach(p => {
+      ctx.save();
+      ctx.translate(p.x+p.w/2, p.y+p.h/2);
+      ctx.rotate(p.rot*Math.PI/180);
+      ctx.fillStyle = p.color;
+      ctx.fillRect(-p.w/2,-p.h/2,p.w,p.h);
+      ctx.restore();
+      p.x += p.vx; p.y += p.vy; p.rot += p.vr;
+    });
+    frame++;
+    if (frame < 180) requestAnimationFrame(draw);
+    else { ctx.clearRect(0,0,canvas.width,canvas.height); canvas.style.display='none'; }
+  }
+  draw();
+  showToast('🎉 Trip completed! Amazing memories!');
+}
+
+// ============================================================
+//  DASHBOARD SEARCH
+// ============================================================
+function filterDashTrips() {
+  const q = (document.getElementById('dashSearch')?.value||'').toLowerCase().trim();
+  const grid = document.getElementById('dashTripsGrid');
+  if (!grid) return;
+  const filtered = allTrips.filter(t => t.status !== 'completed').filter(t =>
+    !q || t.destination?.toLowerCase().includes(q) || t.title?.toLowerCase().includes(q)
+  );
+  grid.innerHTML = filtered.length
+    ? filtered.map(t => smallTripCard(t)).join('')
+    : emptyHTML('🔍','No trips found',`No trips matching "${q}"`, '', '');
+}
+window.filterDashTrips = filterDashTrips;
+
+// ============================================================
+//  TRIP CARD STATUS BADGE
+// ============================================================
+// Override smallTripCard to include status badge
+const _origSmallTripCard = window.smallTripCard || smallTripCard;
