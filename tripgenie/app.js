@@ -115,7 +115,7 @@ function renderDashboardTrips() {
 }
 
 function smallTripCard(trip) {
-  const img   = getDestImage(trip.destination);
+  const img   = trip.cover_image || getDestImage(trip.destination);
   const dates = trip.start_date
     ? `📅 ${fmtDate(trip.start_date)}${trip.end_date?' – '+fmtDate(trip.end_date):''}`
     : '📅 Dates not set';

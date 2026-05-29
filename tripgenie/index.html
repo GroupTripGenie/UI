@@ -77,6 +77,10 @@
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
           Profile
         </a>
+        <a href="landing.html" class="nav-link" style="font-size:13px;color:#94a3b8">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+          Landing Page
+        </a>
         <a href="#" class="nav-link" onclick="toggleDarkMode()" id="darkModeLink" style="margin-top:auto">
           <span id="darkModeIcon">🌙</span>
           <span id="darkModeLabel">Dark Mode</span>
@@ -210,6 +214,7 @@
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
                   Change Photo
                 </label>
+                <button onclick="removeTripCoverPhoto()" style="position:absolute;bottom:12px;left:12px;background:rgba(0,0,0,0.6);color:white;padding:7px 14px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600;border:none;backdrop-filter:blur(4px)">✕ Remove</button>
                 <input type="file" id="coverPhotoInput" accept="image/*" style="display:none" onchange="uploadTripCoverPhoto(this)"/>
               </div>
               <div style="padding:20px">
@@ -408,6 +413,10 @@
               <h2 id="profileName" style="font-size:20px;margin-bottom:4px">—</h2>
               <p id="profileEmail" style="color:#64748b;font-size:14px">—</p>
               <p id="profilePhotoStatus" style="font-size:12px;color:#068cdf;margin-top:4px"></p>
+              <div style="display:flex;gap:8px;justify-content:center;margin-top:8px">
+                <label for="profilePhotoInput" style="font-size:12px;color:#068cdf;cursor:pointer;font-weight:600">📷 Change Photo</label>
+                <span id="removePhotoBtn" onclick="removeProfilePhoto()" style="font-size:12px;color:#ef4444;cursor:pointer;font-weight:600;display:none">✕ Remove</span>
+              </div>
             </div>
             <div style="border-top:1px solid #e8ecf0;padding-top:20px">
               <label style="font-size:13px;font-weight:600;color:#063937;display:block;margin-bottom:6px">Full Name</label>
@@ -1380,7 +1389,11 @@
         const profNameIn  = document.getElementById('profileNameInput');
         const profEmailIn = document.getElementById('profileEmailInput');
         if (profAvatar) {
-          if (freshPhoto) profAvatar.innerHTML = `<img src="${freshPhoto}" style="width:80px;height:80px;border-radius:50%;object-fit:cover;border:3px solid #e8ecf0"/>`;
+          if (freshPhoto) {
+            profAvatar.innerHTML = `<img src="${freshPhoto}" style="width:80px;height:80px;border-radius:50%;object-fit:cover;border:3px solid #e8ecf0"/>`;
+            const removeBtn = document.getElementById('removePhotoBtn');
+            if (removeBtn) removeBtn.style.display = 'inline';
+          }
           else profAvatar.textContent = freshInits;
         }
         if (avatarEl && !freshPhoto) avatarEl.textContent = freshInits;
@@ -1437,8 +1450,40 @@
       }
     }
 
-    // Upload trip cover photo
-    async function uploadTripCoverPhoto(input) {
+    // Remove profile photo
+    async function removeProfilePhoto() {
+      if (!confirm('Remove your profile photo?')) return;
+      try {
+        await apiFetch('/auth/me', { method:'PATCH', body: JSON.stringify({ avatar_url: '' }) });
+        localStorage.removeItem('tg_avatar_url');
+        const user = JSON.parse(localStorage.getItem('tg_user')||'{}');
+        user.avatar_url = '';
+        localStorage.setItem('tg_user', JSON.stringify(user));
+        const name = user.full_name || 'Traveler';
+        const initials = name.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);
+        const profAv = document.getElementById('profileAvatar');
+        const avatarEl = document.getElementById('userAvatar');
+        if (profAv) profAv.innerHTML = initials;
+        if (avatarEl) avatarEl.innerHTML = initials;
+        document.getElementById('removePhotoBtn').style.display = 'none';
+        showToast('Profile photo removed');
+      } catch(e) { showToast('Error: ' + e.message); }
+    }
+    window.removeProfilePhoto = removeProfilePhoto;
+
+    // Remove trip cover photo
+    async function removeTripCoverPhoto() {
+      if (!confirm('Remove cover photo? The destination image will be used instead.')) return;
+      try {
+        await apiFetch('/trips/'+currentTripId, { method:'PATCH', body: JSON.stringify({ cover_image: null }) });
+        const trip = allTrips.find(t=>t.id===currentTripId);
+        if (trip) trip.cover_image = null;
+        const imgEl = document.getElementById('hubTripImg');
+        if (imgEl) imgEl.src = getDestImage(trip?.destination || '');
+        showToast('Cover photo removed');
+      } catch(e) { showToast('Error: ' + e.message); }
+    }
+    window.removeTripCoverPhoto = removeTripCoverPhoto;
       const file = input.files[0];
       if (!file) return;
       showToast('Uploading cover photo…');
