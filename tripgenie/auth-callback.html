@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TripGenie – Signing you in…</title>
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600&display=swap" rel="stylesheet" />
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Sora', sans-serif;
+      background: linear-gradient(135deg, #063937 0%, #068cdf 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      text-align: center;
+      padding: 20px;
+    }
+    .card {
+      background: rgba(255,255,255,0.1);
+      backdrop-filter: blur(12px);
+      border-radius: 20px;
+      padding: 48px 40px;
+      max-width: 360px;
+      width: 100%;
+    }
+    .logo { font-size: 48px; margin-bottom: 16px; }
+    h1 { font-size: 20px; font-weight: 600; margin-bottom: 8px; }
+    p { font-size: 14px; opacity: 0.8; }
+    .spinner {
+      width: 36px; height: 36px;
+      border: 3px solid rgba(255,255,255,0.3);
+      border-top-color: white;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      margin: 24px auto 0;
+    }
+    .error { background: rgba(239,68,68,0.2); border-radius: 10px; padding: 12px 16px; margin-top: 16px; font-size: 14px; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="logo">🧞</div>
+    <h1 id="title">Signing you in…</h1>
+    <p id="subtitle">Just a moment while we set up your account.</p>
+    <div class="spinner" id="spinner"></div>
+    <div class="error" id="errorBox" style="display:none"></div>
+  </div>
+
+  <script>
+    const params = new URLSearchParams(window.location.search);
+    const token  = params.get('token');
+    const user   = params.get('user');
+    const error  = params.get('error');
+
+    if (error || !token || !user) {
+      document.getElementById('spinner').style.display = 'none';
+      document.getElementById('title').textContent = 'Sign in failed';
+      document.getElementById('subtitle').textContent = 'Something went wrong with Google sign in.';
+      const box = document.getElementById('errorBox');
+      box.textContent = error === 'google' ? 'Google authentication was cancelled or failed. Please try again.' : 'Invalid callback. Please try again.';
+      box.style.display = 'block';
+      setTimeout(() => window.location.href = '/login.html', 3000);
+    } else {
+      try {
+        const userData = JSON.parse(decodeURIComponent(user));
+        localStorage.setItem('tg_token', token);
+        localStorage.setItem('tg_user', JSON.stringify(userData));
+        if (userData.avatar_url) localStorage.setItem('tg_avatar_url', userData.avatar_url);
+        document.getElementById('title').textContent = `Welcome, ${userData.full_name?.split(' ')[0] || 'Traveler'}! 🎉`;
+        document.getElementById('subtitle').textContent = 'Redirecting to your dashboard…';
+        setTimeout(() => window.location.href = '/', 1500);
+      } catch(e) {
+        document.getElementById('spinner').style.display = 'none';
+        document.getElementById('title').textContent = 'Something went wrong';
+        document.getElementById('errorBox').textContent = 'Could not process sign in. Redirecting…';
+        document.getElementById('errorBox').style.display = 'block';
+        setTimeout(() => window.location.href = '/login.html', 2000);
+      }
+    }
+  </script>
+</body>
+</html>
