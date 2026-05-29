@@ -87,6 +87,21 @@ function skeletonTripCards(n=3) {
     </div>`).join('');
 }
 
+// Strip old baked-in Edit Itinerary button from saved HTML
+function stripItinBtn(html) {
+  if (!html) return html;
+  const tmp = document.createElement('div');
+  tmp.innerHTML = html;
+  tmp.querySelectorAll('button').forEach(btn => {
+    if (btn.textContent.includes('Edit Itinerary') || btn.getAttribute('onclick')?.includes('openManualItinerary')) {
+      const wrap = btn.parentElement;
+      if (wrap && wrap !== tmp) wrap.remove();
+      else btn.remove();
+    }
+  });
+  return tmp.innerHTML;
+}
+
 function loadingHTML(msg='Loading…') {
   return `<div style="text-align:center;padding:40px;color:#64748b">
     <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#068cdf" stroke-width="2" style="animation:spin 0.8s linear infinite;margin-bottom:12px;display:block;margin-left:auto;margin-right:auto">
@@ -250,7 +265,7 @@ async function openTripHub(tripId) {
       localStorage.setItem('itinerary_raw_'+tripId, JSON.stringify(dbItinerary.days));
     }
     if (saved) {
-      itinEl.innerHTML = saved.includes('openManualItinerary') ? saved.replace(/<div[^>]*><button[^>]*openManualItinerary[^>]*>.*?<\/button><\/div>/s, '') : saved;
+      itinEl.innerHTML = stripItinBtn(saved);
     } else {
       itinEl.innerHTML = '<p style="color:#64748b;font-size:14px">No itinerary yet. Click "✏️ Edit Itinerary" to write your own.</p>';
     }
@@ -1871,7 +1886,7 @@ function closeManualItinerary() {
   const saved = dbHtml || localHtml;
   if (saved) {
     el.innerHTML = saved.includes('openManualItinerary') ? saved :
-      el.innerHTML = saved.replace(/<div[^>]*><button[^>]*openManualItinerary[^>]*>.*?<\/button><\/div>/s, '') || saved;
+      el.innerHTML = stripItinBtn(saved) || saved;
   } else {
     el.innerHTML = '<p style="color:#64748b;font-size:14px">No itinerary yet.</p>';
   }
