@@ -2473,3 +2473,454 @@ window.saveEditItem           = saveEditItem;
 window.deleteChecklistItem    = deleteChecklistItem;
 window.openEditChecklistModal = openEditChecklistModal;
 window.saveEditChecklist      = saveEditChecklist;
+
+// ============================================================
+//  AI DESTINATION RECOMMENDER
+// ============================================================
+async function getDestinationReco() {
+  const budget   = document.getElementById('recoBudget')?.value;
+  const currency = document.getElementById('recoCurrency')?.value || 'PHP';
+  const days     = document.getElementById('recoDays')?.value;
+  const interests = [...document.querySelectorAll('.reco-interest.active')].map(b=>b.textContent.trim()).join(', ') || 'general travel';
+  const resultsEl = document.getElementById('recoResults');
+
+  if (!budget || !days) { showToast('Please enter your budget and number of days'); return; }
+
+  resultsEl.innerHTML = `<div style="text-align:center;padding:20px;color:#94a3b8">
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#068cdf" stroke-width="2" style="animation:spin 0.8s linear infinite;display:block;margin:0 auto 8px"><path d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" opacity=".25"/><path d="M21 12a9 9 0 00-9-9" stroke-linecap="round"/></svg>
+    Finding the best destinations for you…
+  </div>`;
+
+  try {
+    const res = await apiFetch('/assistant/chat', {
+      method: 'POST',
+      body: JSON.stringify({
+        message: `You are a travel expert. Suggest exactly 3 destinations for this traveler.
+
+TRAVELER PROFILE:
+- Budget: ${currency} ${Number(budget).toLocaleString()} total
+- Duration: ${days} days
+- Interests: ${interests}
+
+For each destination provide:
+1. Destination name + country
+2. Why it fits their budget and interests (1-2 sentences)
+3. Estimated cost breakdown (flights, accommodation, food, activities)
+4. Best time to visit
+5. One must-do activity
+
+FORMAT EXACTLY like this (use --- between destinations):
+🌍 [Destination, Country]
+✅ Why it fits: [reason]
+💰 Budget breakdown: Flights ~${currency}X | Stay ~${currency}X/night | Food ~${currency}X/day | Activities ~${currency}X total
+📅 Best time: [months]
+⭐ Must do: [activity]
+---
+🌍 [Destination 2]
+...
+---
+🌍 [Destination 3]
+...
+
+Be specific with real numbers based on the ${currency} ${budget} budget.`
+      })
+    });
+
+    const destinations = res.reply.split('---').filter(d => d.trim());
+    resultsEl.innerHTML = destinations.map((dest, i) => {
+      const lines = dest.trim().split('\n').filter(l => l.trim());
+      const title = lines[0] || `Destination ${i+1}`;
+      const details = lines.slice(1).join('\n');
+      return `
+      <div style="border:1px solid #e8ecf0;border-radius:12px;padding:16px;margin-bottom:12px;background:white">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+          <h3 style="font-size:16px;font-weight:700;color:#063937">${title}</h3>
+          <button onclick="startPlanFromReco('${title.replace(/[🌍🌏🌎✈️]/g,'').trim()}')" class="btn-primary small-btn" style="white-space:nowrap;font-size:12px">Plan This Trip →</button>
+        </div>
+        <div style="font-size:13px;color:#475569;line-height:1.7;white-space:pre-line">${details}</div>
+      </div>`;
+    }).join('');
+  } catch(e) {
+    resultsEl.innerHTML = `<p style="color:#ef4444;font-size:14px">Error: ${e.message}</p>`;
+  }
+}
+
+function startPlanFromReco(destination) {
+  navigate('plantrip');
+  setTimeout(() => {
+    const destEl = document.getElementById('destination');
+    if (destEl) { destEl.value = destination; destEl.focus(); }
+  }, 100);
+}
+window.getDestinationReco = getDestinationReco;
+window.startPlanFromReco  = startPlanFromReco;
+
+// ============================================================
+//  SMART REMINDER SUGGESTIONS
+// ============================================================
+async function openSmartReminders() {
+  openModal('modalReminderSuggestions');
+  const trip = allTrips.find(t=>t.id===currentTripId);
+  if (!trip) return;
+
+  const listEl = document.getElementById('reminderSuggestionsList');
+  listEl.innerHTML = `<div style="text-align:center;padding:20px;color:#94a3b8">Generating suggestions…</div>`;
+
+  const startDate  = trip.start_date ? new Date(trip.start_date) : null;
+  const daysUntil  = startDate ? Math.ceil((startDate - new Date()) / 86400000) : null;
+  const destination = trip.destination;
+
+  try {
+    const res = await apiFetch('/assistant/chat', {
+      method: 'POST',
+      body: JSON.stringify({
+        message: `You are a travel planning assistant. Generate smart reminder suggestions for this trip.
+
+TRIP: ${destination}
+${startDate ? `DEPARTURE: ${startDate.toDateString()} (${daysUntil} days away)` : ''}
+
+Generate exactly 8 practical reminders a traveler should do before this trip.
+Each reminder should have a specific recommended date relative to departure.
+
+FORMAT EXACTLY (one per line, no intro text):
+[emoji] [Task title] | [when to do it, e.g. "3 months before"] | [category: Flight/Hotel/Documents/Health/General/Money/Packing]
+
+Examples:
+✈️ Book flights | 3 months before | Flight
+🏨 Reserve accommodation | 2 months before | Hotel
+📄 Check visa requirements | 2 months before | Documents
+💉 Get travel vaccinations | 6 weeks before | Health
+🔔 Check in online | 24 hours before | Flight
+🧳 Pack luggage | 2 days before | Packing
+💳 Notify bank of travel | 1 week before | Money
+📱 Download offline maps | 3 days before | General
+
+Generate 8 reminders specific to traveling to ${destination}.`
+      })
+    });
+
+    const lines = res.reply.split('\n').filter(l => l.includes('|'));
+    window._reminderSuggestions = [];
+
+    listEl.innerHTML = lines.map((line, i) => {
+      const parts = line.split('|').map(p => p.trim());
+      const title = parts[0] || line.trim();
+      const when  = parts[1] || 'Before trip';
+      const cat   = parts[2] || 'General';
+
+      // Calculate actual date from "X months/weeks/days before"
+      let remindDate = null;
+      if (startDate) {
+        const match = when.match(/(\d+)\s*(month|week|day|hour)/i);
+        if (match) {
+          const n = parseInt(match[1]);
+          const unit = match[2].toLowerCase();
+          remindDate = new Date(startDate);
+          if (unit.startsWith('month')) remindDate.setMonth(remindDate.getMonth() - n);
+          else if (unit.startsWith('week')) remindDate.setDate(remindDate.getDate() - n*7);
+          else if (unit.startsWith('day'))  remindDate.setDate(remindDate.getDate() - n);
+          else if (unit.startsWith('hour')) remindDate.setHours(remindDate.getHours() - n);
+        }
+      }
+
+      window._reminderSuggestions.push({ title, when, cat, remindDate });
+
+      return `<div style="display:flex;align-items:center;gap:10px;padding:10px 12px;border:1px solid #e8ecf0;border-radius:8px;cursor:pointer;transition:all 0.15s" id="remSug_${i}" onclick="toggleReminderSug(${i})">
+        <div style="width:20px;height:20px;border-radius:50%;border:2px solid #e8ecf0;flex-shrink:0;display:flex;align-items:center;justify-content:center" id="remSugCheck_${i}"></div>
+        <div style="flex:1">
+          <div style="font-size:14px;font-weight:500;color:#063937">${title}</div>
+          <div style="font-size:12px;color:#94a3b8">${when} · ${cat}</div>
+        </div>
+        <button onclick="event.stopPropagation();addSingleReminder(${i})" style="font-size:12px;padding:4px 10px;border-radius:6px;border:1.5px solid #068cdf;color:#068cdf;background:white;cursor:pointer;white-space:nowrap;font-family:inherit">+ Add</button>
+      </div>`;
+    }).join('');
+
+    // Add "Add All" button
+    listEl.innerHTML += `<button onclick="addAllReminders()" class="btn-primary" style="width:100%;margin-top:8px">+ Add All Reminders</button>`;
+  } catch(e) {
+    listEl.innerHTML = `<p style="color:#ef4444">Error: ${e.message}</p>`;
+  }
+}
+
+function toggleReminderSug(i) {
+  const el    = document.getElementById(`remSug_${i}`);
+  const check = document.getElementById(`remSugCheck_${i}`);
+  const active = el.style.background === 'rgb(232, 244, 253)';
+  el.style.background    = active ? 'white' : '#e8f4fd';
+  el.style.borderColor   = active ? '#e8ecf0' : '#068cdf';
+  check.innerHTML        = active ? '' : '✓';
+  check.style.background = active ? 'white' : '#068cdf';
+  check.style.color      = 'white';
+  check.style.borderColor= active ? '#e8ecf0' : '#068cdf';
+  check.style.fontSize   = '11px';
+}
+
+async function addSingleReminder(i) {
+  const s = window._reminderSuggestions[i];
+  if (!s) return;
+  const remind_at = s.remindDate ? s.remindDate.toISOString() : new Date(Date.now()+86400000*7).toISOString();
+  try {
+    await apiFetch('/reminders', { method:'POST', body:JSON.stringify({
+      title: s.title, remind_at, priority:'medium', category: s.cat, trip_id: currentTripId||null
+    })});
+    showToast('✅ Reminder added!');
+  } catch(e) { showToast('Error: '+e.message); }
+}
+
+async function addAllReminders() {
+  const sugs = window._reminderSuggestions || [];
+  let added = 0;
+  for (const s of sugs) {
+    const remind_at = s.remindDate ? s.remindDate.toISOString() : new Date(Date.now()+86400000*7).toISOString();
+    try {
+      await apiFetch('/reminders', { method:'POST', body:JSON.stringify({
+        title: s.title, remind_at, priority:'medium', category: s.cat, trip_id: currentTripId||null
+      })});
+      added++;
+    } catch(e) {}
+  }
+  showToast(`✅ Added ${added} reminders!`);
+  closeModal('modalReminderSuggestions');
+}
+window.openSmartReminders  = openSmartReminders;
+window.toggleReminderSug   = toggleReminderSug;
+window.addSingleReminder   = addSingleReminder;
+window.addAllReminders     = addAllReminders;
+
+// ============================================================
+//  AI PACKING LIST
+// ============================================================
+async function openAIPackingList() {
+  openModal('modalPackingList');
+  const trip = allTrips.find(t=>t.id===currentTripId);
+  if (!trip) return;
+  const el = document.getElementById('packingListContent');
+  el.innerHTML = `<div style="text-align:center;padding:20px;color:#94a3b8">Generating packing list…</div>`;
+
+  const days = trip.start_date && trip.end_date
+    ? Math.ceil((new Date(trip.end_date)-new Date(trip.start_date))/86400000) : 7;
+
+  try {
+    const res = await apiFetch('/assistant/chat', {
+      method:'POST', body:JSON.stringify({
+        message:`Generate a practical packing list for a ${days}-day trip to ${trip.destination}.
+${trip.notes ? `Trip notes: ${trip.notes}` : ''}
+Group by category. Each item on its own line starting with - 
+Use these exact category headers:
+👕 Clothing
+🧴 Toiletries
+📄 Documents & Money
+💊 Health & Safety
+🔌 Electronics
+🧳 Miscellaneous
+Keep it practical — no luxury or unnecessary items.`
+      })
+    });
+
+    // Parse into categories and items
+    window._packingItems = [];
+    const lines = res.reply.split('\n');
+    let currentCat = '';
+    let html = '';
+
+    lines.forEach(line => {
+      const l = line.trim();
+      if (!l) return;
+      if (l.match(/^[👕🧴📄💊🔌🧳]/)) {
+        if (currentCat) html += '</div>';
+        currentCat = l;
+        html += `<div style="margin-bottom:14px">
+          <div style="font-size:13px;font-weight:700;color:#063937;margin-bottom:6px;padding:4px 0;border-bottom:1px solid #f0f4f8">${l}</div>
+          <div>`;
+      } else if (l.startsWith('-')) {
+        const item = l.replace(/^-\s*/, '').trim();
+        const idx  = window._packingItems.length;
+        window._packingItems.push({ item, cat: currentCat, checked: true });
+        html += `<label style="display:flex;align-items:center;gap:8px;padding:5px 0;cursor:pointer;font-size:13px">
+          <input type="checkbox" checked id="packItem_${idx}" style="accent-color:#068cdf">
+          <span>${item}</span>
+        </label>`;
+      }
+    });
+    if (currentCat) html += '</div></div>';
+    el.innerHTML = html || '<p style="color:#94a3b8">Could not generate list. Try again.</p>';
+  } catch(e) {
+    el.innerHTML = `<p style="color:#ef4444">Error: ${e.message}</p>`;
+  }
+}
+
+async function addPackingListToChecklist() {
+  const items = (window._packingItems || []).filter((_, i) => document.getElementById(`packItem_${i}`)?.checked);
+  if (!items.length) { showToast('Select at least one item'); return; }
+
+  try {
+    // Create a new checklist
+    const cl = await apiFetch('/checklists', {
+      method:'POST', body:JSON.stringify({ trip_id: currentTripId, title:'Packing List', icon:'🧳' })
+    });
+    cl.items = [];
+    // Add all items
+    for (const i of items) {
+      const item = await apiFetch(`/checklists/${cl.id}/items`, {
+        method:'POST', body:JSON.stringify({ label: i.item })
+      });
+      cl.items.push(item);
+    }
+    // Update local state
+    tripChecklists.unshift(cl);
+    if (!allChecklistsByTrip[currentTripId]) allChecklistsByTrip[currentTripId]=[];
+    allChecklistsByTrip[currentTripId].unshift(cl);
+    renderHubChecklists();
+    closeModal('modalPackingList');
+    showToast(`✅ Added ${items.length} items to Packing List checklist!`);
+  } catch(e) { showToast('Error: '+e.message); }
+}
+window.openAIPackingList         = openAIPackingList;
+window.addPackingListToChecklist = addPackingListToChecklist;
+
+// ============================================================
+//  CURRENCY CONVERTER
+// ============================================================
+let _exchangeRates = null;
+
+async function convertCurrency() {
+  const amount = parseFloat(document.getElementById('convAmount')?.value) || 0;
+  const from   = document.getElementById('convFrom')?.value || 'PHP';
+  const to     = document.getElementById('convTo')?.value || 'USD';
+  const resEl  = document.getElementById('convResult');
+  const rateEl = document.getElementById('convRate');
+
+  if (!amount) { if(resEl) resEl.textContent = '—'; return; }
+
+  try {
+    if (!_exchangeRates || _exchangeRates._base !== from) {
+      const r = await fetch(`https://api.frankfurter.app/latest?from=${from}`);
+      const d = await r.json();
+      _exchangeRates = { ...d.rates, [from]: 1, _base: from };
+    }
+    const rate = _exchangeRates[to];
+    if (!rate) return;
+    const converted = (amount * rate).toFixed(2);
+    const symbols = {USD:'$',PHP:'₱',EUR:'€',GBP:'£',JPY:'¥',SGD:'S$',KRW:'₩',AUD:'A$',THB:'฿'};
+    if(resEl) resEl.textContent = `${symbols[to]||''}${Number(converted).toLocaleString()}`;
+    if(rateEl) rateEl.textContent = `1 ${from} = ${rate.toFixed(4)} ${to} · Live rate`;
+  } catch(e) {
+    if(resEl) resEl.textContent = 'Error fetching rates';
+  }
+}
+window.convertCurrency = convertCurrency;
+
+// ============================================================
+//  PDF TRIP SUMMARY
+// ============================================================
+async function downloadTripPDF() {
+  const trip = allTrips.find(t=>t.id===currentTripId);
+  if (!trip) { showToast('No trip loaded'); return; }
+  showToast('📄 Generating PDF…');
+
+  // Gather data
+  const budget      = tripBudget;
+  const checklists  = tripChecklists;
+  const reminders   = tripReminders;
+  const itinerary   = trip.itinerary?.html || localStorage.getItem('itinerary_'+currentTripId) || '';
+  const notes       = document.getElementById('hubTripNotesEdit')?.value || trip.notes || '';
+  const aiTip       = localStorage.getItem('tg_tip_'+currentTripId) || '';
+
+  const fmtDate = d => d ? new Date(d).toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'}) : '—';
+  const days    = trip.start_date && trip.end_date
+    ? Math.ceil((new Date(trip.end_date)-new Date(trip.start_date))/86400000) : '—';
+
+  const currency = budget?.currency || getCurrency();
+  const sym = {USD:'$',PHP:'₱',EUR:'€',GBP:'£',JPY:'¥',AUD:'A$',SGD:'S$',KRW:'₩'}[currency]||'$';
+  const fmt = n => sym + Number(n||0).toLocaleString();
+
+  // Build budget section
+  let budgetHTML = '';
+  if (budget) {
+    const spent = budget.categories?.reduce((s,c)=>s+(parseFloat(c.spent)||0),0)||0;
+    budgetHTML = `
+    <div class="pdf-section">
+      <h2>💰 Budget Summary</h2>
+      <div class="budget-row"><span>Total Budget</span><strong>${fmt(budget.total_amount)}</strong></div>
+      <div class="budget-row"><span>Total Spent</span><strong>${fmt(spent)}</strong></div>
+      <div class="budget-row"><span>Remaining</span><strong style="color:${spent>budget.total_amount?'#ef4444':'#22c55e'}">${fmt(budget.total_amount-spent)}</strong></div>
+      ${(budget.categories||[]).map(c=>`<div class="budget-row cat-row"><span>${c.name}</span><span>${fmt(c.spent||0)} / ${fmt(c.allocated)}</span></div>`).join('')}
+    </div>`;
+  }
+
+  // Build checklist section
+  let checkHTML = '';
+  if (checklists.length) {
+    checkHTML = `<div class="pdf-section"><h2>✅ Checklists</h2>` +
+      checklists.map(cl => {
+        const items = cl.items||[];
+        const done  = items.filter(i=>i.is_checked).length;
+        return `<div class="cl-pdf"><strong>${cl.icon||'📋'} ${cl.title}</strong> <span class="cl-badge">${done}/${items.length}</span>
+          <ul>${items.map(i=>`<li class="${i.is_checked?'done':''}">${i.is_checked?'☑':'☐'} ${i.label}</li>`).join('')}</ul></div>`;
+      }).join('') + '</div>';
+  }
+
+  // Build reminders section
+  let remHTML = '';
+  if (reminders.length) {
+    remHTML = `<div class="pdf-section"><h2>🔔 Reminders</h2><ul>` +
+      reminders.map(r=>`<li class="${r.is_done?'done':''}">${r.is_done?'☑':'☐'} <strong>${r.title}</strong> · ${new Date(r.remind_at).toLocaleDateString()}</li>`).join('') +
+      '</ul></div>';
+  }
+
+  const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"/>
+  <title>TripGenie — ${trip.destination}</title>
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box}
+    body{font-family:'Segoe UI',Arial,sans-serif;color:#1e293b;background:white;padding:0}
+    .cover{background:linear-gradient(135deg,#063937 0%,#0a4a6e 50%,#068cdf 100%);color:white;padding:48px 40px;position:relative}
+    .cover-logo{font-size:14px;font-weight:700;letter-spacing:0.1em;opacity:0.7;margin-bottom:32px}
+    .cover h1{font-size:40px;font-weight:800;margin-bottom:8px;letter-spacing:-1px}
+    .cover .meta{font-size:16px;opacity:0.8;margin-bottom:4px}
+    .cover .badge{display:inline-block;background:rgba(255,255,255,0.15);padding:4px 12px;border-radius:20px;font-size:13px;margin-top:12px;text-transform:capitalize}
+    .content{padding:32px 40px}
+    .pdf-section{margin-bottom:28px;padding-bottom:20px;border-bottom:1px solid #e2eaf3}
+    .pdf-section:last-child{border-bottom:none}
+    h2{font-size:16px;font-weight:700;color:#063937;margin-bottom:14px;display:flex;align-items:center;gap:8px}
+    .budget-row{display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #f0f4f8;font-size:14px}
+    .cat-row{padding-left:16px;color:#475569;font-size:13px}
+    .cl-pdf{margin-bottom:12px}
+    .cl-pdf strong{font-size:14px;color:#063937}
+    .cl-badge{background:#e8f4fd;color:#068cdf;font-size:11px;padding:2px 8px;border-radius:20px;margin-left:6px}
+    ul{list-style:none;margin-top:8px;padding-left:8px}
+    li{font-size:13px;padding:4px 0;color:#475569;border-bottom:1px solid #f8fafc}
+    li.done{color:#94a3b8;text-decoration:line-through}
+    .itin-html .itinerary-day{margin-bottom:16px;border:1px solid #e2eaf3;border-radius:8px;overflow:hidden}
+    .itin-html .itinerary-day-header{background:#e8f4fd;padding:8px 14px;font-weight:700;color:#063937;font-size:14px}
+    .itin-html .itinerary-activity{padding:6px 14px;font-size:13px;color:#475569;border-bottom:1px solid #f0f4f8}
+    .itin-html .itinerary-activity:last-child{border-bottom:none}
+    .notes-box{background:#f8fafc;border-radius:8px;padding:14px 16px;font-size:13px;color:#475569;line-height:1.7;white-space:pre-wrap}
+    .ai-tip{background:linear-gradient(135deg,rgba(6,57,55,0.04),rgba(6,140,223,0.04));border:1px solid rgba(6,140,223,0.2);border-radius:8px;padding:14px 16px;font-size:13px;color:#475569;line-height:1.65}
+    .footer{text-align:center;padding:20px;color:#94a3b8;font-size:11px;border-top:1px solid #e2eaf3;margin-top:20px}
+    @media print{.cover{-webkit-print-color-adjust:exact;print-color-adjust:exact}}
+  </style></head><body>
+  <div class="cover">
+    <div class="cover-logo">🧞 TRIPGENIE</div>
+    <h1>${trip.destination}</h1>
+    <div class="meta">📅 ${fmtDate(trip.start_date)} – ${fmtDate(trip.end_date)}</div>
+    ${days !== '—' ? `<div class="meta">⏱️ ${days} days</div>` : ''}
+    <div class="badge">${trip.status||'upcoming'}</div>
+  </div>
+  <div class="content">
+    ${itinerary ? `<div class="pdf-section"><h2>📅 Itinerary</h2><div class="itin-html">${itinerary.replace(/<button[^>]*>.*?<\/button>/gs,'')}</div></div>` : ''}
+    ${budgetHTML}
+    ${checkHTML}
+    ${remHTML}
+    ${notes ? `<div class="pdf-section"><h2>📝 Notes</h2><div class="notes-box">${notes}</div></div>` : ''}
+    ${aiTip ? `<div class="pdf-section"><h2>🧞 AI Travel Tip</h2><div class="ai-tip">${aiTip}</div></div>` : ''}
+  </div>
+  <div class="footer">Generated by TripGenie · ${new Date().toLocaleDateString()}</div>
+  <script>window.onload=()=>{window.print();}</script>
+  </body></html>`;
+
+  const blob = new Blob([html], { type:'text/html' });
+  const url  = URL.createObjectURL(blob);
+  const win  = window.open(url, '_blank');
+  if (!win) showToast('Please allow popups to download the PDF');
+}
+window.downloadTripPDF = downloadTripPDF;

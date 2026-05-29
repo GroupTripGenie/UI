@@ -158,6 +158,49 @@
 
             <div class="section">
               <div class="section-header">
+                <h2 class="section-title">🧞 Where Should I Go?</h2>
+              </div>
+              <div class="card" style="padding:20px">
+                <p style="font-size:14px;color:#64748b;margin-bottom:16px">Tell the AI your budget, days, and vibe — get 3 personalized destination suggestions.</p>
+                <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:12px">
+                  <div>
+                    <label style="font-size:12px;font-weight:600;color:#063937;display:block;margin-bottom:4px">Budget</label>
+                    <input type="number" id="recoBudget" placeholder="e.g. 50000" style="width:100%;padding:9px 12px;border:1.5px solid #e8ecf0;border-radius:8px;font-size:14px;font-family:inherit;outline:none;box-sizing:border-box"/>
+                  </div>
+                  <div>
+                    <label style="font-size:12px;font-weight:600;color:#063937;display:block;margin-bottom:4px">Currency</label>
+                    <select id="recoCurrency" style="width:100%;padding:9px 12px;border:1.5px solid #e8ecf0;border-radius:8px;font-size:14px;font-family:inherit;outline:none">
+                      <option value="PHP">PHP</option>
+                      <option value="USD">USD</option>
+                      <option value="EUR">EUR</option>
+                      <option value="SGD">SGD</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label style="font-size:12px;font-weight:600;color:#063937;display:block;margin-bottom:4px">Days</label>
+                    <input type="number" id="recoDays" placeholder="e.g. 5" min="1" max="30" style="width:100%;padding:9px 12px;border:1.5px solid #e8ecf0;border-radius:8px;font-size:14px;font-family:inherit;outline:none;box-sizing:border-box"/>
+                  </div>
+                </div>
+                <div style="margin-bottom:12px">
+                  <label style="font-size:12px;font-weight:600;color:#063937;display:block;margin-bottom:6px">Interests</label>
+                  <div style="display:flex;flex-wrap:wrap;gap:6px">
+                    <button class="reco-interest" onclick="this.classList.toggle('active')" style="font-size:12px;padding:5px 12px;border-radius:20px;border:1.5px solid #e8ecf0;background:white;cursor:pointer;font-family:inherit">🏖️ Beach</button>
+                    <button class="reco-interest" onclick="this.classList.toggle('active')" style="font-size:12px;padding:5px 12px;border-radius:20px;border:1.5px solid #e8ecf0;background:white;cursor:pointer;font-family:inherit">🏔️ Nature</button>
+                    <button class="reco-interest" onclick="this.classList.toggle('active')" style="font-size:12px;padding:5px 12px;border-radius:20px;border:1.5px solid #e8ecf0;background:white;cursor:pointer;font-family:inherit">🍜 Food</button>
+                    <button class="reco-interest" onclick="this.classList.toggle('active')" style="font-size:12px;padding:5px 12px;border-radius:20px;border:1.5px solid #e8ecf0;background:white;cursor:pointer;font-family:inherit">🏛️ Culture</button>
+                    <button class="reco-interest" onclick="this.classList.toggle('active')" style="font-size:12px;padding:5px 12px;border-radius:20px;border:1.5px solid #e8ecf0;background:white;cursor:pointer;font-family:inherit">🛍️ Shopping</button>
+                    <button class="reco-interest" onclick="this.classList.toggle('active')" style="font-size:12px;padding:5px 12px;border-radius:20px;border:1.5px solid #e8ecf0;background:white;cursor:pointer;font-family:inherit">🎭 Nightlife</button>
+                    <button class="reco-interest" onclick="this.classList.toggle('active')" style="font-size:12px;padding:5px 12px;border-radius:20px;border:1.5px solid #e8ecf0;background:white;cursor:pointer;font-family:inherit">🧘 Relaxation</button>
+                    <button class="reco-interest" onclick="this.classList.toggle('active')" style="font-size:12px;padding:5px 12px;border-radius:20px;border:1.5px solid #e8ecf0;background:white;cursor:pointer;font-family:inherit">🏄 Adventure</button>
+                  </div>
+                </div>
+                <button onclick="getDestinationReco()" class="btn-primary" style="width:100%">✨ Suggest Destinations</button>
+                <div id="recoResults" style="margin-top:16px"></div>
+              </div>
+            </div>
+
+            <div class="section">
+              <div class="section-header">
                 <h2 class="section-title">Upcoming Trips</h2>
                 <a href="#" class="view-all" data-page="mytrips">View All →</a>
               </div>
@@ -199,6 +242,9 @@
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
                 Calendar
               </button>
+              <button class="btn-outline small-btn" onclick="openAIPackingList()">🧳 Packing List</button>
+              <button class="btn-outline small-btn" onclick="openSmartReminders()">🔔 Smart Reminders</button>
+              <button class="btn-outline small-btn" onclick="downloadTripPDF()" style="color:#068cdf;border-color:#068cdf">📄 Export PDF</button>
               <button class="btn-outline small-btn" style="color:#ef4444;border-color:#ef4444;margin-left:auto" onclick="deleteCurrentTrip()">🗑 Delete Trip</button>
             </div>
 
@@ -481,7 +527,10 @@
           <div class="page-content">
             <div class="page-header flex-header">
               <div><h1>Budget</h1><p>Track spending across all your trips</p></div>
-              <button class="btn-primary small-btn" onclick="openModal('modalAddCategory')" style="white-space:nowrap">+ Add Category</button>
+              <div style="display:flex;gap:8px;align-items:center">
+                <button class="btn-outline small-btn" onclick="openModal('modalCurrencyConverter')" style="white-space:nowrap">💱 Converter</button>
+                <button class="btn-primary small-btn" onclick="openModal('modalAddCategory')" style="white-space:nowrap">+ Add Category</button>
+              </div>
             </div>
             <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;align-items:center">
               <select id="budgetTripFilter" onchange="filterBudgetByTrip()" style="padding:8px 12px;border:1.5px solid #e8ecf0;border-radius:8px;font-family:inherit;font-size:14px;outline:none;flex:1;min-width:140px">
@@ -1261,6 +1310,75 @@
       .voice-fab   { bottom: 20px; right: 20px; }
     }
   </style>
+
+  <!-- Smart Reminder Suggestions Modal -->
+  <div class="modal-backdrop" id="modalReminderSuggestions">
+    <div class="modal" style="max-width:520px">
+      <div class="modal-header">
+        <h3>🧞 Smart Reminder Suggestions</h3>
+        <button class="modal-close" onclick="closeModal('modalReminderSuggestions')">✕</button>
+      </div>
+      <div class="modal-body">
+        <p style="font-size:14px;color:#64748b;margin-bottom:16px">AI-suggested reminders based on your trip. Click to add the ones you need.</p>
+        <div id="reminderSuggestionsList" style="display:flex;flex-direction:column;gap:8px">
+          <div style="text-align:center;padding:20px;color:#94a3b8">Generating suggestions…</div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-outline" onclick="closeModal('modalReminderSuggestions')">Done</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- AI Packing List Modal -->
+  <div class="modal-backdrop" id="modalPackingList">
+    <div class="modal" style="max-width:520px">
+      <div class="modal-header">
+        <h3>🧳 AI Packing List</h3>
+        <button class="modal-close" onclick="closeModal('modalPackingList')">✕</button>
+      </div>
+      <div class="modal-body">
+        <p style="font-size:14px;color:#64748b;margin-bottom:16px">AI-generated packing list for your trip. Select items to add to a new checklist.</p>
+        <div id="packingListContent" style="max-height:380px;overflow-y:auto">
+          <div style="text-align:center;padding:20px;color:#94a3b8">Generating packing list…</div>
+        </div>
+      </div>
+      <div class="modal-footer" style="gap:8px">
+        <button class="btn-outline" onclick="closeModal('modalPackingList')">Cancel</button>
+        <button class="btn-primary" onclick="addPackingListToChecklist()">+ Add to Checklist</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Currency Converter Modal -->
+  <div class="modal-backdrop" id="modalCurrencyConverter">
+    <div class="modal" style="max-width:400px">
+      <div class="modal-header">
+        <h3>💱 Currency Converter</h3>
+        <button class="modal-close" onclick="closeModal('modalCurrencyConverter')">✕</button>
+      </div>
+      <div class="modal-body">
+        <div style="display:flex;gap:8px;margin-bottom:12px;align-items:center">
+          <input type="number" id="convAmount" placeholder="Amount" oninput="convertCurrency()" style="flex:1;padding:10px 12px;border:1.5px solid #e8ecf0;border-radius:8px;font-size:14px;font-family:inherit;outline:none"/>
+          <select id="convFrom" onchange="convertCurrency()" style="padding:10px 12px;border:1.5px solid #e8ecf0;border-radius:8px;font-size:14px;font-family:inherit;outline:none">
+            <option value="PHP">PHP</option><option value="USD">USD</option><option value="EUR">EUR</option>
+            <option value="GBP">GBP</option><option value="JPY">JPY</option><option value="SGD">SGD</option>
+            <option value="KRW">KRW</option><option value="AUD">AUD</option><option value="THB">THB</option>
+          </select>
+        </div>
+        <div style="text-align:center;font-size:20px;margin:8px 0">⇅</div>
+        <div style="display:flex;gap:8px;margin-bottom:16px;align-items:center">
+          <div id="convResult" style="flex:1;padding:10px 12px;border:1.5px solid #e8ecf0;border-radius:8px;font-size:16px;font-weight:700;color:#063937;background:#f8fafc">—</div>
+          <select id="convTo" onchange="convertCurrency()" style="padding:10px 12px;border:1.5px solid #e8ecf0;border-radius:8px;font-size:14px;font-family:inherit;outline:none">
+            <option value="USD">USD</option><option value="PHP">PHP</option><option value="EUR">EUR</option>
+            <option value="GBP">GBP</option><option value="JPY">JPY</option><option value="SGD">SGD</option>
+            <option value="KRW">KRW</option><option value="AUD">AUD</option><option value="THB">THB</option>
+          </select>
+        </div>
+        <p id="convRate" style="font-size:12px;color:#94a3b8;text-align:center"></p>
+      </div>
+    </div>
+  </div>
 
   <!-- Floating mic button -->
   <button class="voice-fab" id="voiceFab" title="TripGenie AI Assistant">

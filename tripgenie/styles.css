@@ -1157,3 +1157,21 @@ body.dark #hubTripNotesEdit {
 body.dark #hubTripNotesEdit::placeholder { color: #4a5568; }
 body.dark #hubAiTip { background: rgba(6,140,223,0.08) !important; border-color: rgba(6,140,223,0.2) !important; }
 body.dark #hubAiTipText { color: #94a3b8 !important; }
+
+/* ── Destination Recommender ─────────────────────────────────── */
+.reco-interest.active {
+  background: #068cdf !important;
+  color: white !important;
+  border-color: #068cdf !important;
+}
+.reco-interest { transition: all 0.15s; }
+
+/* ── Currency Converter dark mode ───────────────────────────── */
+body.dark #convResult { background: #252d3d !important; color: #f1f5f9 !important; border-color: #2d3748 !important; }
+body.dark #convAmount, body.dark #convFrom, body.dark #convTo { background: #252d3d !important; color: #f1f5f9 !important; border-color: #2d3748 !important; }
+body.dark #recoBudget, body.dark #recoDays, body.dark #recoCurrency { background: #252d3d !important; color: #f1f5f9 !important; border-color: #2d3748 !important; }
+body.dark .reco-interest { background: #252d3d !important; color: #94a3b8 !important; border-color: #2d3748 !important; }
+body.dark .reco-interest.active { background: #068cdf !important; color: white !important; }
+body.dark #recoResults > div { background: #1a1f2e !important; border-color: #2d3748 !important; }
+body.dark #recoResults h3 { color: #f1f5f9 !important; }
+body.dark #recoResults div[style*="color:#475569"] { color: #94a3b8 !important; }
