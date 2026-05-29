@@ -1393,18 +1393,19 @@ async function saveItem() {
   if (!label) { showToast('Please enter an item'); return; }
   try {
     const item = await apiFetch('/checklists/'+clId+'/items',{method:'POST',body:JSON.stringify({label})});
-    // Find the checklist in allChecklistsByTrip
+    // Update allChecklistsByTrip
     for (const tripId of Object.keys(allChecklistsByTrip)) {
       const cl = allChecklistsByTrip[tripId]?.find(c=>c.id===clId);
       if (cl) { cl.items=cl.items||[]; cl.items.push(item); break; }
     }
+    // Update tripChecklists (hub)
     const cl2 = tripChecklists.find(c=>c.id===clId);
-    if (cl2) { cl2.items=cl2.items||[]; cl2.push?.(item); }
+    if (cl2) { cl2.items=cl2.items||[]; cl2.items.push(item); }
     closeModal('modalAddItem');
     document.getElementById('newItemLabel').value='';
     showToast('Item added!');
     if (document.getElementById('page-checklists')?.classList.contains('active')) {
-      renderChecklistPage(document.getElementById('checklistTripFilter')?.value||'all');
+      filterChecklistByTrip();
     }
     if (document.getElementById('page-tripHub')?.classList.contains('active')) renderHubChecklists();
   } catch(e) { showToast('Error: '+e.message); }
