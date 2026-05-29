@@ -31,24 +31,25 @@ function fmtMoney(n) {
   return sym + Number(n||0).toLocaleString();
 }
 
-const DEST_IMAGES = {
-  default:    'https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=400&q=80',
-  paris:      'https://images.unsplash.com/photo-1502602898657-3e91760cbb34?w=400&q=80',
-  tokyo:      'https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?w=400&q=80',
-  vietnam:    'https://images.unsplash.com/photo-1559592413-7cec4d0cae2b?w=400&q=80',
-  bali:       'https://images.unsplash.com/photo-1537996194471-e657df975ab4?w=400&q=80',
-  barcelona:  'https://images.unsplash.com/photo-1539037116277-4db20889f2d4?w=400&q=80',
-  london:     'https://images.unsplash.com/photo-1513635269975-59663e0ac1ad?w=400&q=80',
-  rome:       'https://images.unsplash.com/photo-1552832230-c0197dd311b5?w=400&q=80',
-  newyork:    'https://images.unsplash.com/photo-1496442226666-8d4d0e62e6e9?w=400&q=80',
-  dubai:      'https://images.unsplash.com/photo-1512453979798-5ea266f8880c?w=400&q=80',
-  sydney:     'https://images.unsplash.com/photo-1506973035872-a4ec16b8e8d9?w=400&q=80',
-  singapore:  'https://images.unsplash.com/photo-1525625293386-3f8f99389edd?w=400&q=80',
-  manila:     'https://images.unsplash.com/photo-1518509562904-e7ef99cdcc86?w=400&q=80',
-  thailand:   'https://images.unsplash.com/photo-1528360983277-13d401cdc186?w=400&q=80',
-  korea:      'https://images.unsplash.com/photo-1517154421773-0529f29ea451?w=400&q=80',
-  japan:      'https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?w=400&q=80',
-};
+// Pastel gradients complementing teal/blue color scheme
+const DEST_PASTELS = [
+  'linear-gradient(135deg, #b8d4e8 0%, #c8e6d4 100%)',
+  'linear-gradient(135deg, #d4c5e8 0%, #b8d4e8 100%)',
+  'linear-gradient(135deg, #c8e6d4 0%, #b8e8d4 100%)',
+  'linear-gradient(135deg, #e8d4b8 0%, #d4e8c8 100%)',
+  'linear-gradient(135deg, #b8c8e8 0%, #c8d4e8 100%)',
+  'linear-gradient(135deg, #d4e8b8 0%, #b8d4c8 100%)',
+  'linear-gradient(135deg, #e8c8d4 0%, #c8b8e8 100%)',
+  'linear-gradient(135deg, #b8e8e8 0%, #b8d4e8 100%)',
+];
+function getPastelForDest(destination) {
+  if (!destination) return DEST_PASTELS[0];
+  let hash = 0;
+  for (let i = 0; i < destination.length; i++) hash = destination.charCodeAt(i) + ((hash << 5) - hash);
+  return DEST_PASTELS[Math.abs(hash) % DEST_PASTELS.length];
+}
+const DEST_IMAGES = {};
+function getDestImage(destination) { return null; }
 
 function getDestImage(destination) {
   if (!destination) return DEST_IMAGES.default;
@@ -57,6 +58,33 @@ function getDestImage(destination) {
     if (k !== 'default' && key.includes(k)) return v;
   }
   return DEST_IMAGES.default;
+}
+
+function showAILoading(text='✨ AI is thinking…', sub='This may take a moment') {
+  const el = document.getElementById('aiLoadingOverlay');
+  const t  = document.getElementById('aiLoadingText');
+  const s  = document.getElementById('aiLoadingSub');
+  if (el) el.style.display='flex';
+  if (t)  t.textContent = text;
+  if (s)  s.textContent = sub;
+}
+function hideAILoading() {
+  const el = document.getElementById('aiLoadingOverlay');
+  if (el) el.style.display='none';
+}
+window.showAILoading = showAILoading;
+window.hideAILoading = hideAILoading;
+
+function skeletonTripCards(n=3) {
+  return Array(n).fill(0).map(()=>`
+    <div class="skeleton-card">
+      <div class="skeleton skeleton-img"></div>
+      <div class="skeleton-body">
+        <div class="skeleton skeleton-line medium"></div>
+        <div class="skeleton skeleton-line short"></div>
+        <div class="skeleton skeleton-line short"></div>
+      </div>
+    </div>`).join('');
 }
 
 function loadingHTML(msg='Loading…') {
@@ -89,6 +117,9 @@ let tripReminders = [];
 //  TRIPS — load & render
 // ============================================================
 async function loadTrips() {
+  // Show skeleton while loading
+  const grid = document.getElementById('dashTripsGrid');
+  if (grid) grid.innerHTML = skeletonTripCards(3);
   try {
     allTrips = await apiFetch('/trips');
     renderDashboardStats();
@@ -115,14 +146,20 @@ function renderDashboardTrips() {
 }
 
 function smallTripCard(trip) {
-  const img   = trip.cover_image || getDestImage(trip.destination);
+  const hasCover  = !!trip.cover_image;
+  const pastel    = getPastelForDest(trip.destination);
   const dates = trip.start_date
     ? `📅 ${fmtDate(trip.start_date)}${trip.end_date?' – '+fmtDate(trip.end_date):''}`
     : '📅 Dates not set';
   const pct = trip.planning_pct || 0;
+  const coverHTML = hasCover
+    ? `<div class="trip-img"><img src="${trip.cover_image}" alt="${trip.destination}" style="width:100%;height:100%;object-fit:cover"/></div>`
+    : `<div class="trip-img" style="background:${pastel};display:flex;align-items:center;justify-content:center">
+        <span style="font-size:36px;opacity:0.6">✈️</span>
+      </div>`;
   return `
-  <div class="trip-card" onclick="openTripHub('${trip.id}')" style="cursor:pointer">
-    <div class="trip-img"><img src="${img}" alt="${trip.destination}" onerror="this.src='${DEST_IMAGES.default}'"/></div>
+  <div class="trip-card" onclick="openTripHub('${trip.id}')" style="cursor:pointer;overflow:hidden;border-radius:16px">
+    ${coverHTML}
     <div class="trip-body">
       <h3>${trip.destination}</h3>
       <p class="trip-dates">${dates}</p>
@@ -191,7 +228,15 @@ async function openTripHub(tripId) {
   document.getElementById('hubTripDates').textContent = trip.start_date
     ? `${fmtDate(trip.start_date)} – ${fmtDate(trip.end_date||trip.start_date)}`
     : 'Dates not set';
-  document.getElementById('hubTripImg').src  = trip.cover_image || getDestImage(trip.destination);
+  // Cover image or pastel gradient
+  const hubImg = document.getElementById('hubTripImg');
+  const hubImgWrap = hubImg?.parentElement;
+  if (trip.cover_image) {
+    if (hubImg) { hubImg.src = trip.cover_image; hubImg.style.display = 'block'; }
+  } else {
+    if (hubImg) hubImg.style.display = 'none';
+    if (hubImgWrap) hubImgWrap.style.background = getPastelForDest(trip.destination);
+  }
   document.getElementById('hubTripNotes').textContent = trip.notes || 'No notes yet.';
   document.getElementById('hubTripStatus').textContent = trip.status.charAt(0).toUpperCase()+trip.status.slice(1);
 
@@ -211,7 +256,7 @@ async function openTripHub(tripId) {
       itinEl.innerHTML = saved.includes('openManualItinerary') ? saved :
         `<div style="text-align:right;margin-bottom:10px"><button class="btn-outline small-btn" onclick="openManualItinerary()" style="font-size:12px">✏️ Edit Itinerary</button></div>` + saved;
     } else {
-      itinEl.innerHTML = '<p style="color:#64748b;font-size:14px">No itinerary yet. Click "✨ Generate with AI" or "✏️ Write My Own" above.</p>';
+      itinEl.innerHTML = '<p style="color:#64748b;font-size:14px">No itinerary yet. Click "✏️ Edit Itinerary" to write your own.</p>';
     }
   }
 
@@ -781,6 +826,7 @@ async function generateItinerary() {
 
   btn.innerHTML='⏳ Generating…'; btn.disabled=true;
   if (card) card.style.display='block';
+  showAILoading('✨ Creating your AI itinerary…', `Building your ${days}-day ${dest} adventure`);
 
   try {
     // 1. Save trip first
@@ -853,6 +899,7 @@ Continue for all ${days} days with real ${dest} locations.`;
   } finally {
     btn.innerHTML='✨ Generate AI Itinerary'; btn.disabled=false;
     if (card) card.style.display='none';
+    hideAILoading();
   }
 }
 
@@ -2565,6 +2612,7 @@ async function openSmartReminders() {
 
   const listEl = document.getElementById('reminderSuggestionsList');
   listEl.innerHTML = `<div style="text-align:center;padding:20px;color:#94a3b8">Generating suggestions…</div>`;
+  showAILoading('🔔 Generating smart reminders…', `Based on your ${destination} trip`);
 
   const startDate  = trip.start_date ? new Date(trip.start_date) : null;
   const daysUntil  = startDate ? Math.ceil((startDate - new Date()) / 86400000) : null;
@@ -2637,7 +2685,9 @@ Generate 8 reminders specific to traveling to ${destination}.`
 
     // Add "Add All" button
     listEl.innerHTML += `<button onclick="addAllReminders()" class="btn-primary" style="width:100%;margin-top:8px">+ Add All Reminders</button>`;
+    hideAILoading();
   } catch(e) {
+    hideAILoading();
     listEl.innerHTML = `<p style="color:#ef4444">Error: ${e.message}</p>`;
   }
 }
@@ -2696,6 +2746,7 @@ async function openAIPackingList() {
   if (!trip) return;
   const el = document.getElementById('packingListContent');
   el.innerHTML = `<div style="text-align:center;padding:20px;color:#94a3b8">Generating packing list…</div>`;
+  showAILoading('🧳 Generating your packing list…', `Customized for ${trip.destination}`);
 
   const days = trip.start_date && trip.end_date
     ? Math.ceil((new Date(trip.end_date)-new Date(trip.start_date))/86400000) : 7;
@@ -2744,7 +2795,9 @@ Keep it practical — no luxury or unnecessary items.`
     });
     if (currentCat) html += '</div></div>';
     el.innerHTML = html || '<p style="color:#94a3b8">Could not generate list. Try again.</p>';
+    hideAILoading();
   } catch(e) {
+    hideAILoading();
     el.innerHTML = `<p style="color:#ef4444">Error: ${e.message}</p>`;
   }
 }

@@ -158,49 +158,6 @@
 
             <div class="section">
               <div class="section-header">
-                <h2 class="section-title">🧞 Where Should I Go?</h2>
-              </div>
-              <div class="card" style="padding:20px">
-                <p style="font-size:14px;color:#64748b;margin-bottom:16px">Tell the AI your budget, days, and vibe — get 3 personalized destination suggestions.</p>
-                <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:12px">
-                  <div>
-                    <label style="font-size:12px;font-weight:600;color:#063937;display:block;margin-bottom:4px">Budget</label>
-                    <input type="number" id="recoBudget" placeholder="e.g. 50000" style="width:100%;padding:9px 12px;border:1.5px solid #e8ecf0;border-radius:8px;font-size:14px;font-family:inherit;outline:none;box-sizing:border-box"/>
-                  </div>
-                  <div>
-                    <label style="font-size:12px;font-weight:600;color:#063937;display:block;margin-bottom:4px">Currency</label>
-                    <select id="recoCurrency" style="width:100%;padding:9px 12px;border:1.5px solid #e8ecf0;border-radius:8px;font-size:14px;font-family:inherit;outline:none">
-                      <option value="PHP">PHP</option>
-                      <option value="USD">USD</option>
-                      <option value="EUR">EUR</option>
-                      <option value="SGD">SGD</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label style="font-size:12px;font-weight:600;color:#063937;display:block;margin-bottom:4px">Days</label>
-                    <input type="number" id="recoDays" placeholder="e.g. 5" min="1" max="30" style="width:100%;padding:9px 12px;border:1.5px solid #e8ecf0;border-radius:8px;font-size:14px;font-family:inherit;outline:none;box-sizing:border-box"/>
-                  </div>
-                </div>
-                <div style="margin-bottom:12px">
-                  <label style="font-size:12px;font-weight:600;color:#063937;display:block;margin-bottom:6px">Interests</label>
-                  <div style="display:flex;flex-wrap:wrap;gap:6px">
-                    <button class="reco-interest" onclick="this.classList.toggle('active')" style="font-size:12px;padding:5px 12px;border-radius:20px;border:1.5px solid #e8ecf0;background:white;cursor:pointer;font-family:inherit">🏖️ Beach</button>
-                    <button class="reco-interest" onclick="this.classList.toggle('active')" style="font-size:12px;padding:5px 12px;border-radius:20px;border:1.5px solid #e8ecf0;background:white;cursor:pointer;font-family:inherit">🏔️ Nature</button>
-                    <button class="reco-interest" onclick="this.classList.toggle('active')" style="font-size:12px;padding:5px 12px;border-radius:20px;border:1.5px solid #e8ecf0;background:white;cursor:pointer;font-family:inherit">🍜 Food</button>
-                    <button class="reco-interest" onclick="this.classList.toggle('active')" style="font-size:12px;padding:5px 12px;border-radius:20px;border:1.5px solid #e8ecf0;background:white;cursor:pointer;font-family:inherit">🏛️ Culture</button>
-                    <button class="reco-interest" onclick="this.classList.toggle('active')" style="font-size:12px;padding:5px 12px;border-radius:20px;border:1.5px solid #e8ecf0;background:white;cursor:pointer;font-family:inherit">🛍️ Shopping</button>
-                    <button class="reco-interest" onclick="this.classList.toggle('active')" style="font-size:12px;padding:5px 12px;border-radius:20px;border:1.5px solid #e8ecf0;background:white;cursor:pointer;font-family:inherit">🎭 Nightlife</button>
-                    <button class="reco-interest" onclick="this.classList.toggle('active')" style="font-size:12px;padding:5px 12px;border-radius:20px;border:1.5px solid #e8ecf0;background:white;cursor:pointer;font-family:inherit">🧘 Relaxation</button>
-                    <button class="reco-interest" onclick="this.classList.toggle('active')" style="font-size:12px;padding:5px 12px;border-radius:20px;border:1.5px solid #e8ecf0;background:white;cursor:pointer;font-family:inherit">🏄 Adventure</button>
-                  </div>
-                </div>
-                <button onclick="getDestinationReco()" class="btn-primary" style="width:100%">✨ Suggest Destinations</button>
-                <div id="recoResults" style="margin-top:16px"></div>
-              </div>
-            </div>
-
-            <div class="section">
-              <div class="section-header">
                 <h2 class="section-title">Upcoming Trips</h2>
                 <a href="#" class="view-all" data-page="mytrips">View All →</a>
               </div>
@@ -1380,6 +1337,13 @@
     </div>
   </div>
 
+  <!-- AI Loading Overlay -->
+  <div id="aiLoadingOverlay" class="ai-loading-overlay" style="display:none">
+    <div class="ai-loading-spinner"></div>
+    <div class="ai-loading-text" id="aiLoadingText">✨ Generating your itinerary…</div>
+    <div class="ai-loading-sub" id="aiLoadingSub">This may take 15–30 seconds</div>
+  </div>
+
   <!-- Floating mic button -->
   <button class="voice-fab" id="voiceFab" title="TripGenie AI Assistant">
     <svg id="fabIcon" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
@@ -1627,13 +1591,15 @@
 
     // Remove trip cover photo
     async function removeTripCoverPhoto() {
-      if (!confirm('Remove cover photo? The destination image will be used instead.')) return;
+      if (!confirm('Remove cover photo? A pastel background will be used instead.')) return;
       try {
         await apiFetch('/trips/'+currentTripId, { method:'PATCH', body: JSON.stringify({ cover_image: null }) });
         const trip = allTrips.find(t=>t.id===currentTripId);
         if (trip) trip.cover_image = null;
-        const imgEl = document.getElementById('hubTripImg');
-        if (imgEl) imgEl.src = getDestImage(trip?.destination || '');
+        const hubImg = document.getElementById('hubTripImg');
+        const hubImgWrap = hubImg?.parentElement;
+        if (hubImg) hubImg.style.display = 'none';
+        if (hubImgWrap) hubImgWrap.style.background = getPastelForDest(trip?.destination || '');
         showToast('Cover photo removed');
       } catch(e) { showToast('Error: ' + e.message); }
     }
