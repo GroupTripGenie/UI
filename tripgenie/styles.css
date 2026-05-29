@@ -1079,3 +1079,40 @@ body.dark *[style*="border:1px solid #e8ecf0"],
 body.dark *[style*="border: 1px solid #e8ecf0"],
 body.dark *[style*="border:1.5px solid #e8ecf0"],
 body.dark *[style*="border: 1.5px solid #e8ecf0"] { border-color: #2d3748 !important; }
+
+/* ── Trip Hub Checklist dark mode fixes ─────────────────────── */
+body.dark .checklist-card,
+body.dark [class*="checklist"] { background: #1a1f2e !important; border-color: #2d3748 !important; }
+body.dark .checklist-card h4,
+body.dark .checklist-card .checklist-title { color: #f1f5f9 !important; }
+body.dark .checklist-card p,
+body.dark .checklist-card small,
+body.dark .checklist-card span { color: #94a3b8 !important; }
+body.dark .check-item { background: #1a1f2e !important; border-bottom-color: #2d3748 !important; }
+body.dark .check-item label,
+body.dark .check-item span { color: #f1f5f9 !important; }
+body.dark .check-item.done label,
+body.dark .check-item.done span { color: #4a5568 !important; }
+body.dark .checklist-header { background: #252d3d !important; border-color: #2d3748 !important; }
+body.dark .checklist-header h4 { color: #f1f5f9 !important; }
+body.dark .checklist-header small,
+body.dark .checklist-header span { color: #94a3b8 !important; }
+body.dark .checklist-items { background: #1a1f2e !important; }
+/* Catch all white backgrounds inside hub checklist section */
+body.dark #hubChecklists *,
+body.dark #page-tripHub .card * { 
+  --white-bg: #1a1f2e;
+}
+body.dark #hubChecklists .checklist-card,
+body.dark #hubChecklists > div { background: #1a1f2e !important; }
+body.dark #hubChecklists [style*="background:white"],
+body.dark #hubChecklists [style*="background: white"],
+body.dark #hubChecklists [style*="background:#fff"],
+body.dark #hubChecklists [style*="background: #fff"] { background: #1a1f2e !important; }
+body.dark #hubChecklists [style*="color:#063937"],
+body.dark #hubChecklists [style*="color: #063937"] { color: #f1f5f9 !important; }
+body.dark #hubChecklists [style*="color:#64748b"],
+body.dark #hubChecklists [style*="color: #64748b"],
+body.dark #hubChecklists [style*="color:#94a3b8"],
+body.dark #hubChecklists [style*="color: #94a3b8"] { color: #6b7a99 !important; }
+body.dark #hubChecklists [style*="border"] { border-color: #2d3748 !important; }
