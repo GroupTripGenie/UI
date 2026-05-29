@@ -502,7 +502,7 @@
         localStorage.setItem('tg_user',  JSON.stringify(data.user));
 
         showSuccess(`Welcome, ${data.user.full_name}! Redirecting to your dashboard…`);
-        setTimeout(() => window.location.href = '/', 1500);
+        setTimeout(() => window.location.href = '/app', 1500);
 
       } catch (err) {
         btn.classList.remove('loading');

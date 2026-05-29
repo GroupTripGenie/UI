@@ -11,7 +11,7 @@
 <body>
   <script>
     if (!localStorage.getItem('tg_token')) {
-      window.location.replace('/');
+      window.location.replace('/login');
     }
     // Override browser back button to stay in app
     history.pushState(null, '', window.location.href);

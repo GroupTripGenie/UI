@@ -559,7 +559,8 @@
 
   <script>
     // If already logged in, go straight to the app
-    if (localStorage.getItem('tg_token')) {
+    const token = localStorage.getItem('tg_token');
+    if (token && token.length > 10) {
       window.location.replace('/app');
     }
     // Navbar scroll effect

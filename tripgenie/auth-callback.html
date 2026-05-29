@@ -73,7 +73,7 @@
         if (userData.avatar_url) localStorage.setItem('tg_avatar_url', userData.avatar_url);
         document.getElementById('title').textContent = `Welcome, ${userData.full_name?.split(' ')[0] || 'Traveler'}! 🎉`;
         document.getElementById('subtitle').textContent = 'Redirecting to your dashboard…';
-        setTimeout(() => window.location.href = '/', 1500);
+        setTimeout(() => window.location.href = '/app', 1500);
       } catch(e) {
         document.getElementById('spinner').style.display = 'none';
         document.getElementById('title').textContent = 'Something went wrong';
