@@ -1477,65 +1477,74 @@
     // Load user info
     (async function loadUser() {
       try {
-        const user     = JSON.parse(localStorage.getItem('tg_user') || '{}');
-        const name     = user.full_name || 'Traveler';
-        const initials = name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0,2);
         const hour     = new Date().getHours();
         const greeting = hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening';
         const avatarEl = document.getElementById('userAvatar');
         const greetEl  = document.getElementById('dashGreeting');
-        const savedPhoto = user.avatar_url || localStorage.getItem('tg_avatar_url');
+
+        // Show initials placeholder while loading
+        if (avatarEl) avatarEl.textContent = '…';
+
+        // ALWAYS fetch from API first — source of truth
+        let me = null;
+        try {
+          me = await apiFetch('/auth/me');
+        } catch(e) {
+          // Fallback to localStorage cache if offline/error
+          me = JSON.parse(localStorage.getItem('tg_user') || '{}');
+        }
+
+        if (!me || !me.id) {
+          me = JSON.parse(localStorage.getItem('tg_user') || '{}');
+        }
+
+        // Update localStorage cache from server data
+        if (me.id) {
+          localStorage.setItem('tg_user', JSON.stringify(me));
+          if (me.preferred_currency) localStorage.setItem('tg_currency', me.preferred_currency);
+          if (me.preferred_timezone) localStorage.setItem('tg_timezone', me.preferred_timezone);
+          if (me.avatar_url)         localStorage.setItem('tg_avatar_url', me.avatar_url);
+          else                       localStorage.removeItem('tg_avatar_url');
+        }
+
+        const name     = me.full_name || 'Traveler';
+        const initials = name.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);
+        const photo    = me.avatar_url || null;
+
+        // Render avatar
         if (avatarEl) {
-          if (savedPhoto) avatarEl.innerHTML = `<img src="${savedPhoto}" style="width:36px;height:36px;border-radius:50%;object-fit:cover"/>`;
+          if (photo) avatarEl.innerHTML = `<img src="${photo}" style="width:36px;height:36px;border-radius:50%;object-fit:cover"/>`;
           else avatarEl.textContent = initials;
         }
         if (greetEl) greetEl.textContent = greeting + ', ' + name.split(' ')[0] + '! ✈️';
 
-        // Fetch latest profile from API to sync preferences
-        try {
-          const me = await apiFetch('/auth/me');
-          if (me) {
-            // Update local cache with server values
-            Object.assign(user, me);
-            localStorage.setItem('tg_user', JSON.stringify(user));
-            if (me.preferred_currency) localStorage.setItem('tg_currency', me.preferred_currency);
-            if (me.preferred_timezone) localStorage.setItem('tg_timezone', me.preferred_timezone);
-            if (me.avatar_url)         localStorage.setItem('tg_avatar_url', me.avatar_url);
-          }
-        } catch(e) { /* use cached values if offline */ }
-
-        const freshUser  = JSON.parse(localStorage.getItem('tg_user') || '{}');
-        const freshName  = freshUser.full_name || name;
-        const freshPhoto = freshUser.avatar_url || localStorage.getItem('tg_avatar_url');
-        const freshInits = freshName.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);
-
+        // Profile page
         const profAvatar  = document.getElementById('profileAvatar');
         const profName    = document.getElementById('profileName');
         const profEmail   = document.getElementById('profileEmail');
         const profNameIn  = document.getElementById('profileNameInput');
         const profEmailIn = document.getElementById('profileEmailInput');
-        if (profAvatar) {
-          if (freshPhoto) {
-            profAvatar.innerHTML = `<img src="${freshPhoto}" style="width:80px;height:80px;border-radius:50%;object-fit:cover;border:3px solid #e8ecf0"/>`;
-            const removeBtn = document.getElementById('removePhotoBtn');
-            if (removeBtn) removeBtn.style.display = 'inline';
-          }
-          else profAvatar.textContent = freshInits;
-        }
-        if (avatarEl && !freshPhoto) avatarEl.textContent = freshInits;
-        if (avatarEl && freshPhoto)  avatarEl.innerHTML = `<img src="${freshPhoto}" style="width:36px;height:36px;border-radius:50%;object-fit:cover"/>`;
-        if (greetEl)     greetEl.textContent  = greeting + ', ' + freshName.split(' ')[0] + '! ✈️';
-        if (profName)    profName.textContent  = freshName;
-        if (profEmail)   profEmail.textContent = freshUser.email || '—';
-        if (profNameIn)  profNameIn.value      = freshName;
-        if (profEmailIn) profEmailIn.value     = freshUser.email || '';
+        const removeBtn   = document.getElementById('removePhotoBtn');
 
-        const savedCurrency = localStorage.getItem('tg_currency') || 'USD';
+        if (profAvatar) {
+          if (photo) {
+            profAvatar.innerHTML = `<img src="${photo}" style="width:80px;height:80px;border-radius:50%;object-fit:cover;border:3px solid #e8ecf0"/>`;
+            if (removeBtn) removeBtn.style.display = 'inline';
+          } else {
+            profAvatar.textContent = initials;
+            if (removeBtn) removeBtn.style.display = 'none';
+          }
+        }
+        if (profName)    profName.textContent  = name;
+        if (profEmail)   profEmail.textContent = me.email || '—';
+        if (profNameIn)  profNameIn.value      = name;
+        if (profEmailIn) profEmailIn.value     = me.email || '';
+
         const currencyEl = document.getElementById('profileCurrency');
-        if (currencyEl) currencyEl.value = savedCurrency;
-        const savedTz = localStorage.getItem('tg_timezone') || 'Asia/Manila';
+        if (currencyEl) currencyEl.value = me.preferred_currency || localStorage.getItem('tg_currency') || 'USD';
         const tzEl = document.getElementById('profileTimezone');
-        if (tzEl) tzEl.value = savedTz;
+        if (tzEl) tzEl.value = me.preferred_timezone || localStorage.getItem('tg_timezone') || 'Asia/Manila';
+
       } catch(e) { console.error('loadUser error', e); }
     })();
 
