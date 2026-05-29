@@ -1293,23 +1293,14 @@ function checklistCard(cl, tripId) {
   const done=items.filter(i=>i.is_checked).length;
   const total=items.length;
   const pct=total?Math.round(done/total*100):0;
-  const dark=document.body.classList.contains('dark');
-  const cardBg    = dark ? '#1a1f2e' : 'white';
-  const headerBg  = dark ? '#252d3d' : '#f8fafc';
-  const borderC   = dark ? '#2d3748' : '#e8ecf0';
-  const rowBorder = dark ? '#2d3748' : '#f0f4f8';
-  const titleC    = dark ? '#f1f5f9' : '#063937';
-  const metaC     = dark ? '#94a3b8' : '#64748b';
-  const itemC     = dark ? '#f1f5f9' : '#0f1c2e';
-  const doneC     = dark ? '#4a5568' : '#94a3b8';
   return `
-  <div style="border:1px solid ${borderC};border-radius:10px;margin-bottom:12px;overflow:hidden">
-    <div style="background:${headerBg};padding:12px 16px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
+  <div class="cl-card">
+    <div class="cl-header">
       <div style="display:flex;align-items:center;gap:10px">
         <span style="font-size:20px">${cl.icon||'📋'}</span>
         <div>
-          <strong style="font-size:15px;color:${titleC}">${cl.title}</strong>
-          <p style="font-size:12px;color:${metaC};margin:0">${done} of ${total} completed</p>
+          <strong class="cl-title">${cl.title}</strong>
+          <p class="cl-meta">${done} of ${total} completed</p>
         </div>
       </div>
       <div style="display:flex;gap:6px">
@@ -1320,15 +1311,15 @@ function checklistCard(cl, tripId) {
       </div>
     </div>
     <div class="progress-bar" style="margin:0;border-radius:0;height:3px"><div class="progress-fill" style="width:${pct}%"></div></div>
-    <div style="padding:4px 0;background:${cardBg}">
+    <div class="cl-items">
       ${items.map(item=>`
-        <label style="display:flex;align-items:center;gap:10px;padding:10px 16px;border-bottom:1px solid ${rowBorder};cursor:pointer;background:${cardBg}">
+        <label class="cl-item ${item.is_checked?'cl-item-done':''}">
           <input type="checkbox" ${item.is_checked?'checked':''} onchange="togglePageItem('${item.id}',this.checked,'${cl.id}','${tripId}')" style="accent-color:#068cdf;flex-shrink:0">
-          <span style="flex:1;color:${item.is_checked?doneC:itemC};${item.is_checked?'text-decoration:line-through':''}">${item.label}</span>
+          <span class="cl-item-label">${item.label}</span>
           <button onclick="openEditItemModal('${item.id}','${item.label}','${cl.id}')" style="background:none;border:none;color:#068cdf;cursor:pointer;font-size:13px;padding:2px 4px;flex-shrink:0" title="Edit">✏️</button>
           <button onclick="deleteChecklistItem('${item.id}','${cl.id}')" style="background:none;border:none;color:#ef4444;cursor:pointer;font-size:13px;padding:2px 4px;flex-shrink:0" title="Delete">🗑</button>
         </label>`).join('')}
-      ${!items.length?`<p style="text-align:center;color:${metaC};font-size:13px;padding:12px">No items yet</p>`:''}
+      ${!items.length?'<p class="cl-empty">No items yet</p>':''}
     </div>
   </div>`;
 }
