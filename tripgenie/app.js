@@ -151,7 +151,6 @@ function smallTripCard(trip) {
   const dates = trip.start_date
     ? `📅 ${fmtDate(trip.start_date)}${trip.end_date?' – '+fmtDate(trip.end_date):''}`
     : '📅 Dates not set';
-  const pct = trip.planning_pct || 0;
   const coverHTML = hasCover
     ? `<div class="trip-img"><img src="${trip.cover_image}" alt="${trip.destination}" style="width:100%;height:100%;object-fit:cover"/></div>`
     : `<div class="trip-img" style="background:${pastel};display:flex;align-items:center;justify-content:center">
@@ -163,8 +162,6 @@ function smallTripCard(trip) {
     <div class="trip-body">
       <h3>${trip.destination}</h3>
       <p class="trip-dates">${dates}</p>
-      <div class="progress-row"><span>Planning</span><span>${pct}%</span></div>
-      <div class="progress-bar"><div class="progress-fill" style="width:${pct}%"></div></div>
       <button class="btn-primary full-width" style="margin-top:12px" onclick="event.stopPropagation();openTripHub('${trip.id}')">Open Trip →</button>
     </div>
   </div>`;
