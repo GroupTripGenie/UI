@@ -1041,3 +1041,41 @@ body.dark [style*="background:white"],
 body.dark [style*="background: white"] { background: #1a1f2e !important; }
 body.dark [style*="border-color:#e8ecf0"],
 body.dark [style*="border: 1px solid #e8ecf0"] { border-color: #2d3748 !important; }
+
+/* ── Dark mode targeted fixes ────────────────────────────────── */
+/* Email/readonly inputs */
+body.dark input[readonly]   { background: #252d3d !important; color: #94a3b8 !important; }
+
+/* Profile page inline styles */
+body.dark .card h2          { color: #f1f5f9 !important; }
+body.dark .card p           { color: #94a3b8 !important; }
+
+/* Checklist inside trip hub */
+body.dark .check-item       { border-bottom-color: #2d3748; }
+body.dark .check-item span  { color: #f1f5f9 !important; }
+body.dark .check-item.done span { color: #4a5568 !important; text-decoration: line-through; }
+body.dark .checklist-card   { background: #1a1f2e !important; border-color: #2d3748 !important; }
+body.dark .checklist-card h4 { color: #f1f5f9 !important; }
+body.dark .checklist-card p  { color: #94a3b8 !important; }
+body.dark .checklist-progress { background: #2d3748; }
+
+/* Hub tabs and sections */
+body.dark .hub-card         { background: #1a1f2e; border-color: #2d3748; }
+body.dark .hub-card h3,
+body.dark .hub-card h4      { color: #f1f5f9 !important; }
+body.dark .hub-card p,
+body.dark .hub-card span    { color: #94a3b8 !important; }
+
+/* Trip cover photo area */
+body.dark .trip-cover       { border-color: #2d3748; }
+body.dark .cover-overlay    { background: rgba(0,0,0,0.5); }
+
+/* General inline color overrides for dark mode */
+body.dark *[style*="color:#063937"] { color: #f1f5f9 !important; }
+body.dark *[style*="color: #063937"] { color: #f1f5f9 !important; }
+body.dark *[style*="background:white"] { background: #1a1f2e !important; border-color: #2d3748 !important; }
+body.dark *[style*="background: white"] { background: #1a1f2e !important; border-color: #2d3748 !important; }
+body.dark *[style*="border:1px solid #e8ecf0"],
+body.dark *[style*="border: 1px solid #e8ecf0"],
+body.dark *[style*="border:1.5px solid #e8ecf0"],
+body.dark *[style*="border: 1.5px solid #e8ecf0"] { border-color: #2d3748 !important; }

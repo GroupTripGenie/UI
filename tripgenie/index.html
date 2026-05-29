@@ -204,7 +204,14 @@
 
             <!-- Trip header card -->
             <div class="card" style="margin-bottom:24px;overflow:hidden;padding:0">
-              <img id="hubTripImg" src="" alt="" style="width:100%;height:200px;object-fit:cover"/>
+              <div style="position:relative">
+                <img id="hubTripImg" src="" alt="" style="width:100%;height:200px;object-fit:cover"/>
+                <label for="coverPhotoInput" style="position:absolute;bottom:12px;right:12px;background:rgba(0,0,0,0.6);color:white;padding:7px 14px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600;display:flex;align-items:center;gap:6px;backdrop-filter:blur(4px)">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                  Change Photo
+                </label>
+                <input type="file" id="coverPhotoInput" accept="image/*" style="display:none" onchange="uploadTripCoverPhoto(this)"/>
+              </div>
               <div style="padding:20px">
                 <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap">
                   <div>
@@ -1429,8 +1436,43 @@
       }
     }
 
-    // Profile photo upload via Cloudinary
-    async function uploadProfilePhoto(input) {
+    // Upload trip cover photo
+    async function uploadTripCoverPhoto(input) {
+      const file = input.files[0];
+      if (!file) return;
+      showToast('Uploading cover photo…');
+
+      const CLOUD_NAME    = 'dvzgrc7hy';
+      const UPLOAD_PRESET = 'tripgenie_unsigned';
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('upload_preset', UPLOAD_PRESET);
+      formData.append('folder', 'tripgenie/covers');
+
+      try {
+        const res  = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`, {
+          method: 'POST', body: formData
+        });
+        const data = await res.json();
+        if (data.secure_url) {
+          // Update the img tag immediately
+          const imgEl = document.getElementById('hubTripImg');
+          if (imgEl) imgEl.src = data.secure_url;
+          // Save to DB
+          await apiFetch('/trips/' + currentTripId, {
+            method: 'PATCH',
+            body: JSON.stringify({ cover_image: data.secure_url })
+          });
+          // Update allTrips cache
+          const trip = allTrips.find(t => t.id === currentTripId);
+          if (trip) trip.cover_image = data.secure_url;
+          showToast('✅ Cover photo updated!');
+        } else { throw new Error('Upload failed'); }
+      } catch(e) {
+        showToast('❌ Upload failed: ' + e.message);
+      }
+    }
+    window.uploadTripCoverPhoto = uploadTripCoverPhoto;
       const file = input.files[0];
       if (!file) return;
       const statusEl = document.getElementById('profilePhotoStatus');
