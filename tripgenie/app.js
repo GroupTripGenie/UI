@@ -253,8 +253,7 @@ async function openTripHub(tripId) {
       localStorage.setItem('itinerary_raw_'+tripId, JSON.stringify(dbItinerary.days));
     }
     if (saved) {
-      itinEl.innerHTML = saved.includes('openManualItinerary') ? saved :
-        `<div style="text-align:right;margin-bottom:10px"><button class="btn-outline small-btn" onclick="openManualItinerary()" style="font-size:12px">✏️ Edit Itinerary</button></div>` + saved;
+      itinEl.innerHTML = saved.includes('openManualItinerary') ? saved.replace(/<div[^>]*><button[^>]*openManualItinerary[^>]*>.*?<\/button><\/div>/s, '') : saved;
     } else {
       itinEl.innerHTML = '<p style="color:#64748b;font-size:14px">No itinerary yet. Click "✏️ Edit Itinerary" to write your own.</p>';
     }
@@ -936,10 +935,8 @@ function parseItinerary(reply, dest) {
   });
   if (inDay) html+='</div>';
   if (!html) html=`<div class="itinerary-day"><div class="itinerary-day-header">Your ${dest} Itinerary</div><div class="itinerary-activity">${reply}</div></div>`;
-  // Add edit button at the top
-  return `<div style="text-align:right;margin-bottom:10px">
-    <button class="btn-outline small-btn" onclick="openManualItinerary()" style="font-size:12px">✏️ Edit Itinerary</button>
-  </div>` + html;
+  // Return clean HTML — Edit button is in the card header
+  return html;
 }
 
 
@@ -1877,7 +1874,7 @@ function closeManualItinerary() {
   const saved = dbHtml || localHtml;
   if (saved) {
     el.innerHTML = saved.includes('openManualItinerary') ? saved :
-      `<div style="text-align:right;margin-bottom:10px"><button class="btn-outline small-btn" onclick="openManualItinerary()" style="font-size:12px">✏️ Edit Itinerary</button></div>` + saved;
+      el.innerHTML = saved.replace(/<div[^>]*><button[^>]*openManualItinerary[^>]*>.*?<\/button><\/div>/s, '') || saved;
   } else {
     el.innerHTML = '<p style="color:#64748b;font-size:14px">No itinerary yet.</p>';
   }
@@ -1961,9 +1958,7 @@ async function saveManualItinerary() {
       ${day.activities.map(act=>`
         <div class="itinerary-activity">${act.time?`<span>${act.time}</span>`:''} ${act.desc||'—'}</div>`).join('')}
     </div>`).join('');
-  const html = `<div style="text-align:right;margin-bottom:10px">
-    <button class="btn-outline small-btn" onclick="openManualItinerary()" style="font-size:12px">✏️ Edit Itinerary</button>
-  </div>` + rawHtml;
+  const html = rawHtml;
 
   // Save to DB (itinerary JSON + rendered HTML in notes)
   try {
