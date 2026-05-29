@@ -216,7 +216,8 @@ async function openTripHub(tripId) {
   }
 
   // Show hub page
-  navigate('tripHub');
+  if (typeof window.navigate === 'function') window.navigate('tripHub');
+  else if (typeof navigate === 'function') navigate('tripHub');
 
   // Load trip data
   loadHubBudget();

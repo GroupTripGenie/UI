@@ -1296,6 +1296,7 @@
         if (window.pageHistory.length > 20) window.pageHistory.shift();
       }
     }
+    window.navigate = navigate;
 
     document.addEventListener('click', function(e) {
       const el = e.target.closest('[data-page]');
