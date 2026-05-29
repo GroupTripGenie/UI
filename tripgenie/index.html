@@ -77,10 +77,6 @@
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
           Profile
         </a>
-        <a href="landing.html" class="nav-link" style="font-size:13px;color:#94a3b8">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
-          Landing Page
-        </a>
         <a href="#" class="nav-link" onclick="toggleDarkMode()" id="darkModeLink" style="margin-top:auto">
           <span id="darkModeIcon">🌙</span>
           <span id="darkModeLabel">Dark Mode</span>
@@ -1427,34 +1423,40 @@
       const timezone = document.getElementById('profileTimezone')?.value || 'Asia/Manila';
       if (!name) { showToast('Please enter your name'); return; }
 
+      // Always save to localStorage immediately
+      const user = JSON.parse(localStorage.getItem('tg_user') || '{}');
+      user.full_name = name;
+      user.preferred_currency = currency;
+      user.preferred_timezone = timezone;
+      localStorage.setItem('tg_user', JSON.stringify(user));
+      localStorage.setItem('tg_currency', currency);
+      localStorage.setItem('tg_timezone', timezone);
+
       try {
         const updated = await apiFetch('/auth/me', {
           method: 'PATCH',
           body: JSON.stringify({ full_name: name, preferred_currency: currency, preferred_timezone: timezone })
         });
-        // Update localStorage cache
-        const user = JSON.parse(localStorage.getItem('tg_user') || '{}');
-        user.full_name = name;
-        user.preferred_currency = currency;
-        user.preferred_timezone = timezone;
-        localStorage.setItem('tg_user', JSON.stringify(user));
-        localStorage.setItem('tg_currency', currency);
-        localStorage.setItem('tg_timezone', timezone);
-
-        const initials = name.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);
-        const avatarEl = document.getElementById('userAvatar');
-        const profAv   = document.getElementById('profileAvatar');
-        const profNm   = document.getElementById('profileName');
-        const hasPhoto = updated.avatar_url || localStorage.getItem('tg_avatar_url');
-        if (!hasPhoto) {
-          if (avatarEl) avatarEl.textContent = initials;
-          if (profAv)   profAv.textContent   = initials;
+        if (updated) {
+          user.avatar_url = updated.avatar_url || user.avatar_url;
+          localStorage.setItem('tg_user', JSON.stringify(user));
         }
-        if (profNm) profNm.textContent = name;
-        showToast('✅ Profile saved!');
       } catch(e) {
-        showToast('Error saving profile: ' + e.message);
+        // localStorage already saved — just warn
+        console.warn('Profile sync to server failed:', e.message);
       }
+
+      const initials = name.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);
+      const avatarEl = document.getElementById('userAvatar');
+      const profAv   = document.getElementById('profileAvatar');
+      const profNm   = document.getElementById('profileName');
+      const hasPhoto = user.avatar_url || localStorage.getItem('tg_avatar_url');
+      if (!hasPhoto) {
+        if (avatarEl) avatarEl.textContent = initials;
+        if (profAv)   profAv.textContent   = initials;
+      }
+      if (profNm) profNm.textContent = name;
+      showToast('✅ Profile saved! Currency set to ' + currency);
     }
 
     // Remove profile photo
