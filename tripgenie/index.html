@@ -1491,6 +1491,9 @@
       } catch(e) { showToast('Error: ' + e.message); }
     }
     window.removeTripCoverPhoto = removeTripCoverPhoto;
+
+    // Upload trip cover photo
+    async function uploadTripCoverPhoto(input) {
       const file = input.files[0];
       if (!file) return;
       showToast('Uploading cover photo…');
@@ -1524,7 +1527,7 @@
       } catch(e) {
         showToast('❌ Upload failed: ' + e.message);
       }
-    
+    }
     window.uploadTripCoverPhoto = uploadTripCoverPhoto;
 
     // Profile photo upload via Cloudinary
