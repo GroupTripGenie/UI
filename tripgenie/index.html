@@ -1266,7 +1266,14 @@
     <div class="voice-messages" id="voiceMessages">
       <div class="voice-msg ai">
         <div class="voice-msg-avatar">🧞</div>
-        <div class="voice-msg-bubble">Hi! I'm your TripGenie AI assistant. Hold the mic button and ask me anything about trips, budget, packing, or travel tips! 🌍</div>
+        <div class="voice-msg-bubble">Hi! I'm your TripGenie AI assistant. Ask me anything about travel, or try one of these quick actions! 🌍</div>
+      </div>
+      <div style="padding:8px 12px;display:flex;flex-wrap:wrap;gap:8px">
+        <button onclick="sendQuickMessage('Give me packing tips for my next trip')" style="font-size:12px;padding:6px 12px;border-radius:20px;border:1.5px solid #068cdf;background:transparent;color:#068cdf;cursor:pointer;font-family:inherit">🧳 Packing Tips</button>
+        <button onclick="sendQuickMessage('What are the best budget travel tips?')" style="font-size:12px;padding:6px 12px;border-radius:20px;border:1.5px solid #068cdf;background:transparent;color:#068cdf;cursor:pointer;font-family:inherit">💰 Budget Tips</button>
+        <button onclick="sendQuickMessage('Help me break down my travel budget')" style="font-size:12px;padding:6px 12px;border-radius:20px;border:1.5px solid #068cdf;background:transparent;color:#068cdf;cursor:pointer;font-family:inherit">📊 Budget Breakdown</button>
+        <button onclick="sendQuickMessage('What are some hidden gems and local tips for my destination?')" style="font-size:12px;padding:6px 12px;border-radius:20px;border:1.5px solid #068cdf;background:transparent;color:#068cdf;cursor:pointer;font-family:inherit">💡 Local Tips</button>
+        <button onclick="sendQuickMessage('What should I know about weather and best time to visit?')" style="font-size:12px;padding:6px 12px;border-radius:20px;border:1.5px solid #068cdf;background:transparent;color:#068cdf;cursor:pointer;font-family:inherit">🌤️ Weather Guide</button>
       </div>
     </div>
 
@@ -1275,7 +1282,7 @@
     </div>
 
     <div class="voice-panel-footer">
-      <input class="voice-text-input" id="voiceTextInput" placeholder="Type a question…" 
+      <input class="voice-text-input" id="voiceTextInput" placeholder="Ask about any destination…"
              onkeydown="if(event.key==='Enter') sendTextMessage()"/>
       <button class="voice-send-btn" onclick="sendTextMessage()">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
@@ -1517,7 +1524,7 @@
       } catch(e) {
         showToast('❌ Upload failed: ' + e.message);
       }
-    
+    }
     window.uploadTripCoverPhoto = uploadTripCoverPhoto;
 
     // Profile photo upload via Cloudinary
@@ -1725,6 +1732,11 @@
       const text  = input.value.trim();
       if (!text) return;
       input.value = '';
+      addMessage('user', text);
+      askAssistant(text);
+    }
+
+    function sendQuickMessage(text) {
       addMessage('user', text);
       askAssistant(text);
     }

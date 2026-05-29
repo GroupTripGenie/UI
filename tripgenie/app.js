@@ -494,23 +494,6 @@ function renderHubChecklists() {
   }).join('');
 }
 
-async function saveChecklist() {
-  const title = document.getElementById('newChecklistTitle').value.trim();
-  const icon  = document.getElementById('newChecklistIcon').value||'📋';
-  if (!title) { showToast('Please enter a title'); return; }
-  try {
-    const cl = await apiFetch('/checklists', {
-      method:'POST', body:JSON.stringify({trip_id:currentTripId, title, icon})
-    });
-    cl.items = [];
-    tripChecklists.unshift(cl);
-    renderHubChecklists();
-    closeModal('modalNewChecklist');
-    document.getElementById('newChecklistTitle').value='';
-    showToast('Checklist created!');
-  } catch(e) { showToast('Error: '+e.message); }
-}
-
 function openAddItem(clId) {
   document.getElementById('newItemLabel').value  = '';
   document.getElementById('newItemTarget').value = clId;
@@ -709,9 +692,9 @@ async function generateItinerary() {
   const notes = document.getElementById('tripNotes')?.value?.trim()||'';
   const pace  = document.querySelector('.pace-btn.active')?.textContent?.trim()||'Moderate';
   const interests = [...document.querySelectorAll('.interest-btn.active')].map(b=>b.textContent.trim()).join(', ')||'general sightseeing';
-  const budget= parseFloat(document.getElementById('budgetAmount')?.value)||0;
+  const budget  = parseFloat(document.getElementById('budgetAmount')?.value)||0;
+  const currency = document.getElementById('budgetCurrency')?.value || getCurrency();
 
-  // Proper validation
   const errs = [];
   if (!dest)  errs.push('📍 Please enter a destination');
   if (!start) errs.push('📅 Please select a start date');
@@ -722,6 +705,10 @@ async function generateItinerary() {
   let days = 3;
   if (start&&end) days=Math.max(1,Math.ceil((new Date(end)-new Date(start))/86400000));
 
+  const startFmt = start ? new Date(start).toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'}) : '';
+  const endFmt   = end   ? new Date(end).toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'}) : '';
+  const budgetPerDay = budget>0 ? Math.round(budget/days) : 0;
+
   btn.innerHTML='⏳ Generating…'; btn.disabled=true;
   if (card) card.style.display='block';
 
@@ -731,42 +718,63 @@ async function generateItinerary() {
       method:'POST', body:JSON.stringify({title:dest,destination:dest,start_date:start||null,end_date:end||null,notes})
     });
     if (budget>0) {
-      await apiFetch('/budget/'+trip.id, {method:'POST',body:JSON.stringify({total_amount:budget,currency:getCurrency()})});
+      await apiFetch('/budget/'+trip.id, {method:'POST',body:JSON.stringify({total_amount:budget,currency})});
     }
     allTrips.unshift(trip);
     currentTripId = trip.id;
 
-    // 2. Generate AI itinerary
+    // 2. Build rich context-aware prompt
+    const prompt = `You are TripGenie, an expert AI travel planner. Create a detailed ${days}-day itinerary for ${dest}.
+
+TRIP DETAILS:
+- Destination: ${dest}
+- Travel dates: ${startFmt} to ${endFmt} (${days} days)
+- Travel pace: ${pace} — ${pace==='Relaxed'?'fewer activities, more leisure and rest time':pace==='Intensive'?'pack in as many experiences as possible, early starts':'balanced mix of activities and downtime'}
+- Interests: ${interests}
+${budget>0 ? `- Total budget: ${currency} ${budget.toLocaleString()} (about ${currency} ${budgetPerDay.toLocaleString()} per day)` : ''}
+${notes ? `- Special requirements: ${notes}` : ''}
+
+RULES:
+1. Use REAL, specific place names and restaurants in ${dest}
+2. Match the ${pace} travel pace strictly
+3. Center activities around: ${interests}
+${budget>0 ? `4. Keep suggestions within ${currency} ${budgetPerDay.toLocaleString()}/day budget` : ''}
+${notes ? `5. STRICTLY respect: ${notes}` : ''}
+
+FORMAT (no markdown, no asterisks, exactly like this):
+Day 1 — [Descriptive Theme]
+🕘 9:00 AM - [Activity at specific place]
+🕛 12:00 PM - [Lunch at specific restaurant]
+🕒 3:00 PM - [Activity at specific place]
+🕖 7:00 PM - [Dinner at specific restaurant]
+
+Continue for all ${days} days with real ${dest} locations.`;
+
     const res = await apiFetch('/assistant/chat', {
-      method:'POST',
-      body:JSON.stringify({
-        message:`Create a detailed ${days}-day travel itinerary for ${dest}.
-Travel pace: ${pace}.
-Interests: ${interests}.
-${budget>0 ? `Total budget: ${getCurrency()} ${budget}.` : ''}
-${notes ? `Special requirements: ${notes}` : ''}
-Important: Strictly follow any special requirements mentioned above (e.g. family-friendly activities, dietary restrictions, mobility limitations, etc.)
-Format EXACTLY like this for each day:
-Day 1 — [Theme]
-🕘 9:00 AM - [Specific activity with real place name]
-🕛 12:00 PM - [Lunch recommendation]
-🕒 3:00 PM - [Activity]
-🕖 7:00 PM - [Dinner recommendation]
-Day 2 — [Theme]
-...continue for all ${days} days. Use real places in ${dest}. Be specific and practical.`
-      })
+      method:'POST', body:JSON.stringify({ message: prompt })
     });
 
-    // 3. Parse and store itinerary
+    // 3. Parse itinerary
     const itinHTML = parseItinerary(res.reply, dest);
-    localStorage.setItem('itinerary_'+trip.id, itinHTML);
+    const itinDays = parseItineraryToDays(res.reply);
 
-    // 4. Show trip hub with itinerary
+    // 4. Save to DB
+    try {
+      await apiFetch('/trips/'+trip.id, {
+        method:'PATCH',
+        body:JSON.stringify({ itinerary: { days: itinDays, html: itinHTML } })
+      });
+      trip.itinerary = { days: itinDays, html: itinHTML };
+    } catch(e) {
+      localStorage.setItem('itinerary_'+trip.id, itinHTML);
+    }
+
+    // 5. Show trip hub
     renderMyTripsPage();
     renderDashboardStats();
     renderDashboardTrips();
     clearPlanForm();
-    showToast('Trip created with AI itinerary!');
+    showToast('✅ Trip created with AI itinerary!');
     openTripHub(trip.id);
 
   } catch(e) {
@@ -776,6 +784,24 @@ Day 2 — [Theme]
     btn.innerHTML='✨ Generate AI Itinerary'; btn.disabled=false;
     if (card) card.style.display='none';
   }
+}
+
+// Parse AI reply into structured days for DB
+function parseItineraryToDays(reply) {
+  const lines = reply.split('\n').filter(l=>l.trim());
+  const days = [];
+  let currentDay = null;
+  lines.forEach(line => {
+    const l = line.trim().replace(/\*\*/g,'');
+    if (l.match(/^day\s*\d+/i)) {
+      if (currentDay) days.push(currentDay);
+      currentDay = { title: l, activities: [] };
+    } else if (l && currentDay) {
+      currentDay.activities.push({ desc: l });
+    }
+  });
+  if (currentDay) days.push(currentDay);
+  return days;
 }
 
 function parseItinerary(reply, dest) {
