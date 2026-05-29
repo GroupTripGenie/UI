@@ -191,7 +191,7 @@ async function openTripHub(tripId) {
   document.getElementById('hubTripDates').textContent = trip.start_date
     ? `${fmtDate(trip.start_date)} – ${fmtDate(trip.end_date||trip.start_date)}`
     : 'Dates not set';
-  document.getElementById('hubTripImg').src  = getDestImage(trip.destination);
+  document.getElementById('hubTripImg').src  = trip.cover_image || getDestImage(trip.destination);
   document.getElementById('hubTripNotes').textContent = trip.notes || 'No notes yet.';
   document.getElementById('hubTripStatus').textContent = trip.status.charAt(0).toUpperCase()+trip.status.slice(1);
 
@@ -430,6 +430,16 @@ async function saveExpense() {
 }
 
 // ── Hub Checklists ────────────────────────────────────────────
+async function deleteChecklistFromHub(clId) {
+  if (!confirm('Delete this checklist?')) return;
+  try {
+    await apiFetch('/checklists/'+clId, {method:'DELETE'});
+    tripChecklists = tripChecklists.filter(c=>c.id!==clId);
+    renderHubChecklists();
+    showToast('Checklist deleted');
+  } catch(e) { showToast('Error: '+e.message); }
+}
+
 async function loadHubChecklists() {
   const el = document.getElementById('hubChecklistContent');
   if (!el) return;
@@ -454,25 +464,31 @@ function renderHubChecklists() {
     const total = items.length;
     const pct   = total ? Math.round(done/total*100) : 0;
     return `
-    <div style="border:1px solid #e8ecf0;border-radius:10px;margin-bottom:12px;overflow:hidden">
-      <div style="background:#f8fafc;padding:12px 16px;display:flex;justify-content:space-between;align-items:center">
+    <div class="cl-card">
+      <div class="cl-header">
         <div style="display:flex;align-items:center;gap:10px">
           <span style="font-size:20px">${cl.icon||'📋'}</span>
-          <div><strong style="font-size:15px">${cl.title}</strong><p style="font-size:12px;color:#64748b;margin:0">${done} of ${total} completed</p></div>
+          <div>
+            <strong class="cl-title">${cl.title}</strong>
+            <p class="cl-meta">${done} of ${total} completed</p>
+          </div>
         </div>
-        <button class="btn-primary small-btn" onclick="openAddItem('${cl.id}')">+ Item</button>
-        <button class="btn-outline small-btn" onclick="openEditChecklistModal('${cl.id}','${cl.title}','${cl.icon||'📋'}')" title="Edit">✏️</button>
+        <div style="display:flex;gap:6px">
+          <button class="btn-primary small-btn" onclick="openAddItem('${cl.id}')">+ Item</button>
+          <button class="btn-outline small-btn" onclick="openEditChecklistModal('${cl.id}','${cl.title}','${cl.icon||'📋'}')" title="Edit">✏️</button>
+          <button class="btn-outline small-btn" style="color:#ef4444;border-color:#ef4444" onclick="deleteChecklistFromHub('${cl.id}')" title="Delete">🗑</button>
+        </div>
       </div>
-      <div style="padding:4px 0;background:#fff">
-        <div class="progress-bar" style="margin:0;border-radius:0;height:3px"><div class="progress-fill" style="width:${pct}%"></div></div>
+      <div class="progress-bar" style="margin:0;border-radius:0;height:3px"><div class="progress-fill" style="width:${pct}%"></div></div>
+      <div class="cl-items">
         ${items.map(item=>`
-          <div style="display:flex;align-items:center;padding:8px 16px;border-bottom:1px solid #f8fafc;gap:8px">
+          <label class="cl-item ${item.is_checked?'cl-item-done':''}">
             <input type="checkbox" ${item.is_checked?'checked':''} onchange="toggleItem('${item.id}',this.checked,'${cl.id}')" style="accent-color:#068cdf;flex-shrink:0">
-            <span style="flex:1;${item.is_checked?'text-decoration:line-through;color:#94a3b8':''}">${item.label}</span>
+            <span class="cl-item-label">${item.label}</span>
             <button onclick="openEditItemModal('${item.id}','${item.label}','${cl.id}')" style="background:none;border:none;color:#068cdf;cursor:pointer;font-size:13px;padding:2px 4px;flex-shrink:0" title="Edit">✏️</button>
             <button onclick="deleteChecklistItem('${item.id}','${cl.id}')" style="background:none;border:none;color:#ef4444;cursor:pointer;font-size:13px;padding:2px 4px;flex-shrink:0" title="Delete">🗑</button>
-          </div>`).join('')}
-        ${!items.length?'<p style="text-align:center;color:#94a3b8;font-size:13px;padding:12px">No items yet</p>':''}
+          </label>`).join('')}
+        ${!items.length?'<p class="cl-empty">No items yet</p>':''}
       </div>
     </div>`;
   }).join('');
