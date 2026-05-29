@@ -226,52 +226,63 @@
               </div>
             </div>
 
-            <!-- Itinerary section -->
-            <div class="card section" style="margin-bottom:24px">
-              <div class="card-header" style="flex-wrap:wrap;gap:8px">
-                <h2>📅 Itinerary</h2>
-                <div style="display:flex;gap:8px;margin-left:auto">
-                  <button class="btn-outline small-btn" onclick="openManualItinerary()">✏️ Edit Itinerary</button>
+            <!-- Two column layout: main content left, notes right -->
+            <div style="display:grid;grid-template-columns:1fr 320px;gap:20px;align-items:start">
+
+              <!-- LEFT COLUMN -->
+              <div>
+                <!-- Itinerary section -->
+                <div class="card section" style="margin-bottom:20px">
+                  <div class="card-header" style="flex-wrap:wrap;gap:8px">
+                    <h2>📅 Itinerary</h2>
+                    <button class="btn-outline small-btn" onclick="openManualItinerary()" style="margin-left:auto">✏️ Edit Itinerary</button>
+                  </div>
+                  <div id="hubItinerary"></div>
+                </div>
+
+                <!-- Budget section -->
+                <div class="card section" style="margin-bottom:20px">
+                  <div class="card-header"><h2>💰 Budget</h2></div>
+                  <div id="hubBudgetContent"></div>
+                </div>
+
+                <!-- Checklists section -->
+                <div class="card section" style="margin-bottom:20px">
+                  <div class="card-header"><h2>✅ Checklists</h2></div>
+                  <div id="hubChecklistContent"></div>
+                </div>
+
+                <!-- Reminders section -->
+                <div class="card section" style="margin-bottom:20px">
+                  <div class="card-header"><h2>🔔 Reminders</h2></div>
+                  <div id="hubReminderContent"></div>
                 </div>
               </div>
-              <div id="hubItinerary"></div>
-            </div>
 
-            <!-- Notes + AI Tip section -->
-            <div class="card section" style="margin-bottom:24px">
-              <div class="card-header">
-                <h2>📝 Trip Notes</h2>
-                <button class="btn-outline small-btn" onclick="saveTripNotes()" style="margin-left:auto">💾 Save</button>
-              </div>
-              <textarea id="hubTripNotesEdit" placeholder="Add your trip notes, reminders, or anything you want to remember…" style="width:100%;min-height:100px;padding:12px;border:1.5px solid #e8ecf0;border-radius:10px;font-size:14px;font-family:inherit;outline:none;resize:vertical;box-sizing:border-box;line-height:1.6"></textarea>
-              <div id="hubAiTip" style="margin-top:16px;padding:14px 16px;background:linear-gradient(135deg,rgba(6,57,55,0.05),rgba(6,140,223,0.05));border-radius:10px;border:1px solid rgba(6,140,223,0.15);display:none">
-                <div style="display:flex;align-items:flex-start;gap:10px">
-                  <span style="font-size:20px;flex-shrink:0">🧞</span>
-                  <div>
-                    <p style="font-size:12px;font-weight:700;color:#068cdf;margin-bottom:4px;text-transform:uppercase;letter-spacing:0.05em">AI Travel Tip</p>
-                    <p id="hubAiTipText" style="font-size:14px;color:#475569;line-height:1.6;margin:0"></p>
+              <!-- RIGHT COLUMN -->
+              <div style="position:sticky;top:80px">
+                <!-- AI Tip -->
+                <div id="hubAiTip" class="card section" style="margin-bottom:16px;display:none">
+                  <div style="display:flex;align-items:flex-start;gap:10px">
+                    <span style="font-size:22px;flex-shrink:0">🧞</span>
+                    <div>
+                      <p style="font-size:11px;font-weight:700;color:#068cdf;margin-bottom:6px;text-transform:uppercase;letter-spacing:0.06em">AI Travel Tip</p>
+                      <p id="hubAiTipText" style="font-size:13px;color:#475569;line-height:1.65;margin:0"></p>
+                    </div>
                   </div>
                 </div>
+
+                <!-- Notes -->
+                <div class="card section">
+                  <div class="card-header" style="margin-bottom:12px">
+                    <h2>📝 Notes</h2>
+                    <button class="btn-outline small-btn" onclick="saveTripNotes()" style="margin-left:auto">💾 Save</button>
+                  </div>
+                  <textarea id="hubTripNotesEdit" placeholder="Jot down anything you want to remember for this trip…" style="width:100%;min-height:160px;padding:12px;border:1.5px solid #e8ecf0;border-radius:10px;font-size:13px;font-family:inherit;outline:none;resize:vertical;box-sizing:border-box;line-height:1.6"></textarea>
+                </div>
               </div>
-            </div>
 
-            <!-- Budget section -->
-            <div class="card section" style="margin-bottom:24px">
-              <div class="card-header"><h2>💰 Budget</h2></div>
-              <div id="hubBudgetContent"></div>
-            </div>
-
-            <!-- Checklists section -->
-            <div class="card section" style="margin-bottom:24px">
-              <div class="card-header"><h2>✅ Checklists</h2></div>
-              <div id="hubChecklistContent"></div>
-            </div>
-
-            <!-- Reminders section -->
-            <div class="card section" style="margin-bottom:24px">
-              <div class="card-header"><h2>🔔 Reminders</h2></div>
-              <div id="hubReminderContent"></div>
-            </div>
+            </div><!-- end two-column -->
           </div>
         </div>
 

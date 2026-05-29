@@ -536,12 +536,20 @@ async function loadHubNotes() {
   const notesEl = document.getElementById('hubTripNotesEdit');
   if (notesEl) notesEl.value = trip.notes || '';
 
-  // Generate AI tip for this destination
-  const tipEl  = document.getElementById('hubAiTip');
+  const tipEl   = document.getElementById('hubAiTip');
   const tipText = document.getElementById('hubAiTipText');
   if (!tipEl || !tipText) return;
 
-  // Check localStorage cache first to avoid re-fetching
+  // Skip AI tip for obviously fake/test destinations
+  const dest = (trip.destination || '').toLowerCase().trim();
+  const fakeNames = ['test','testing','asdf','qwerty','abc','123','hello','temp','sample','xxx','demo','trial'];
+  const isFake = fakeNames.some(f => dest === f || dest.startsWith(f+' ') || dest.endsWith(' '+f)) || dest.length < 3;
+  if (isFake) {
+    tipEl.style.display = 'none';
+    return;
+  }
+
+  // Check localStorage cache to avoid re-fetching
   const cached = localStorage.getItem('tg_tip_'+currentTripId);
   if (cached) {
     tipText.textContent = cached;
@@ -553,12 +561,16 @@ async function loadHubNotes() {
     const res = await apiFetch('/assistant/chat', {
       method: 'POST',
       body: JSON.stringify({
-        message: `Give me one short, specific, practical travel tip for visiting ${trip.destination}. 
-Max 2 sentences. Something locals know that tourists often miss. Be specific to ${trip.destination}.
-Do NOT start with "Sure" or "Here's a tip" — just give the tip directly.`
+        message: `Give me ONE specific, practical insider travel tip for visiting ${trip.destination}.
+Requirements:
+- Must be about a REAL, specific place, area, or local practice in ${trip.destination}
+- Something most tourists miss but locals know
+- Max 2 sentences, direct and useful
+- Do NOT start with "Sure", "Here's", or "Great" — just give the tip
+- If you are not confident about ${trip.destination} being a real place, respond with exactly: SKIP`
       })
     });
-    if (res.reply) {
+    if (res.reply && res.reply.trim() !== 'SKIP' && res.reply.length > 20) {
       tipText.textContent = res.reply;
       tipEl.style.display = 'block';
       localStorage.setItem('tg_tip_'+currentTripId, res.reply);

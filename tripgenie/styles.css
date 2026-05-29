@@ -1138,3 +1138,22 @@ body.dark .cl-item    { background:#1a1f2e; border-bottom-color:#2d3748; }
 body.dark .cl-item-label { color:#f1f5f9; }
 body.dark .cl-item-done .cl-item-label { color:#4a5568; }
 body.dark .cl-empty   { color:#64748b; }
+
+/* ── Trip Hub two-column responsive ─────────────────────────── */
+@media (max-width: 900px) {
+  #page-tripHub .page-content > div[style*="grid-template-columns"] {
+    display: block !important;
+  }
+  #page-tripHub .page-content > div[style*="grid-template-columns"] > div:last-child {
+    position: static !important;
+    margin-top: 16px;
+  }
+}
+body.dark #hubTripNotesEdit {
+  background: #252d3d;
+  border-color: #2d3748;
+  color: #f1f5f9;
+}
+body.dark #hubTripNotesEdit::placeholder { color: #4a5568; }
+body.dark #hubAiTip { background: rgba(6,140,223,0.08) !important; border-color: rgba(6,140,223,0.2) !important; }
+body.dark #hubAiTipText { color: #94a3b8 !important; }
