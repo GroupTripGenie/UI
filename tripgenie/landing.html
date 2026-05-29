@@ -558,15 +558,14 @@
   </footer>
 
   <script>
+    // If already logged in, go straight to the app
+    if (localStorage.getItem('tg_token')) {
+      window.location.replace('/app');
+    }
     // Navbar scroll effect
     window.addEventListener('scroll', () => {
       document.getElementById('navbar').classList.toggle('scrolled', window.scrollY > 20);
     });
-
-    // If already logged in, redirect to app
-    if (localStorage.getItem('tg_token')) {
-      // Don't redirect — let them see the landing page, they can use the nav
-    }
   </script>
 </body>
 </html>
