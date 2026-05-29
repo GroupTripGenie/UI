@@ -1473,6 +1473,9 @@
       }
     }
     window.uploadTripCoverPhoto = uploadTripCoverPhoto;
+
+    // Profile photo upload via Cloudinary
+    async function uploadProfilePhoto(input) {
       const file = input.files[0];
       if (!file) return;
       const statusEl = document.getElementById('profilePhotoStatus');
@@ -1703,7 +1706,7 @@
         setStatus('🎤 Click the mic button to speak again');
 
       } catch (err) {
-        addMessage('ai', 'Sorry, I couldn't connect right now. Make sure your server is running! 🔌');
+        addMessage('ai', 'Sorry, I could not connect right now. Make sure your server is running! 🔌');
         setStatus('🎤 Click the mic button to try again');
       } finally {
         // Always re-enable the mic button after a response
