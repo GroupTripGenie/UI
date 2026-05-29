@@ -231,12 +231,28 @@
               <div class="card-header" style="flex-wrap:wrap;gap:8px">
                 <h2>📅 Itinerary</h2>
                 <div style="display:flex;gap:8px;margin-left:auto">
-                  <button class="btn-outline small-btn" id="hubGenBtn" onclick="generateHubItinerary()">✨ Generate with AI</button>
-                  <button class="btn-outline small-btn" onclick="openManualItinerary()">✏️ Write My Own</button>
+                  <button class="btn-outline small-btn" onclick="openManualItinerary()">✏️ Edit Itinerary</button>
                 </div>
               </div>
               <div id="hubItinerary"></div>
+            </div>
 
+            <!-- Notes + AI Tip section -->
+            <div class="card section" style="margin-bottom:24px">
+              <div class="card-header">
+                <h2>📝 Trip Notes</h2>
+                <button class="btn-outline small-btn" onclick="saveTripNotes()" style="margin-left:auto">💾 Save</button>
+              </div>
+              <textarea id="hubTripNotesEdit" placeholder="Add your trip notes, reminders, or anything you want to remember…" style="width:100%;min-height:100px;padding:12px;border:1.5px solid #e8ecf0;border-radius:10px;font-size:14px;font-family:inherit;outline:none;resize:vertical;box-sizing:border-box;line-height:1.6"></textarea>
+              <div id="hubAiTip" style="margin-top:16px;padding:14px 16px;background:linear-gradient(135deg,rgba(6,57,55,0.05),rgba(6,140,223,0.05));border-radius:10px;border:1px solid rgba(6,140,223,0.15);display:none">
+                <div style="display:flex;align-items:flex-start;gap:10px">
+                  <span style="font-size:20px;flex-shrink:0">🧞</span>
+                  <div>
+                    <p style="font-size:12px;font-weight:700;color:#068cdf;margin-bottom:4px;text-transform:uppercase;letter-spacing:0.05em">AI Travel Tip</p>
+                    <p id="hubAiTipText" style="font-size:14px;color:#475569;line-height:1.6;margin:0"></p>
+                  </div>
+                </div>
+              </div>
             </div>
 
             <!-- Budget section -->

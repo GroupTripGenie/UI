@@ -223,6 +223,7 @@ async function openTripHub(tripId) {
   loadHubBudget();
   loadHubChecklists();
   loadHubReminders();
+  loadHubNotes();
 
   // Calculate and update progress
   setTimeout(() => calculateAndSaveProgress(tripId), 1500);
@@ -526,7 +527,64 @@ async function toggleItem(itemId, checked, clId) {
   } catch(e) { console.error('toggleItem:',e); }
 }
 
-// ── Hub Reminders ─────────────────────────────────────────────
+// ── Hub Notes + AI Tip ────────────────────────────────────────
+async function loadHubNotes() {
+  const trip = allTrips.find(t=>t.id===currentTripId);
+  if (!trip) return;
+
+  // Populate notes textarea
+  const notesEl = document.getElementById('hubTripNotesEdit');
+  if (notesEl) notesEl.value = trip.notes || '';
+
+  // Generate AI tip for this destination
+  const tipEl  = document.getElementById('hubAiTip');
+  const tipText = document.getElementById('hubAiTipText');
+  if (!tipEl || !tipText) return;
+
+  // Check localStorage cache first to avoid re-fetching
+  const cached = localStorage.getItem('tg_tip_'+currentTripId);
+  if (cached) {
+    tipText.textContent = cached;
+    tipEl.style.display = 'block';
+    return;
+  }
+
+  try {
+    const res = await apiFetch('/assistant/chat', {
+      method: 'POST',
+      body: JSON.stringify({
+        message: `Give me one short, specific, practical travel tip for visiting ${trip.destination}. 
+Max 2 sentences. Something locals know that tourists often miss. Be specific to ${trip.destination}.
+Do NOT start with "Sure" or "Here's a tip" — just give the tip directly.`
+      })
+    });
+    if (res.reply) {
+      tipText.textContent = res.reply;
+      tipEl.style.display = 'block';
+      localStorage.setItem('tg_tip_'+currentTripId, res.reply);
+    }
+  } catch(e) {
+    console.warn('AI tip failed:', e.message);
+  }
+}
+
+async function saveTripNotes() {
+  const notesEl = document.getElementById('hubTripNotesEdit');
+  if (!notesEl) return;
+  const notes = notesEl.value.trim();
+  try {
+    await apiFetch('/trips/'+currentTripId, {
+      method: 'PATCH',
+      body: JSON.stringify({ notes })
+    });
+    const trip = allTrips.find(t=>t.id===currentTripId);
+    if (trip) trip.notes = notes;
+    showToast('✅ Notes saved!');
+  } catch(e) {
+    showToast('Error saving notes: '+e.message);
+  }
+}
+window.saveTripNotes = saveTripNotes;
 async function loadHubReminders() {
   const el = document.getElementById('hubReminderContent');
   if (!el) return;
@@ -1708,22 +1766,64 @@ if (_origNavigate) {
 // ============================================================
 //  IN-PLACE ITINERARY EDITOR
 // ============================================================
-let itineraryDays    = [];
-let itineraryEditing = false;
+let itineraryDays       = [];
+let itineraryEditing    = false;
+let itinerarySnapshot   = []; // backup for cancel
 
 function openManualItinerary() {
-  const saved = localStorage.getItem('itinerary_raw_'+currentTripId);
-  if (saved) { try { itineraryDays = JSON.parse(saved); } catch { itineraryDays = []; } }
+  // Load from DB first (trip object), fallback to localStorage
+  const trip = allTrips.find(t=>t.id===currentTripId);
+  const dbDays = trip?.itinerary?.days;
+  const localRaw = localStorage.getItem('itinerary_raw_'+currentTripId);
+
+  if (dbDays && dbDays.length) {
+    itineraryDays = JSON.parse(JSON.stringify(dbDays)); // deep clone
+  } else if (localRaw) {
+    try { itineraryDays = JSON.parse(localRaw); } catch { itineraryDays = []; }
+  }
+
+  // Clean up time fields — remove emoji clocks that AI adds (🕘, 🕛, etc.)
+  itineraryDays.forEach(day => {
+    day.activities = (day.activities || []).map(act => {
+      let desc = act.desc || '';
+      let time = act.time || '';
+      // If desc starts with a time pattern like "🕘 9:00 AM - " extract it
+      const timeMatch = desc.match(/^[🕐🕑🕒🕓🕔🕕🕖🕗🕘🕙🕚🕛🕜🕝🕞🕟🕠🕡🕢🕣🕤🕥🕦🕧]?\s*(\d{1,2}:\d{2}\s*(?:AM|PM)?)\s*[-–]?\s*/i);
+      if (timeMatch && !time) {
+        time = timeMatch[1].trim();
+        desc = desc.replace(timeMatch[0], '').trim();
+      }
+      // Strip leading emoji clocks from desc
+      desc = desc.replace(/^[🕐🕑🕒🕓🕔🕕🕖🕗🕘🕙🕚🕛🕜🕝🕞🕟🕠🕡🕢🕣🕤🕥🕦🕧]\s*/, '').trim();
+      return { time, desc };
+    });
+  });
+
   if (!itineraryDays.length) itineraryDays = [{ title:'Day 1', activities:[{time:'9:00 AM',desc:''}] }];
+
+  // Save snapshot for cancel
+  itinerarySnapshot = JSON.parse(JSON.stringify(itineraryDays));
   itineraryEditing = true;
   renderInPlaceEditor();
 }
 
 function closeManualItinerary() {
   itineraryEditing = false;
-  const saved = localStorage.getItem('itinerary_'+currentTripId);
+  // Restore snapshot (what was there before editing)
+  const trip = allTrips.find(t=>t.id===currentTripId);
   const el = document.getElementById('hubItinerary');
-  if (el) el.innerHTML = saved || '<p style="color:#64748b;font-size:14px">No itinerary yet.</p>';
+  if (!el) return;
+  const dbHtml = trip?.itinerary?.html;
+  const localHtml = localStorage.getItem('itinerary_'+currentTripId);
+  const saved = dbHtml || localHtml;
+  if (saved) {
+    el.innerHTML = saved.includes('openManualItinerary') ? saved :
+      `<div style="text-align:right;margin-bottom:10px"><button class="btn-outline small-btn" onclick="openManualItinerary()" style="font-size:12px">✏️ Edit Itinerary</button></div>` + saved;
+  } else {
+    el.innerHTML = '<p style="color:#64748b;font-size:14px">No itinerary yet.</p>';
+  }
+  // Restore snapshot so cancel truly reverts
+  itineraryDays = JSON.parse(JSON.stringify(itinerarySnapshot));
 }
 
 function renderInPlaceEditor() {
