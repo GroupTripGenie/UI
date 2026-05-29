@@ -1888,7 +1888,7 @@ function closeManualItinerary() {
     el.innerHTML = saved.includes('openManualItinerary') ? saved :
       el.innerHTML = stripItinBtn(saved) || saved;
   } else {
-    el.innerHTML = '<p style="color:#64748b;font-size:14px">No itinerary yet.</p>';
+    el.innerHTML = '<p style="color:#64748b;font-size:14px">No itinerary yet. Click ✏️ Edit Itinerary to get started.</p>';
   }
   // Restore snapshot so cancel truly reverts
   itineraryDays = JSON.parse(JSON.stringify(itinerarySnapshot));
