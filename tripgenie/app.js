@@ -42,6 +42,25 @@ const DEST_PASTELS = [
   'linear-gradient(135deg, #e8c8d4 0%, #c8b8e8 100%)',
   'linear-gradient(135deg, #b8e8e8 0%, #b8d4e8 100%)',
 ];
+function getCountryEmoji(dest) {
+  if (!dest) return '🌍';
+  const d = dest.toLowerCase();
+  const m = {'japan':'🇯🇵','tokyo':'🇯🇵','osaka':'🇯🇵','kyoto':'🇯🇵','korea':'🇰🇷','seoul':'🇰🇷',
+    'philippines':'🇵🇭','manila':'🇵🇭','cebu':'🇵🇭','boracay':'🇵🇭','palawan':'🇵🇭',
+    'thailand':'🇹🇭','bangkok':'🇹🇭','phuket':'🇹🇭','chiang mai':'🇹🇭',
+    'singapore':'🇸🇬','indonesia':'🇮🇩','bali':'🇮🇩','vietnam':'🇻🇳','hanoi':'🇻🇳',
+    'france':'🇫🇷','paris':'🇫🇷','italy':'🇮🇹','rome':'🇮🇹',
+    'spain':'🇪🇸','barcelona':'🇪🇸','uk':'🇬🇧','london':'🇬🇧',
+    'usa':'🇺🇸','new york':'🇺🇸','hawaii':'🇺🇸','australia':'🇦🇺','sydney':'🇦🇺',
+    'dubai':'🇦🇪','china':'🇨🇳','india':'🇮🇳','taiwan':'🇹🇼','taipei':'🇹🇼',
+    'malaysia':'🇲🇾','greece':'🇬🇷','turkey':'🇹🇷','egypt':'🇪🇬',
+    'brazil':'🇧🇷','mexico':'🇲🇽','canada':'🇨🇦','germany':'🇩🇪',
+    'switzerland':'🇨🇭','maldives':'🇲🇻','hong kong':'🇭🇰','cambodia':'🇰🇭','nepal':'🇳🇵',
+    'new zealand':'🇳🇿','portugal':'🇵🇹','netherlands':'🇳🇱'};
+  for (const [k,v] of Object.entries(m)) { if (d.includes(k)) return v; }
+  return '🌍';
+}
+
 function getPastelForDest(destination) {
   if (!destination) return DEST_PASTELS[0];
   let hash = 0;
@@ -175,7 +194,7 @@ function smallTripCard(trip) {
   const coverHTML = hasCover
     ? `<div class="trip-img"><img src="${trip.cover_image}" alt="${trip.destination}" style="width:100%;height:100%;object-fit:cover"/></div>`
     : `<div class="trip-img" style="background:${pastel};display:flex;align-items:center;justify-content:center">
-        <span style="font-size:36px;opacity:0.6">✈️</span>
+        <span style="font-size:36px;opacity:0.6">${getCountryEmoji(trip.destination)}</span>
       </div>`;
   return `
   <div class="trip-card" onclick="openTripHub('${trip.id}')" style="cursor:pointer;overflow:hidden;border-radius:16px">
@@ -404,7 +423,7 @@ function hubCategoryHTML(cat) {
 
 async function createTripBudget() {
   const amount   = document.getElementById('hubTotalBudget')?.value;
-  const currency = document.getElementById('hubBudgetCurrency')?.value || 'USD';
+  const currency = document.getElementById('hubBudgetCurrency')?.value || getCurrency();
   if (!amount) { showToast('Please enter a budget amount'); return; }
   try {
     tripBudget = await apiFetch('/budget/'+currentTripId, {
@@ -577,23 +596,6 @@ function openAddItem(clId) {
   openModal('modalAddItem');
 }
 
-async function saveItem() {
-  const label = document.getElementById('newItemLabel').value.trim();
-  const clId  = document.getElementById('newItemTarget').value;
-  if (!label) { showToast('Please enter an item'); return; }
-  try {
-    const item = await apiFetch('/checklists/'+clId+'/items', {
-      method:'POST', body:JSON.stringify({label})
-    });
-    const cl = tripChecklists.find(c=>c.id===clId);
-    if (cl) { cl.items=cl.items||[]; cl.items.push(item); }
-    renderHubChecklists();
-    closeModal('modalAddItem');
-    document.getElementById('newItemLabel').value='';
-    showToast('Item added!');
-  } catch(e) { showToast('Error: '+e.message); }
-}
-
 async function toggleItem(itemId, checked, clId) {
   try {
     await apiFetch('/checklists/items/'+itemId, {method:'PATCH', body:JSON.stringify({is_checked:checked})});
@@ -610,7 +612,14 @@ async function loadHubNotes() {
 
   // Populate notes textarea
   const notesEl = document.getElementById('hubTripNotesEdit');
+  const notesView = document.getElementById('hubNotesView');
   if (notesEl) notesEl.value = trip.notes || '';
+  if (notesView) {
+    notesView.textContent = trip.notes || 'No notes yet. Click ✏️ Edit to add notes.';
+    notesView.style.color = trip.notes ? '#475569' : '#94a3b8';
+  }
+  // Start in view mode
+  if (typeof toggleNotesEdit === 'function') toggleNotesEdit(false);
 
   const tipEl   = document.getElementById('hubAiTip');
   const tipText = document.getElementById('hubAiTipText');
@@ -668,6 +677,7 @@ async function saveTripNotes() {
     const trip = allTrips.find(t=>t.id===currentTripId);
     if (trip) trip.notes = notes;
     showToast('✅ Notes saved!');
+    toggleNotesEdit(false);
   } catch(e) {
     showToast('Error saving notes: '+e.message);
   }
@@ -1312,7 +1322,7 @@ function budgetCatRow(cat, tripId, fmt) {
 
 async function quickSetBudget(tripId) {
   const amount   = document.getElementById('qb_amount_'+tripId)?.value;
-  const currency = document.getElementById('qb_currency_'+tripId)?.value || 'USD';
+  const currency = document.getElementById('qb_currency_'+tripId)?.value || getCurrency();
   if (!amount) { showToast('Enter a budget amount'); return; }
   try {
     const b = await apiFetch('/budget/'+tripId, {method:'POST',body:JSON.stringify({total_amount:parseFloat(amount),currency})});
@@ -1646,11 +1656,12 @@ function filterReminderByTrip() {
   const val      = document.getElementById('reminderTripFilter')?.value || 'all';
   const search   = (document.getElementById('reminderSearch')?.value || '').toLowerCase();
   const category = document.getElementById('reminderCategoryFilter')?.value || 'all';
+  const showDone = document.getElementById('showDoneReminders')?.checked || false;
   if (val !== 'all') currentTripId = val;
-  renderReminderPage(val, search, category);
+  renderReminderPage(val, search, category, showDone);
 }
 
-function renderReminderPage(tripFilter, search='', categoryFilter='all') {
+function renderReminderPage(tripFilter, search='', categoryFilter='all', showDone=false) {
   const el=document.getElementById('reminderPageContent');
   if(!el) return;
 
@@ -1671,6 +1682,11 @@ function renderReminderPage(tripFilter, search='', categoryFilter='all') {
   // Category filter
   if(categoryFilter && categoryFilter!=='all') {
     reminders=reminders.filter(r=>r.category===categoryFilter);
+  }
+
+  // Hide done unless showDone is checked
+  if(!showDone) {
+    reminders=reminders.filter(r=>!r.is_done);
   }
 
   if(!reminders.length) {
@@ -1711,12 +1727,16 @@ function reminderRow(r) {
   const dt=r.remind_at?new Date(r.remind_at):null;
   const dStr=dt?fmtDate(dt):'';
   const tStr=dt?dt.toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'}):'';
+  const doneStyle = r.is_done ? 'opacity:0.5;' : '';
+  const doneTitle = r.is_done ? 'text-decoration:line-through;color:#94a3b8' : '';
+  const doneLabel = r.is_done ? `<span style="font-size:11px;background:#e8f5e9;color:#16a34a;padding:2px 8px;border-radius:10px">✅ Done${r.done_at?' · '+fmtDate(new Date(r.done_at)):''}</span>` : '';
   return `
-  <div class="reminder-item" style="border:1px solid #e8ecf0;border-radius:10px;padding:14px 16px;margin-bottom:10px;display:flex;justify-content:space-between;align-items:flex-start;gap:12px">
+  <div class="reminder-item" id="reminder_${r.id}" style="border:1px solid #e8ecf0;border-radius:10px;padding:14px 16px;margin-bottom:10px;display:flex;justify-content:space-between;align-items:flex-start;gap:12px;${doneStyle}">
     <div style="flex:1">
       <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;flex-wrap:wrap">
-        <strong>${r.title}</strong>
+        <strong style="${doneTitle}">${r.title}</strong>
         <span class="badge ${badgeClass}">${r.priority}</span>
+        ${doneLabel}
       </div>
       ${r.description?`<p style="font-size:13px;color:#64748b;margin:0 0 4px">${r.description}</p>`:''}
       <div style="font-size:12px;color:#94a3b8;display:flex;gap:8px;flex-wrap:wrap">
@@ -1726,8 +1746,11 @@ function reminderRow(r) {
       </div>
     </div>
     <div style="display:flex;gap:6px;flex-shrink:0;flex-wrap:wrap">
-      <button class="btn-outline small-btn" onclick="openEditPageReminder('${r.id}')">Edit</button>
-      <button class="btn-green small-btn" onclick="markDonePage('${r.id}')">Done</button>
+      ${r.is_done
+        ? `<button class="btn-outline small-btn" onclick="markUndonePage('${r.id}')">↩️ Undo</button>`
+        : `<button class="btn-outline small-btn" onclick="openEditPageReminder('${r.id}')">Edit</button>
+           <button class="btn-green small-btn" onclick="markDonePage('${r.id}')">Done</button>`
+      }
       <button class="btn-outline small-btn" style="color:#ef4444;border-color:#ef4444" onclick="deleteReminder('${r.id}')">🗑</button>
     </div>
   </div>`;
@@ -1809,16 +1832,34 @@ async function saveEditReminder() {
 }
 
 async function markDonePage(id) {
-  try { await apiFetch('/reminders/'+id,{method:'PATCH',body:JSON.stringify({is_done:true})}); } catch{}
-  globalReminders=globalReminders.filter(r=>r.id!==id);
-  tripReminders=tripReminders.filter(r=>r.id!==id);
-  Object.keys(allRemindersByTrip).forEach(tid=>{
-    allRemindersByTrip[tid]=allRemindersByTrip[tid].filter(r=>r.id!==id);
-  });
-  updateReminderStats();
-  renderReminderPage(document.getElementById('reminderTripFilter')?.value||'all');
-  showToast('Done ✓');
+  try {
+    await apiFetch('/reminders/'+id, {method:'PATCH', body:JSON.stringify({is_done:true})});
+    // Update in all arrays — mark done, don't remove
+    const markInArray = (arr) => { const r = arr.find(x=>x.id===id); if(r) { r.is_done=true; r.done_at=new Date().toISOString(); } };
+    markInArray(globalReminders);
+    markInArray(tripReminders);
+    Object.values(allRemindersByTrip).forEach(markInArray);
+    updateReminderStats();
+    filterReminderByTrip();
+    if (document.getElementById('page-tripHub')?.classList.contains('active')) renderHubReminders();
+    showToast('✅ Reminder marked as done!');
+  } catch(e) { showToast('Error: '+e.message); }
 }
+
+async function markUndonePage(id) {
+  try {
+    await apiFetch('/reminders/'+id, {method:'PATCH', body:JSON.stringify({is_done:false})});
+    const markInArray = (arr) => { const r = arr.find(x=>x.id===id); if(r) { r.is_done=false; r.done_at=null; } };
+    markInArray(globalReminders);
+    markInArray(tripReminders);
+    Object.values(allRemindersByTrip).forEach(markInArray);
+    updateReminderStats();
+    filterReminderByTrip();
+    if (document.getElementById('page-tripHub')?.classList.contains('active')) renderHubReminders();
+    showToast('Reminder restored!');
+  } catch(e) { showToast('Error: '+e.message); }
+}
+window.markUndonePage = markUndonePage;
 
 async function markDone(id) { return markDonePage(id); }
 
@@ -2639,11 +2680,12 @@ async function openSmartReminders() {
 
   const listEl = document.getElementById('reminderSuggestionsList');
   listEl.innerHTML = `<div style="text-align:center;padding:20px;color:#94a3b8">Generating suggestions…</div>`;
-  showAILoading('🔔 Generating smart reminders…', `Based on your ${destination} trip`);
 
   const startDate  = trip.start_date ? new Date(trip.start_date) : null;
   const daysUntil  = startDate ? Math.ceil((startDate - new Date()) / 86400000) : null;
   const destination = trip.destination;
+
+  showAILoading('🔔 Generating smart reminders…', `Based on your ${destination} trip`);
 
   try {
     const res = await apiFetch('/assistant/chat', {
@@ -2866,7 +2908,7 @@ let _exchangeRates = null;
 async function convertCurrency() {
   const amount = parseFloat(document.getElementById('convAmount')?.value) || 0;
   const from   = document.getElementById('convFrom')?.value || 'PHP';
-  const to     = document.getElementById('convTo')?.value || 'USD';
+  const to     = document.getElementById('convTo')?.value || getCurrency();
   const resEl  = document.getElementById('convResult');
   const rateEl = document.getElementById('convRate');
 
@@ -2874,7 +2916,7 @@ async function convertCurrency() {
 
   try {
     if (!_exchangeRates || _exchangeRates._base !== from) {
-      const r = await fetch(`https://api.frankfurter.app/latest?from=${from}`);
+      const r = await fetch(`https://api.frankfurter.dev/v1/latest?from=${from}`);
       const d = await r.json();
       _exchangeRates = { ...d.rates, [from]: 1, _base: from };
     }
@@ -3307,3 +3349,35 @@ Return ONLY the JSON, no explanation, no markdown.`
   }
 }
 window.toggleVoicePlan = toggleVoicePlan;
+
+
+// ============================================================
+//  NOTES VIEW/EDIT TOGGLE
+// ============================================================
+function toggleNotesEdit(editing) {
+  const viewEl   = document.getElementById('hubNotesView');
+  const editEl   = document.getElementById('hubTripNotesEdit');
+  const editBtn  = document.getElementById('notesEditBtn');
+  const saveBtn  = document.getElementById('notesSaveBtn');
+  const cancelBtn= document.getElementById('notesCancelBtn');
+  if (editing) {
+    if (viewEl)    viewEl.style.display = 'none';
+    if (editEl)    { editEl.style.display = 'block'; editEl.focus(); }
+    if (editBtn)   editBtn.style.display = 'none';
+    if (saveBtn)   saveBtn.style.display = 'inline-flex';
+    if (cancelBtn) cancelBtn.style.display = 'inline-flex';
+  } else {
+    const trip = allTrips.find(t=>t.id===currentTripId);
+    const notes = trip?.notes || '';
+    if (viewEl) {
+      viewEl.textContent = notes || 'No notes yet. Click ✏️ Edit to add notes.';
+      viewEl.style.display = 'block';
+      viewEl.style.color = notes ? '#475569' : '#94a3b8';
+    }
+    if (editEl)    { editEl.style.display = 'none'; editEl.value = notes; }
+    if (editBtn)   editBtn.style.display = 'inline-flex';
+    if (saveBtn)   saveBtn.style.display = 'none';
+    if (cancelBtn) cancelBtn.style.display = 'none';
+  }
+}
+window.toggleNotesEdit = toggleNotesEdit;

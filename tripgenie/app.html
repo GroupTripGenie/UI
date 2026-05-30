@@ -293,9 +293,14 @@
                 <div class="card section">
                   <div class="card-header" style="margin-bottom:12px">
                     <h2>📝 Notes</h2>
-                    <button class="btn-outline small-btn" onclick="saveTripNotes()" style="margin-left:auto">💾 Save</button>
+                    <div style="display:flex;gap:6px;margin-left:auto">
+                      <button id="notesEditBtn" class="btn-outline small-btn" onclick="toggleNotesEdit(true)">✏️ Edit</button>
+                      <button id="notesSaveBtn" class="btn-primary small-btn" onclick="saveTripNotes()" style="display:none">💾 Save</button>
+                      <button id="notesCancelBtn" class="btn-outline small-btn" onclick="toggleNotesEdit(false)" style="display:none">Cancel</button>
+                    </div>
                   </div>
-                  <textarea id="hubTripNotesEdit" placeholder="Jot down anything you want to remember for this trip…" style="width:100%;min-height:160px;padding:12px;border:1.5px solid #e8ecf0;border-radius:10px;font-size:13px;font-family:inherit;outline:none;resize:vertical;box-sizing:border-box;line-height:1.6"></textarea>
+                  <div id="hubNotesView" style="font-size:13px;color:#475569;line-height:1.7;white-space:pre-wrap;padding:12px;min-height:60px"></div>
+                  <textarea id="hubTripNotesEdit" style="display:none" placeholder="Jot down anything you want to remember for this trip…" style="width:100%;min-height:160px;padding:12px;border:1.5px solid #e8ecf0;border-radius:10px;font-size:13px;font-family:inherit;outline:none;resize:vertical;box-sizing:border-box;line-height:1.6"></textarea>
                 </div>
               </div>
 
@@ -575,6 +580,9 @@
                 <option value="Documents">📄 Documents</option>
                 <option value="Money">💰 Money</option>
               </select>
+              <label style="display:flex;align-items:center;gap:6px;font-size:13px;color:#64748b;cursor:pointer;white-space:nowrap">
+                <input type="checkbox" id="showDoneReminders" onchange="filterReminderByTrip()" style="accent-color:#068cdf"> Show Done
+              </label>
             </div>
             <div class="stats-grid three-col" style="margin-bottom:20px">
               <div class="stat-card"><div><p class="stat-label">High Priority</p><p class="stat-value" id="statHighPriority">—</p></div></div>
@@ -1342,8 +1350,8 @@
       </div>
       <div class="modal-body">
         <div style="display:flex;gap:8px;margin-bottom:12px;align-items:center">
-          <input type="number" id="convAmount" placeholder="Amount" oninput="convertCurrency()" style="flex:1;padding:10px 12px;border:1.5px solid #e8ecf0;border-radius:8px;font-size:14px;font-family:inherit;outline:none"/>
-          <select id="convFrom" onchange="convertCurrency()" style="padding:10px 12px;border:1.5px solid #e8ecf0;border-radius:8px;font-size:14px;font-family:inherit;outline:none">
+          <input type="number" id="convAmount" placeholder="Enter amount" oninput="convertCurrency()" style="flex:1;min-width:0;padding:10px 12px;border:1.5px solid #e8ecf0;border-radius:8px;font-size:14px;font-family:inherit;outline:none"/>
+          <select id="convFrom" onchange="convertCurrency()" style="padding:10px 8px;border:1.5px solid #e8ecf0;border-radius:8px;font-size:14px;font-family:inherit;outline:none;width:80px;flex-shrink:0">
             <option value="PHP">PHP</option><option value="USD">USD</option><option value="EUR">EUR</option>
             <option value="GBP">GBP</option><option value="JPY">JPY</option><option value="SGD">SGD</option>
             <option value="KRW">KRW</option><option value="AUD">AUD</option><option value="THB">THB</option>
@@ -1351,8 +1359,8 @@
         </div>
         <div style="text-align:center;font-size:20px;margin:8px 0">⇅</div>
         <div style="display:flex;gap:8px;margin-bottom:16px;align-items:center">
-          <div id="convResult" style="flex:1;padding:10px 12px;border:1.5px solid #e8ecf0;border-radius:8px;font-size:16px;font-weight:700;color:#063937;background:#f8fafc">—</div>
-          <select id="convTo" onchange="convertCurrency()" style="padding:10px 12px;border:1.5px solid #e8ecf0;border-radius:8px;font-size:14px;font-family:inherit;outline:none">
+          <div id="convResult" style="flex:1;min-width:0;padding:10px 12px;border:1.5px solid #e8ecf0;border-radius:8px;font-size:16px;font-weight:700;color:#063937;background:#f8fafc">—</div>
+          <select id="convTo" onchange="convertCurrency()" style="padding:10px 8px;border:1.5px solid #e8ecf0;border-radius:8px;font-size:14px;font-family:inherit;outline:none;width:80px;flex-shrink:0">
             <option value="USD">USD</option><option value="PHP">PHP</option><option value="EUR">EUR</option>
             <option value="GBP">GBP</option><option value="JPY">JPY</option><option value="SGD">SGD</option>
             <option value="KRW">KRW</option><option value="AUD">AUD</option><option value="THB">THB</option>
@@ -1368,6 +1376,7 @@
     <div class="ai-loading-spinner"></div>
     <div class="ai-loading-text" id="aiLoadingText">✨ Generating your itinerary…</div>
     <div class="ai-loading-sub" id="aiLoadingSub">This may take 15–30 seconds</div>
+    <div class="ai-loading-dots"><span></span><span></span><span></span></div>
   </div>
 
   <!-- Floating mic button -->

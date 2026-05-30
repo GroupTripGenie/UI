@@ -1253,3 +1253,48 @@ body.dark #voicePlanBtn { background:#252d3d !important; border-color:#2d3748 !i
 body.dark #voicePlanBtn:hover { border-color:#068cdf !important; }
 body.dark #voicePlanBanner { background:linear-gradient(135deg,rgba(6,140,223,0.08),rgba(6,57,55,0.08)) !important; border-color:rgba(6,140,223,0.3) !important; }
 body.dark #voicePlanStatus { color:#f1f5f9 !important; }
+
+/* ── Animated loading bar ────────────────────────────────────── */
+.progress-fill {
+  transition: width 0.5s ease;
+  position: relative;
+  overflow: hidden;
+}
+.progress-fill::after {
+  content: '';
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+  animation: progressShine 1.5s infinite;
+}
+@keyframes progressShine {
+  0%   { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+/* ── AI loading spinner animation ────────────────────────────── */
+.ai-loading-dots {
+  display: flex;
+  gap: 6px;
+  margin-top: 8px;
+}
+.ai-loading-dots span {
+  width: 8px; height: 8px;
+  background: rgba(255,255,255,0.5);
+  border-radius: 50%;
+  animation: dotBounce 1.2s infinite;
+}
+.ai-loading-dots span:nth-child(2) { animation-delay: 0.15s; }
+.ai-loading-dots span:nth-child(3) { animation-delay: 0.3s; }
+@keyframes dotBounce {
+  0%,80%,100% { transform:scale(0.6);opacity:0.3 }
+  40% { transform:scale(1);opacity:1 }
+}
+
+/* ── Reminder done styling ───────────────────────────────────── */
+.reminder-done { opacity: 0.5; }
+.reminder-done .reminder-title { text-decoration: line-through; }
+
+/* ── Notes view mode dark ────────────────────────────────────── */
+body.dark #hubNotesView { color: #94a3b8 !important; }
