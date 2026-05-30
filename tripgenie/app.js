@@ -3144,3 +3144,166 @@ window.filterDashTrips = filterDashTrips;
 // ============================================================
 // Override smallTripCard to include status badge
 const _origSmallTripCard = window.smallTripCard || smallTripCard;
+
+// ============================================================
+//  VOICE INPUT FOR PLAN TRIP
+// ============================================================
+let voicePlanRecognition = null;
+let voicePlanActive      = false;
+
+function toggleVoicePlan() {
+  if (voicePlanActive) {
+    stopVoicePlan();
+  } else {
+    startVoicePlan();
+  }
+}
+
+function startVoicePlan() {
+  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SpeechRecognition) {
+    showToast('Voice input is not supported in this browser. Try Chrome!');
+    return;
+  }
+
+  voicePlanRecognition = new SpeechRecognition();
+  voicePlanRecognition.continuous    = false;
+  voicePlanRecognition.interimResults = true;
+  voicePlanRecognition.lang           = 'en-US';
+
+  const btn    = document.getElementById('voicePlanBtn');
+  const banner = document.getElementById('voicePlanBanner');
+  const status = document.getElementById('voicePlanStatus');
+
+  voicePlanActive = true;
+  if (btn)    { btn.style.background = '#fee2e2'; btn.style.borderColor = '#ef4444'; btn.textContent = '⏹️'; }
+  if (banner) banner.style.display = 'block';
+  if (status) status.textContent = 'Listening… speak your trip details';
+
+  voicePlanRecognition.onresult = (e) => {
+    const transcript = Array.from(e.results).map(r => r[0].transcript).join('');
+    if (status) status.textContent = `"${transcript}"`;
+    if (e.results[0].isFinal) {
+      stopVoicePlan();
+      parseVoiceInput(transcript);
+    }
+  };
+
+  voicePlanRecognition.onerror = (e) => {
+    stopVoicePlan();
+    if (e.error === 'no-speech') showToast('No speech detected. Try again!');
+    else showToast('Voice error: ' + e.error);
+  };
+
+  voicePlanRecognition.onend = () => {
+    if (voicePlanActive) stopVoicePlan();
+  };
+
+  voicePlanRecognition.start();
+}
+
+function stopVoicePlan() {
+  voicePlanActive = false;
+  if (voicePlanRecognition) { try { voicePlanRecognition.stop(); } catch(e){} }
+  const btn    = document.getElementById('voicePlanBtn');
+  const banner = document.getElementById('voicePlanBanner');
+  if (btn)    { btn.style.background = 'white'; btn.style.borderColor = '#e8ecf0'; btn.textContent = '🎤'; }
+  if (banner) setTimeout(() => { banner.style.display = 'none'; }, 2000);
+}
+
+async function parseVoiceInput(transcript) {
+  const status = document.getElementById('voicePlanStatus');
+  if (status) status.textContent = '🧞 Extracting trip details…';
+  showAILoading('🎤 Processing your voice input…', 'Extracting trip details from what you said');
+
+  try {
+    const today = new Date().toLocaleDateString('en-US', { month:'long', day:'numeric', year:'numeric' });
+    const res = await apiFetch('/assistant/chat', {
+      method: 'POST',
+      body: JSON.stringify({
+        message: `Extract trip planning details from this voice input and return ONLY a JSON object.
+Today's date is ${today}.
+
+Voice input: "${transcript}"
+
+Extract these fields (use null if not mentioned):
+{
+  "destination": "city/country name",
+  "startDate": "YYYY-MM-DD format, calculate from today if relative like 'next month'",
+  "endDate": "YYYY-MM-DD format",
+  "days": number of days if mentioned,
+  "budget": number only (no currency symbols),
+  "currency": "PHP, USD, EUR, etc — default PHP if peso/pesos mentioned",
+  "interests": ["array", "of", "interests"],
+  "pace": "Relaxed or Moderate or Intensive",
+  "notes": "any special requirements mentioned"
+}
+
+Return ONLY the JSON, no explanation, no markdown.`
+      })
+    });
+
+    hideAILoading();
+
+    // Parse the JSON response
+    let data;
+    try {
+      const clean = res.reply.replace(/```json|```/g, '').trim();
+      data = JSON.parse(clean);
+    } catch(e) {
+      showToast('Could not parse voice input. Please fill the form manually.');
+      if (status) status.textContent = 'Could not parse. Please fill manually.';
+      return;
+    }
+
+    // Fill form fields
+    let filled = [];
+    if (data.destination) {
+      const el = document.getElementById('destination');
+      if (el) { el.value = data.destination; filled.push('Destination'); }
+    }
+    if (data.startDate) {
+      const el = document.getElementById('startDate');
+      if (el) { el.value = data.startDate; filled.push('Start date'); }
+    }
+    if (data.endDate) {
+      const el = document.getElementById('endDate');
+      if (el) { el.value = data.endDate; filled.push('End date'); }
+    }
+    if (data.budget) {
+      const el = document.getElementById('budgetAmount');
+      if (el) { el.value = data.budget; filled.push('Budget'); }
+    }
+    if (data.currency) {
+      const el = document.getElementById('budgetCurrency');
+      if (el) el.value = data.currency;
+    }
+    if (data.pace) {
+      document.querySelectorAll('.pace-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.textContent.trim().toLowerCase() === data.pace.toLowerCase());
+      });
+      filled.push('Pace');
+    }
+    if (data.interests && data.interests.length) {
+      document.querySelectorAll('.interest-btn').forEach(btn => {
+        const text = btn.textContent.trim().toLowerCase();
+        const match = data.interests.some(i => text.includes(i.toLowerCase()) || i.toLowerCase().includes(text.replace(/[^\w]/g,'')));
+        if (match) btn.classList.add('active');
+      });
+      filled.push('Interests');
+    }
+    if (data.notes) {
+      const el = document.getElementById('tripNotes');
+      if (el) { el.value = data.notes; filled.push('Notes'); }
+    }
+
+    if (status) status.textContent = `✅ Filled: ${filled.join(', ')}`;
+    showToast(`✅ Got it! Filled in: ${filled.join(', ')}. Review and adjust if needed.`);
+
+  } catch(e) {
+    hideAILoading();
+    showToast('Error processing voice: ' + e.message);
+    if (status) status.textContent = 'Error. Please fill manually.';
+  }
+}
+window.toggleVoicePlan = toggleVoicePlan;

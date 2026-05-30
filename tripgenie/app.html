@@ -369,8 +369,20 @@
               <!-- Validation errors -->
               <div id="planValidation" style="display:none;background:#fee2e2;border:1px solid #fca5a5;color:#dc2626;font-size:13px;padding:12px 14px;border-radius:8px;margin-top:8px"></div>
 
-              <!-- Two action buttons -->
-              <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:8px">
+              <!-- Voice input banner -->
+              <div id="voicePlanBanner" style="display:none;padding:12px 16px;background:linear-gradient(135deg,rgba(6,57,55,0.06),rgba(6,140,223,0.06));border:1.5px solid rgba(6,140,223,0.3);border-radius:10px;margin-top:8px;text-align:center">
+                <div style="display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:4px">
+                  <div id="voicePlanDot" style="width:10px;height:10px;background:#ef4444;border-radius:50%;animation:pulse 1s infinite"></div>
+                  <span id="voicePlanStatus" style="font-size:13px;font-weight:600;color:#063937">Listening… speak your trip details</span>
+                </div>
+                <p style="font-size:12px;color:#64748b;margin:0">e.g. "Tokyo, 5 days, June 15, budget 80000 pesos, food and culture, moderate pace"</p>
+              </div>
+
+              <!-- Three action buttons -->
+              <div style="display:grid;grid-template-columns:auto 1fr 1fr;gap:10px;margin-top:8px;align-items:stretch">
+                <button id="voicePlanBtn" onclick="toggleVoicePlan()" title="Speak your trip details" style="padding:14px 16px;border:1.5px solid #e8ecf0;border-radius:10px;background:white;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all 0.2s;font-size:20px">
+                  🎤
+                </button>
                 <button class="btn-outline large-btn" onclick="createMyOwnTrip()" style="padding:14px">
                   ✏️ Create My Own Trip
                 </button>

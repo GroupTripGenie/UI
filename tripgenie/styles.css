@@ -1247,3 +1247,9 @@ body.dark #hubCountdownSub  { color:#94a3b8 !important; }
 body.dark .badge-upcoming  { background:rgba(6,140,223,0.2); color:#60c8f5; }
 body.dark .badge-ongoing   { background:rgba(34,197,94,0.15); color:#4ade80; }
 body.dark .badge-completed { background:rgba(100,116,139,0.2); color:#94a3b8; }
+
+/* ── Voice Plan button dark mode ─────────────────────────────── */
+body.dark #voicePlanBtn { background:#252d3d !important; border-color:#2d3748 !important; }
+body.dark #voicePlanBtn:hover { border-color:#068cdf !important; }
+body.dark #voicePlanBanner { background:linear-gradient(135deg,rgba(6,140,223,0.08),rgba(6,57,55,0.08)) !important; border-color:rgba(6,140,223,0.3) !important; }
+body.dark #voicePlanStatus { color:#f1f5f9 !important; }
