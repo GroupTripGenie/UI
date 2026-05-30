@@ -1717,24 +1717,37 @@ function renderReminderPage(tripFilter, search='', categoryFilter='all', showDon
   allTrips.forEach(t=>tripMap[t.id]=t.destination);
 
   if(tripFilter==='all') {
+    const catIcons={'Flight':'✈️','Hotel':'🏨','High Priority':'🔴','Documents':'📄','Money':'💰','Packing':'🧳','Health':'💊','General':'📌'};
+    // Group by category
     const grouped={};
+    const catOrder=['High Priority','Flight','Hotel','Documents','Money','Packing','Health','General'];
     reminders.forEach(r=>{
       const key=r.category||'General';
       if(!grouped[key]) grouped[key]=[];
       grouped[key].push(r);
     });
-    const catIcons={'Flight':'✈️','Hotel':'🏨','High Priority':'🔴','Documents':'📄','Money':'💰','Packing':'🧳','Health':'💊','General':'📌'};
+    // Sort categories: known ones first, then alphabetical
+    const sortedCats = Object.keys(grouped).sort((a,b)=>{
+      const ai=catOrder.indexOf(a), bi=catOrder.indexOf(b);
+      if(ai>=0&&bi>=0) return ai-bi;
+      if(ai>=0) return -1; if(bi>=0) return 1;
+      return a.localeCompare(b);
+    });
     let html='';
-    Object.entries(grouped).forEach(([cat,rems])=>{
+    sortedCats.forEach(cat=>{
+      const rems=grouped[cat];
       const icon=catIcons[cat]||'📌';
-      html+=`<div style="margin-bottom:20px">
-        <h3 style="font-size:14px;color:#64748b;margin-bottom:10px;display:flex;align-items:center;gap:6px">
-          ${icon} ${cat}
-        </h3>
+      const done=rems.filter(r=>r.is_done).length;
+      html+=`<div style="margin-bottom:24px">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;padding-bottom:6px;border-bottom:1.5px solid #e8ecf0">
+          <span style="font-size:16px">${icon}</span>
+          <h3 style="font-size:14px;font-weight:700;color:#063937;margin:0">${cat}</h3>
+          <span style="font-size:12px;color:#94a3b8;margin-left:auto">${rems.length - done} active${done>0?' · '+done+' done':''}</span>
+        </div>
         ${rems.map(r=>reminderRow(r)).join('')}
       </div>`;
     });
-    el.innerHTML=html;
+    el.innerHTML=html||emptyHTML('🔔',"No reminders",'','','');
   } else {
     el.innerHTML=reminders.map(r=>reminderRow(r)).join('');
   }
@@ -1748,6 +1761,8 @@ function reminderRow(r) {
   const doneStyle = r.is_done ? 'opacity:0.5;' : '';
   const doneTitle = r.is_done ? 'text-decoration:line-through;color:#94a3b8' : '';
   const doneLabel = r.is_done ? `<span style="font-size:11px;background:#e8f5e9;color:#16a34a;padding:2px 8px;border-radius:10px">✅ Done${r.done_at?' · '+fmtDate(new Date(r.done_at)):''}</span>` : '';
+  const _trip = allTrips.find(t=>t.id===r.trip_id);
+  const tripName = _trip ? ('✈️ '+_trip.destination) : (r.trip_id ? '✈️ Trip' : '📌 General');
   return `
   <div class="reminder-item" id="reminder_${r.id}" style="border:1px solid #e8ecf0;border-radius:10px;padding:14px 16px;margin-bottom:10px;display:flex;justify-content:space-between;align-items:flex-start;gap:12px;${doneStyle}">
     <div style="flex:1">
@@ -1803,11 +1818,12 @@ async function saveReminder() {
   const remind_at=date&&time?new Date(date+'T'+time).toISOString():date?new Date(date+'T00:00').toISOString():new Date().toISOString();
   try {
     const r=await apiFetch('/reminders',{method:'POST',body:JSON.stringify({title,description:desc,remind_at,priority:pri,category:cat,trip_id:currentTripId||null})});
-    globalReminders.unshift(r);
+    // Add to global arrays (avoid duplicates)
+    if (!globalReminders.find(x=>x.id===r.id)) globalReminders.unshift(r);
     const tid=r.trip_id||'none';
     if(!allRemindersByTrip[tid]) allRemindersByTrip[tid]=[];
-    allRemindersByTrip[tid].unshift(r);
-    tripReminders.unshift(r);
+    if (!allRemindersByTrip[tid].find(x=>x.id===r.id)) allRemindersByTrip[tid].unshift(r);
+    if (!tripReminders.find(x=>x.id===r.id)) tripReminders.unshift(r);
     closeModal('modalAddReminder');
     // Reset form
     document.getElementById('newReminderTitle').value='';
@@ -1853,29 +1869,26 @@ async function saveEditReminder() {
 async function markDonePage(id) {
   try {
     await apiFetch('/reminders/'+id, {method:'PATCH', body:JSON.stringify({is_done:true})});
-    // Update in all arrays — mark done, don't remove
-    const markInArray = (arr) => { const r = arr.find(x=>x.id===id); if(r) { r.is_done=true; r.done_at=new Date().toISOString(); } };
-    markInArray(globalReminders);
-    markInArray(tripReminders);
-    Object.values(allRemindersByTrip).forEach(markInArray);
+    const update = (arr) => { const r = arr.find(x=>x.id===id); if(r) { r.is_done=true; r.done_at=new Date().toISOString(); } };
+    update(globalReminders); update(tripReminders);
+    Object.values(allRemindersByTrip).forEach(update);
     updateReminderStats();
-    filterReminderByTrip();
+    if (document.getElementById('page-reminders')?.classList.contains('active')) filterReminderByTrip();
     if (document.getElementById('page-tripHub')?.classList.contains('active')) renderHubReminders();
-    showToast('✅ Reminder marked as done!');
+    showToast('✅ Marked as done!');
   } catch(e) { showToast('Error: '+e.message); }
 }
 
 async function markUndonePage(id) {
   try {
     await apiFetch('/reminders/'+id, {method:'PATCH', body:JSON.stringify({is_done:false})});
-    const markInArray = (arr) => { const r = arr.find(x=>x.id===id); if(r) { r.is_done=false; r.done_at=null; } };
-    markInArray(globalReminders);
-    markInArray(tripReminders);
-    Object.values(allRemindersByTrip).forEach(markInArray);
+    const update = (arr) => { const r = arr.find(x=>x.id===id); if(r) { r.is_done=false; r.done_at=null; } };
+    update(globalReminders); update(tripReminders);
+    Object.values(allRemindersByTrip).forEach(update);
     updateReminderStats();
-    filterReminderByTrip();
+    if (document.getElementById('page-reminders')?.classList.contains('active')) filterReminderByTrip();
     if (document.getElementById('page-tripHub')?.classList.contains('active')) renderHubReminders();
-    showToast('Reminder restored!');
+    showToast('↩️ Reminder restored!');
   } catch(e) { showToast('Error: '+e.message); }
 }
 window.markUndonePage = markUndonePage;
