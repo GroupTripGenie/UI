@@ -688,7 +688,7 @@ async function loadHubReminders() {
   if (!el) return;
   el.innerHTML = loadingHTML('Loading reminders…');
   try {
-    tripReminders = await apiFetch('/reminders?tripId='+currentTripId+'&done=false');
+    tripReminders = await apiFetch('/reminders?tripId='+currentTripId);
     renderHubReminders();
   } catch { tripReminders = []; renderHubReminders(); }
 }
@@ -696,33 +696,50 @@ async function loadHubReminders() {
 function renderHubReminders() {
   const el = document.getElementById('hubReminderContent');
   if (!el) return;
-  const btn = `<div style="text-align:right;margin-bottom:12px"><button class="btn-primary small-btn" onclick="openModal('modalAddReminder')">+ Add Reminder</button></div>`;
-  if (!tripReminders.length) {
+  const showDone = window._hubShowDoneReminders || false;
+  const visible = showDone ? tripReminders : tripReminders.filter(r => !r.is_done);
+  const doneCount = tripReminders.filter(r => r.is_done).length;
+
+  const btn = `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+    <button class="btn-primary small-btn" onclick="openModal('modalAddReminder')">+ Add Reminder</button>
+    ${doneCount > 0 ? `<label style="display:flex;align-items:center;gap:6px;font-size:12px;color:#64748b;cursor:pointer">
+      <input type="checkbox" ${showDone?'checked':''} onchange="window._hubShowDoneReminders=this.checked;renderHubReminders()" style="accent-color:#068cdf"> Show Done (${doneCount})
+    </label>` : ''}
+  </div>`;
+
+  if (!visible.length) {
     el.innerHTML = btn + emptyHTML('🔔',"No reminders yet",'Add reminders for this trip!','','');
     return;
   }
-  el.innerHTML = btn + tripReminders.map(r => {
+  el.innerHTML = btn + visible.map(r => {
     const badgeClass = {low:'badge-low',medium:'badge-medium',high:'badge-high'}[r.priority]||'badge-medium';
     const dt   = r.remind_at ? new Date(r.remind_at) : null;
     const dStr = dt ? fmtDate(dt) : '';
     const tStr = dt ? dt.toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'}) : '';
+    const doneStyle = r.is_done ? 'opacity:0.5;' : '';
+    const doneTitle = r.is_done ? 'text-decoration:line-through;color:#94a3b8' : '';
+    const doneBadge = r.is_done ? `<span style="font-size:11px;background:#e8f5e9;color:#16a34a;padding:2px 8px;border-radius:10px">✅ Done</span>` : '';
     return `
-    <div class="reminder-item" data-rem-id="${r.id}" style="border:1px solid #e8ecf0;border-radius:10px;padding:14px 16px;margin-bottom:10px;display:flex;justify-content:space-between;align-items:flex-start;gap:12px">
+    <div class="reminder-item" style="border:1px solid #e8ecf0;border-radius:10px;padding:14px 16px;margin-bottom:10px;display:flex;justify-content:space-between;align-items:flex-start;gap:12px;${doneStyle}">
       <div>
-        <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
-          <strong>${r.title}</strong>
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;flex-wrap:wrap">
+          <strong style="${doneTitle}">${r.title}</strong>
           <span class="badge ${badgeClass}">${r.priority}</span>
+          ${doneBadge}
         </div>
         ${r.description?`<p style="font-size:13px;color:#64748b;margin:0 0 4px">${r.description}</p>`:''}
-        <div style="font-size:12px;color:#94a3b8;display:flex;gap:8px">
+        <div style="font-size:12px;color:#94a3b8;display:flex;gap:8px;flex-wrap:wrap">
           ${dStr?`<span>📅 ${dStr}</span>`:''}
           ${tStr?`<span>🕐 ${tStr}</span>`:''}
           ${r.category?`<span class="tag">${r.category}</span>`:''}
         </div>
       </div>
       <div style="display:flex;gap:6px;flex-shrink:0">
-        <button class="btn-outline small-btn" onclick="openEditReminderModal('${r.id}')">Edit</button>
-        <button class="btn-green small-btn" onclick="markDone('${r.id}')">Done</button>
+        ${r.is_done
+          ? `<button class="btn-outline small-btn" onclick="markUndonePage('${r.id}')">↩️ Undo</button>`
+          : `<button class="btn-outline small-btn" onclick="openEditReminderModal('${r.id}')">Edit</button>
+             <button class="btn-green small-btn" onclick="markDone('${r.id}')">Done</button>`
+        }
       </div>
     </div>`;
   }).join('');
@@ -1576,13 +1593,14 @@ async function saveItem() {
   try {
     const item = await apiFetch('/checklists/'+clId+'/items',{method:'POST',body:JSON.stringify({label})});
     // Update allChecklistsByTrip
+    let alreadyAdded = false;
     for (const tripId of Object.keys(allChecklistsByTrip)) {
       const cl = allChecklistsByTrip[tripId]?.find(c=>c.id===clId);
-      if (cl) { cl.items=cl.items||[]; cl.items.push(item); break; }
+      if (cl) { cl.items=cl.items||[]; cl.items.push(item); alreadyAdded = true; break; }
     }
-    // Update tripChecklists (hub)
+    // Update tripChecklists (hub) — only if it's a different object
     const cl2 = tripChecklists.find(c=>c.id===clId);
-    if (cl2) { cl2.items=cl2.items||[]; cl2.items.push(item); }
+    if (cl2 && !alreadyAdded) { cl2.items=cl2.items||[]; cl2.items.push(item); }
     closeModal('modalAddItem');
     document.getElementById('newItemLabel').value='';
     showToast('Item added!');
@@ -1623,7 +1641,7 @@ async function loadReminderPage() {
   el.innerHTML = loadingHTML('Loading reminders…');
   populateTripFilters();
   try {
-    globalReminders = await apiFetch('/reminders?done=false');
+    globalReminders = await apiFetch('/reminders');
     // Group by trip
     allRemindersByTrip={};
     globalReminders.forEach(r => {
@@ -1743,6 +1761,7 @@ function reminderRow(r) {
         ${dStr?`<span>📅 ${dStr}</span>`:''}
         ${tStr?`<span>🕐 ${tStr}</span>`:''}
         ${r.category?`<span class="tag">${r.category}</span>`:''}
+        <span style="font-weight:500">${tripName}</span>
       </div>
     </div>
     <div style="display:flex;gap:6px;flex-shrink:0;flex-wrap:wrap">
@@ -2875,27 +2894,49 @@ async function addPackingListToChecklist() {
   const items = (window._packingItems || []).filter((_, i) => document.getElementById(`packItem_${i}`)?.checked);
   if (!items.length) { showToast('Select at least one item'); return; }
 
+  // Disable button to prevent double-click
+  const btn = document.querySelector('#modalPackingList .btn-primary');
+  if (btn) { btn.disabled = true; btn.textContent = '⏳ Adding…'; }
+  showAILoading('🧳 Creating checklists…', `Adding ${items.length} items`);
+
   try {
-    // Create a new checklist
-    const cl = await apiFetch('/checklists', {
-      method:'POST', body:JSON.stringify({ trip_id: currentTripId, title:'Packing List', icon:'🧳' })
+    // Group items by category
+    const grouped = {};
+    items.forEach(i => {
+      const cat = (i.cat || '🧳 Miscellaneous').replace(/^[^\w]*/, '').trim();
+      const cleanCat = i.cat || '🧳 Miscellaneous';
+      if (!grouped[cleanCat]) grouped[cleanCat] = [];
+      grouped[cleanCat].push(i.item);
     });
-    cl.items = [];
-    // Add all items
-    for (const i of items) {
-      const item = await apiFetch(`/checklists/${cl.id}/items`, {
-        method:'POST', body:JSON.stringify({ label: i.item })
+
+    // Create a separate checklist for each category
+    for (const [catName, catItems] of Object.entries(grouped)) {
+      const cl = await apiFetch('/checklists', {
+        method: 'POST',
+        body: JSON.stringify({ trip_id: currentTripId, title: catName, icon: '🧳' })
       });
-      cl.items.push(item);
+      cl.items = [];
+      for (const label of catItems) {
+        const item = await apiFetch(`/checklists/${cl.id}/items`, {
+          method: 'POST', body: JSON.stringify({ label })
+        });
+        cl.items.push(item);
+      }
+      tripChecklists.unshift(cl);
+      if (!allChecklistsByTrip[currentTripId]) allChecklistsByTrip[currentTripId] = [];
+      allChecklistsByTrip[currentTripId].unshift(cl);
     }
-    // Update local state
-    tripChecklists.unshift(cl);
-    if (!allChecklistsByTrip[currentTripId]) allChecklistsByTrip[currentTripId]=[];
-    allChecklistsByTrip[currentTripId].unshift(cl);
+
     renderHubChecklists();
+    hideAILoading();
     closeModal('modalPackingList');
-    showToast(`✅ Added ${items.length} items to Packing List checklist!`);
-  } catch(e) { showToast('Error: '+e.message); }
+    showToast(`✅ Created ${Object.keys(grouped).length} checklists with ${items.length} items!`);
+  } catch(e) {
+    hideAILoading();
+    showToast('Error: ' + e.message);
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = '+ Add to Checklist'; }
+  }
 }
 window.openAIPackingList         = openAIPackingList;
 window.addPackingListToChecklist = addPackingListToChecklist;
