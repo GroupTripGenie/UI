@@ -994,14 +994,16 @@ function parseItineraryToDays(reply) {
       if (currentDay) days.push(currentDay);
       currentDay = { title: l, activities: [] };
     } else if (l && currentDay) {
-      const timeMatch = l.match(/^[🕐🕑🕒🕓🕔🕕🕖🕗🕘🕙🕚🕛🕜🕝🕞🕟🕠🕡🕢🕣🕤🕥🕦🕧]?\s*(\d{1,2}:\d{2}\s*(?:AM|PM)?)\s*[-–]\s*/i);
+     // Strip any leading clock emoji or bullet
+      const stripped = l.replace(/^[\u{1F550}-\u{1F567}⏰🕐-🕧]\s*/u, '').replace(/^[-•*]\s*/,'').trim();
+      // Match time at start: "9:00 AM - X" or "9:00 - X" or "9:00AM - X"
+      const timeMatch = stripped.match(/^(\d{1,2}:\d{2}\s*(?:AM|PM)?)\s*[-–:]\s*/i);
       if (timeMatch) {
         const time = timeMatch[1].trim();
-        const desc = l.replace(timeMatch[0], '').replace(/^[🕐🕑🕒🕓🕔🕕🕖🕗🕘🕙🕚🕛🕜🕝🕞🕟🕠🕡🕢🕣🕤🕥🕦🕧]\s*/,'').trim();
+        const desc = stripped.slice(timeMatch[0].length).trim();
         currentDay.activities.push({ time, desc });
       } else {
-        const desc = l.replace(/^[🕐🕑🕒🕓🕔🕕🕖🕗🕘🕙🕚🕛🕜🕝🕞🕟🕠🕡🕢🕣🕤🕥🕦🕧]\s*/,'').trim();
-        currentDay.activities.push({ time: '', desc });
+        currentDay.activities.push({ time: '', desc: stripped });
       }
     }
   });
