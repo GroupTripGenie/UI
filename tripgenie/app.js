@@ -838,8 +838,8 @@ async function createMyOwnTrip() {
   const dest  = document.getElementById('destination')?.value?.trim();
   const startEl = document.getElementById('startDate');
   const endEl   = document.getElementById('endDate');
-  const start   = startEl?.dataset?.isoVal || startEl?.value || '';
-  const end     = endEl?.dataset?.isoVal   || endEl?.value   || '';
+  const start   = startEl?.value || '';
+  const end     = endEl?.value || '';
   const budget= parseFloat(document.getElementById('budgetAmount')?.value)||0;
   const notes = document.getElementById('tripNotes')?.value?.trim()||'';
 
@@ -880,8 +880,8 @@ async function generateItinerary() {
   const dest  = document.getElementById('destination')?.value?.trim();
   const startEl = document.getElementById('startDate');
   const endEl   = document.getElementById('endDate');
-  const start   = startEl?.dataset?.isoVal || startEl?.value || '';
-  const end     = endEl?.dataset?.isoVal   || endEl?.value   || '';
+  const start   = startEl?.value || '';
+  const end     = endEl?.value || '';
   const notes = document.getElementById('tripNotes')?.value?.trim()||'';
   const pace  = document.querySelector('.pace-btn.active')?.textContent?.trim()||'Moderate';
   const interests = [...document.querySelectorAll('.interest-btn.active')].map(b=>b.textContent.trim()).join(', ')||'general sightseeing';
@@ -3542,8 +3542,7 @@ async function confirmSaveItinerary() {
   showToast('✅ Trip & itinerary saved!');
   openTripHub(trip.id);
   window._pendingItinerary = null;
-}
-
+  
 function discardItineraryPreview() {
   var pending = window._pendingItinerary;
   if (!pending) { closeModal('modalItineraryPreview'); return; }
@@ -3785,171 +3784,7 @@ function onStartDateChange() {
 window.onStartDateChange = onStartDateChange;
 
 // ============================================================
-//  CUSTOM DATE PICKER
-// ============================================================
-var _cdpTarget = null;
-var _cdpYear   = 0;
-var _cdpMonth  = 0;
-
-function openDatePicker(inputId) {
-  _cdpTarget = inputId;
-  var inp    = document.getElementById(inputId);
-  var picker = document.getElementById('customDatePicker');
-  if (!inp || !picker) return;
-
-  // Parse existing value
-  var today = new Date();
-  _cdpYear  = today.getFullYear();
-  _cdpMonth = today.getMonth();
-  if (inp.dataset.isoVal) {
-    var d = new Date(inp.dataset.isoVal);
-    _cdpYear  = d.getFullYear();
-    _cdpMonth = d.getMonth();
-  }
-
-  cdpRender();
-
-  // Position below the input
-  var rect = inp.getBoundingClientRect();
-  picker.style.display = 'block';
-  var left = rect.left + window.scrollX;
-  var top  = rect.bottom + window.scrollY + 4;
-  // Keep on screen
-  if (left + 300 > window.innerWidth) left = window.innerWidth - 308;
-  picker.style.left = left + 'px';
-  picker.style.top  = top  + 'px';
-
-  // Close on outside click
-  setTimeout(function() {
-    document.addEventListener('click', cdpOutsideClick, true);
-  }, 10);
-}
-
-function cdpOutsideClick(e) {
-  var picker = document.getElementById('customDatePicker');
-  var isInside = picker && picker.contains(e.target);
-  var isInput  = ['startDate','endDate'].includes(e.target.id);
-  if (!isInside && !isInput) {
-    cdpClose();
-  }
-}
-
-function cdpClose() {
-  var picker = document.getElementById('customDatePicker');
-  if (picker) picker.style.display = 'none';
-  document.removeEventListener('click', cdpOutsideClick, true);
-  _cdpTarget = null;
-}
-
-function cdpChangeMonth(dir) {
-  _cdpMonth += dir;
-  if (_cdpMonth > 11) { _cdpMonth = 0; _cdpYear++; }
-  if (_cdpMonth < 0)  { _cdpMonth = 11; _cdpYear--; }
-  cdpRender();
-}
-
-function cdpRender() {
-  var label = document.getElementById('cdpMonthLabel');
-  var grid  = document.getElementById('cdpDays');
-  if (!label || !grid) return;
-
-  var months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
-  label.textContent = months[_cdpMonth] + ' ' + _cdpYear;
-
-  var first    = new Date(_cdpYear, _cdpMonth, 1).getDay();
-  var daysInM  = new Date(_cdpYear, _cdpMonth + 1, 0).getDate();
-  var today    = new Date();
-  today.setHours(0,0,0,0);
-
-  // Get min date (for endDate, min = startDate)
-  var minISO = null;
-  if (_cdpTarget === 'endDate') {
-    var startInp = document.getElementById('startDate');
-    if (startInp && startInp.dataset.isoVal) minISO = startInp.dataset.isoVal;
-  }
-
-  // Current selected value
-  var selInp  = document.getElementById(_cdpTarget);
-  var selISO  = selInp && selInp.dataset.isoVal ? selInp.dataset.isoVal : null;
-
-  var html = '';
-  // Empty cells before first day
-  for (var i = 0; i < first; i++) html += '<div></div>';
-
-  for (var d = 1; d <= daysInM; d++) {
-    var iso      = _cdpYear + '-' + String(_cdpMonth+1).padStart(2,'0') + '-' + String(d).padStart(2,'0');
-    var isToday  = (iso === today.toISOString().split('T')[0]);
-    var isSel    = (iso === selISO);
-    var disabled = minISO && iso < minISO;
-
-    var bg    = isSel    ? '#068cdf' : isToday ? 'rgba(6,140,223,0.12)' : 'transparent';
-    var color = isSel    ? 'white'   : disabled ? '#94a3b8' : 'var(--text-1)';
-    var fw    = (isSel || isToday) ? '700' : '400';
-    var cur   = disabled ? 'not-allowed' : 'pointer';
-    var onclick = disabled ? '' : 'cdpSelect(\'' + iso + '\')';
-
-    html += '<div onclick="' + onclick + '" style="text-align:center;padding:6px 2px;border-radius:8px;font-size:13px;'
-          + 'background:' + bg + ';color:' + color + ';font-weight:' + fw + ';cursor:' + cur + ';'
-          + 'transition:background 0.1s;" '
-          + 'onmouseover="if(!' + disabled + ')this.style.background=\'' + (isSel?'#068cdf':'rgba(6,140,223,0.12)') + '\'" '
-          + 'onmouseout="this.style.background=\'' + bg + '\'">'
-          + d + '</div>';
-  }
-  grid.innerHTML = html;
-}
-
-function cdpSelect(iso) {
-  var inp = document.getElementById(_cdpTarget);
-  if (!inp) return;
-  // Store ISO value, display formatted
-  inp.dataset.isoVal = iso;
-  var parts = iso.split('-');
-  inp.value = parts[2] + '/' + parts[1] + '/' + parts[0];
-  // Fire onchange for onStartDateChange
-  inp.dispatchEvent(new Event('change'));
-  if (_cdpTarget === 'startDate') onStartDateChange();
-  cdpClose();
-}
-
-function cdpClear() {
-  var inp = document.getElementById(_cdpTarget);
-  if (inp) { inp.value = ''; inp.dataset.isoVal = ''; }
-  cdpClose();
-}
-
-function cdpToday() {
-  var today = new Date().toISOString().split('T')[0];
-  cdpSelect(today);
-}
-
-// Override onStartDateChange to work with custom picker
-function onStartDateChange() {
-  var start = document.getElementById('startDate');
-  var end   = document.getElementById('endDate');
-  if (!start || !end) return;
-  var startISO = start.dataset.isoVal || '';
-  // If end date is before start, clear it
-  if (end.dataset.isoVal && end.dataset.isoVal < startISO) {
-    end.value = '';
-    end.dataset.isoVal = '';
-  }
-}
-
-// Make generateItinerary read isoVal instead of .value
-// Patch the date reading in generateItinerary
-var _origGetDateVal = function(id) {
-  var el = document.getElementById(id);
-  if (!el) return '';
-  return el.dataset.isoVal || el.value || '';
-};
-window.getDateVal = _origGetDateVal;
-
-window.openDatePicker  = openDatePicker;
-window.cdpChangeMonth  = cdpChangeMonth;
-window.cdpSelect       = cdpSelect;
-window.cdpClear        = cdpClear;
-window.cdpToday        = cdpToday;
-window.onStartDateChange = onStartDateChange;
+//  CUSTOM DATE PICKER — removed, using native date inputs
 
 // ============================================================
 //  GEOCODE CACHE — prevents Nominatim rate limiting
