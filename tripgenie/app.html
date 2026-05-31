@@ -287,9 +287,14 @@
                 <div class="card section" style="margin-bottom:16px;padding:0;overflow:hidden">
                   <div style="padding:14px 16px 10px;display:flex;align-items:center;justify-content:space-between">
                     <h2 style="font-size:15px;margin:0">🗺️ Map</h2>
-                    <span style="font-size:11px;color:#94a3b8">Click map to pin a place</span>
+                    <div style="display:flex;gap:6px;align-items:center">
+                      <span style="font-size:11px;color:#94a3b8">Click map to pin</span>
+                      <button onclick="toggleMapSize()" id="mapSizeBtn" title="Toggle map size"
+                        style="background:none;border:1px solid var(--border);border-radius:6px;padding:3px 8px;font-size:11px;color:#64748b;cursor:pointer">⛶ Expand</button>
+                    </div>
                   </div>
-                  <div id="hubMapContainer" style="height:320px;background:#e8ecf0"></div>
+                  <div id="hubMapContainer" style="height:300px;background:var(--bg)"></div>
+                  <div class="map-resize-bar" id="mapResizeBar"></div>
                   <div style="padding:10px 16px 14px">
                     <div id="hubMapPinList">
                       <p style="color:#94a3b8;font-size:13px;margin:0">Click the map to drop a pin 📌</p>
@@ -2043,5 +2048,46 @@
   </script>
 
   <script src="app.js"></script>
+  <script>
+    // Map expand toggle
+    var _mapExpanded = false;
+    function toggleMapSize() {
+      var c   = document.getElementById('hubMapContainer');
+      var btn = document.getElementById('mapSizeBtn');
+      if (!c) return;
+      _mapExpanded = !_mapExpanded;
+      c.style.height = _mapExpanded ? '520px' : '300px';
+      btn.textContent = _mapExpanded ? '⛶ Collapse' : '⛶ Expand';
+      if (window._hubMap) setTimeout(function(){ window._hubMap.invalidateSize(); }, 260);
+    }
+    window.toggleMapSize = toggleMapSize;
+
+    // Drag-to-resize the map
+    (function() {
+      var bar = document.getElementById('mapResizeBar');
+      if (!bar) return;
+      var dragging = false, startY = 0, startH = 0;
+      bar.addEventListener('mousedown', function(e) {
+        var c = document.getElementById('hubMapContainer');
+        if (!c) return;
+        dragging = true; startY = e.clientY; startH = c.offsetHeight;
+        document.body.style.userSelect = 'none';
+        e.preventDefault();
+      });
+      document.addEventListener('mousemove', function(e) {
+        if (!dragging) return;
+        var c = document.getElementById('hubMapContainer');
+        if (!c) return;
+        var newH = Math.max(180, Math.min(700, startH + (e.clientY - startY)));
+        c.style.height = newH + 'px';
+      });
+      document.addEventListener('mouseup', function() {
+        if (!dragging) return;
+        dragging = false;
+        document.body.style.userSelect = '';
+        if (window._hubMap) window._hubMap.invalidateSize();
+      });
+    })();
+  </script>
 </body>
 </html>
