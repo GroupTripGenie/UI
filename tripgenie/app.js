@@ -7,6 +7,26 @@
 const API = 'https://ui-production-e419.up.railway.app/api';
 
 // ── Helpers ──────────────────────────────────────────────────
+
+// ── Window stubs: functions called from HTML onclick/onchange
+// ── must exist before any user interaction fires ──────────────
+window.discardItineraryPreview = function() {
+  // real function defined below — this stub prevents ReferenceError
+  // on first interaction before script fully parses
+  setTimeout(function(){ if(typeof discardItineraryPreview==='function') discardItineraryPreview(); },0);
+};
+window.confirmSaveItinerary = function() {
+  setTimeout(function(){ if(typeof confirmSaveItinerary==='function') confirmSaveItinerary(); },0);
+};
+window.onStartDateChange = function() {
+  var s=document.getElementById('startDate'),e=document.getElementById('endDate');
+  if(s&&e){ e.min=s.value; if(e.value&&e.value<s.value)e.value=''; }
+};
+window.previewAddDay        = function(){ if(typeof previewAddDay==='function') previewAddDay(); };
+window.previewRemoveDay     = function(i){ if(typeof previewRemoveDay==='function') previewRemoveDay(i); };
+window.previewAddActivity   = function(i){ if(typeof previewAddActivity==='function') previewAddActivity(i); };
+window.previewRemoveActivity= function(d,a){ if(typeof previewRemoveActivity==='function') previewRemoveActivity(d,a); };
+
 function getToken()    { return localStorage.getItem('tg_token'); }
 function getUser()     { try { return JSON.parse(localStorage.getItem('tg_user')||'{}'); } catch { return {}; } }
 function getCurrency() { return localStorage.getItem('tg_currency') || 'USD'; }
@@ -3556,10 +3576,11 @@ function discardItineraryPreview() {
   openTripHub(trip.id);
   window._pendingItinerary = null;
 }
-window.discardItineraryPreview = discardItineraryPreview;
-window.confirmSaveItinerary = confirmSaveItinerary;
+
+window.showItineraryPreview=showItineraryPreview; window.renderPreviewEditor=renderPreviewEditor;
 window.previewAddDay=previewAddDay; window.previewRemoveDay=previewRemoveDay;
 window.previewAddActivity=previewAddActivity; window.previewRemoveActivity=previewRemoveActivity;
+window.confirmSaveItinerary=confirmSaveItinerary; window.discardItineraryPreview=discardItineraryPreview;
 
 // ============================================================
 //  FEATURE: PACKING LIST — SELECT ALL + INLINE RENAME
@@ -3613,11 +3634,11 @@ async function renderJournalTab() {
   el.innerHTML = '<div style="text-align:center;padding:16px;color:#94a3b8;font-size:13px">Loading journal…</div>';
 
   var trip = allTrips.find(function(t){ return t.id === currentTripId; });
-  if (!trip) { el.innerHTML = '<p style="color:#94a3b8;font-size:13px">Open a trip to see its journal.</p>'; return; }
+  if (!trip) return;
   // Fetch fresh metadata from DB
   var meta = trip.metadata || {};
   if (!trip.metadata) {
-    try { meta = await loadTripMetadata(currentTripId); } catch(e) { meta = {}; }
+    try { meta = await loadTripMetadata(currentTripId); } catch(e) {}
   }
   var entries = (meta.journal || []).slice().sort(function(a,b){ return new Date(b.date)-new Date(a.date); });
 
@@ -3707,16 +3728,7 @@ async function initHubMap(trip) {
   container.innerHTML='';
   await loadLeaflet();
   var lat=20,lon=0,zoom=2;
-  try{
-    var cacheKey = trip.destination.trim().toLowerCase();
-    var cached = _geoCache[cacheKey];
-    if (!cached) {
-      var gR=await fetch('https://nominatim.openstreetmap.org/search?format=json&limit=1&q='+encodeURIComponent(trip.destination));
-      var gD=await gR.json();
-      if(gD[0]){ cached={lat:parseFloat(gD[0].lat),lon:parseFloat(gD[0].lon)}; _geoCache[cacheKey]=cached; }
-    }
-    if(cached){lat=cached.lat;lon=cached.lon;zoom=11;}
-  }catch(e){}
+  try{ var gR=await fetch('https://nominatim.openstreetmap.org/search?format=json&limit=1&q='+encodeURIComponent(trip.destination)); var gD=await gR.json(); if(gD[0]){lat=parseFloat(gD[0].lat);lon=parseFloat(gD[0].lon);zoom=11;} }catch(e){}
   _hubMap=L.map(container,{zoomControl:true,scrollWheelZoom:false}).setView([lat,lon],zoom);
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© <a href="https://openstreetmap.org">OpenStreetMap</a>',maxZoom:19}).addTo(_hubMap);
   if(zoom>2){var di=L.divIcon({html:'<div style="background:#068cdf;color:white;border-radius:50% 50% 50% 0;width:32px;height:32px;display:flex;align-items:center;justify-content:center;font-size:16px;transform:rotate(-45deg);box-shadow:0 2px 8px rgba(0,0,0,0.3)"><span style="transform:rotate(45deg)">📍</span></div>',className:'',iconAnchor:[16,32],popupAnchor:[0,-34]});L.marker([lat,lon],{icon:di}).addTo(_hubMap).bindPopup('<strong>'+trip.destination+'</strong>').openPopup();}
@@ -3980,7 +3992,7 @@ async function geocode(destination) {
 }
 window.geocode = geocode;
 
-// Geocode cache used directly inside initHubMap and loadWeatherWidget
+// Geocode cache used directly inside initHubMap
 
 // ============================================================
 //  GLOBAL ERROR HANDLER — friendly message instead of blank
