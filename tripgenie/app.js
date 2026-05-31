@@ -7,26 +7,6 @@
 const API = 'https://ui-production-e419.up.railway.app/api';
 
 // ── Helpers ──────────────────────────────────────────────────
-
-// ── Window stubs: functions called from HTML onclick/onchange
-// ── must exist before any user interaction fires ──────────────
-window.discardItineraryPreview = function() {
-  // real function defined below — this stub prevents ReferenceError
-  // on first interaction before script fully parses
-  setTimeout(function(){ if(typeof discardItineraryPreview==='function') discardItineraryPreview(); },0);
-};
-window.confirmSaveItinerary = function() {
-  setTimeout(function(){ if(typeof confirmSaveItinerary==='function') confirmSaveItinerary(); },0);
-};
-window.onStartDateChange = function() {
-  var s=document.getElementById('startDate'),e=document.getElementById('endDate');
-  if(s&&e){ e.min=s.value; if(e.value&&e.value<s.value)e.value=''; }
-};
-window.previewAddDay        = function(){ if(typeof previewAddDay==='function') previewAddDay(); };
-window.previewRemoveDay     = function(i){ if(typeof previewRemoveDay==='function') previewRemoveDay(i); };
-window.previewAddActivity   = function(i){ if(typeof previewAddActivity==='function') previewAddActivity(i); };
-window.previewRemoveActivity= function(d,a){ if(typeof previewRemoveActivity==='function') previewRemoveActivity(d,a); };
-
 function getToken()    { return localStorage.getItem('tg_token'); }
 function getUser()     { try { return JSON.parse(localStorage.getItem('tg_user')||'{}'); } catch { return {}; } }
 function getCurrency() { return localStorage.getItem('tg_currency') || 'USD'; }
@@ -271,7 +251,7 @@ function renderMyTripsPage() {
   const completed = allTrips.filter(t=>t.status==='completed');
   if (upEl) upEl.innerHTML = upcoming.length
     ? upcoming.map(t=>smallTripCard(t)).join('')
-    : emptyHTML('🗺️','No upcoming trips','Start planning your next adventure!','','');
+    : emptyHTML('🗺️','No upcoming trips','Start planning your next adventure!','+ Plan a Trip',"navigate('plantrip')");
   if (paEl) paEl.innerHTML = completed.length
     ? completed.map(t=>smallTripCard(t)).join('')
     : '<p style="color:#64748b;font-size:14px;padding:20px 0">No completed trips yet.</p>';
@@ -1290,7 +1270,7 @@ function renderBudgetPage(tripFilter, search='', sort='date-asc') {
   const el = document.getElementById('budgetPageContent');
   if (!el) return;
 
-  let trips = tripFilter === 'all' ? allTrips.filter(t=>t.status!=='completed') : allTrips.filter(t=>t.id===tripFilter);
+  let trips = tripFilter === 'all' ? [...allTrips] : allTrips.filter(t=>t.id===tripFilter);
 
   // Search filter
   if (search) trips = trips.filter(t =>
@@ -1524,7 +1504,7 @@ function openNewChecklistFromPage() {
 function renderChecklistPage(tripFilter, search='', sort='date-asc') {
   const el = document.getElementById('checklistPageContent');
   if (!el) return;
-  let trips = tripFilter==='all' ? allTrips.filter(t=>t.status!=='completed') : allTrips.filter(t=>t.id===tripFilter);
+  let trips = tripFilter==='all' ? [...allTrips] : allTrips.filter(t=>t.id===tripFilter);
 
   if (search) trips = trips.filter(t =>
     t.destination?.toLowerCase().includes(search) ||
@@ -3562,7 +3542,8 @@ async function confirmSaveItinerary() {
   showToast('✅ Trip & itinerary saved!');
   openTripHub(trip.id);
   window._pendingItinerary = null;
-  
+}
+
 function discardItineraryPreview() {
   var pending = window._pendingItinerary;
   if (!pending) { closeModal('modalItineraryPreview'); return; }
@@ -3941,18 +3922,7 @@ function cdpToday() {
   cdpSelect(today);
 }
 
-// Override onStartDateChange to work with custom picker
-function onStartDateChange() {
-  var start = document.getElementById('startDate');
-  var end   = document.getElementById('endDate');
-  if (!start || !end) return;
-  var startISO = start.dataset.isoVal || '';
-  // If end date is before start, clear it
-  if (end.dataset.isoVal && end.dataset.isoVal < startISO) {
-    end.value = '';
-    end.dataset.isoVal = '';
-  }
-}
+// onStartDateChange defined earlier above
 
 // Make generateItinerary read isoVal instead of .value
 // Patch the date reading in generateItinerary
@@ -3992,8 +3962,6 @@ async function geocode(destination) {
 }
 window.geocode = geocode;
 
-// Geocode cache used directly inside initHubMap
-
 // ============================================================
 //  GLOBAL ERROR HANDLER — friendly message instead of blank
 // ============================================================
@@ -4015,4 +3983,4 @@ window.onerror = function(msg, src, line, col, err) {
   // Let normal dev errors through to console
   console.warn('Global error:', msg, 'at', src + ':' + line);
   return false; // don't suppress default console logging
-};}
+};
