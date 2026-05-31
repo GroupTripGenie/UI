@@ -2266,56 +2266,50 @@ function renderMonthView(titleEl, bodyEl) {
   const daysInMonth = new Date(year, month+1, 0).getDate();
   const dayNames = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
 
-  // Build calendar using table for reliable equal-width columns
-  const isDark = document.body.classList.contains('dark');
-  const borderCol = isDark ? '#2d3748' : '#e8ecf0';
-  const altBg     = isDark ? '#141824' : '#fafafa';
-  const hoverBg   = isDark ? '#252d3d' : '#f8fafc';
-  const baseBg    = isDark ? '#1a1f2e' : 'white';
-  const textCol   = isDark ? '#f1f5f9' : '#063937';
+  // Header row
+  let html = '<div class="cal-header-row">'
+    + dayNames.map(d=>`<div class="cal-header-cell">${d}</div>`).join('')
+    + '</div><div class="cal-grid-month">';
 
-  let html = `<div style="overflow-x:auto;-webkit-overflow-scrolling:touch">
-  <table style="width:100%;border-collapse:collapse;table-layout:fixed;min-width:560px">
-    <thead>
-      <tr>${dayNames.map(d=>`<th style="padding:10px 4px;text-align:center;font-size:12px;font-weight:700;color:#64748b;background:${altBg};border-bottom:2px solid ${borderCol}">${d}</th>`).join('')}</tr>
-    </thead>
-    <tbody>`;
-
-  let cells = [];
   // Empty cells before month
-  for (let i=0; i<firstDay; i++) cells.push({empty:true, before:true});
+  for (let i=0; i<firstDay; i++) {
+    html += '<div class="cal-day other-month"></div>';
+  }
+
   // Month days
   for (let d=1; d<=daysInMonth; d++) {
     const dateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
-    cells.push({ d, dateStr, isToday: dateStr===today, events: getEventsForDate(dateStr) });
-  }
-  // Pad to complete last row
-  while (cells.length % 7 !== 0) cells.push({empty:true, after:true});
+    const isToday = dateStr === today;
+    const events  = getEventsForDate(dateStr);
+    const maxShow = 2;
 
-  // Build rows
-  for (let r=0; r<cells.length/7; r++) {
-    html += '<tr>';
-    for (let c=0; c<7; c++) {
-      const cell = cells[r*7+c];
-      if (cell.empty) {
-        html += `<td style="height:90px;background:${altBg};border:1px solid ${borderCol}"></td>`;
-      } else {
-        const maxShow = 2;
-        html += `<td onclick="openDayDetail('${cell.dateStr}')"
-          style="height:90px;vertical-align:top;padding:6px 6px;border:1px solid ${borderCol};cursor:pointer;background:${baseBg};transition:background 0.1s"
-          onmouseover="this.style.background='${hoverBg}'" onmouseout="this.style.background='${baseBg}'">
-          <div style="display:flex;justify-content:center;margin-bottom:4px">
-            <span style="width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:${cell.isToday?'700':'500'};background:${cell.isToday?'#068cdf':'transparent'};color:${cell.isToday?'white':textCol}">${cell.d}</span>
-          </div>
-          ${cell.events.slice(0,maxShow).map(e=>`<div style="background:${e.color};color:white;border-radius:4px;padding:2px 5px;font-size:10px;margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="${e.title}">${e.title}</div>`).join('')}
-          ${cell.events.length>maxShow?`<div style="font-size:10px;color:#64748b">+${cell.events.length-maxShow} more</div>`:''}
-        </td>`;
-      }
+    html += `<div class="cal-day${isToday?' today':''}" onclick="openDayDetail('${dateStr}')">`;
+    html += `<div class="cal-day-num">${d}</div>`;
+    html += events.slice(0,maxShow).map(e =>
+      `<div class="cal-event" style="background:${e.color}" title="${e.title}">${e.title}</div>`
+    ).join('');
+    if (events.length > maxShow) {
+      html += `<div style="font-size:10px;color:#94a3b8;margin-top:2px;text-align:center">+${events.length-maxShow} more</div>`;
     }
-    html += '</tr>';
+    html += '</div>';
   }
 
-  html += '</tbody></table></div>';
+  // Pad to complete last row
+  const remaining = (7 - ((firstDay + daysInMonth) % 7)) % 7;
+  for (let i=0; i<remaining; i++) {
+    html += '<div class="cal-day other-month"></div>';
+  }
+
+  html += '</div>';
+
+  // Legend
+  html += `<div class="cal-legend">
+    <div class="cal-legend-item"><div class="cal-legend-dot" style="background:#068cdf"></div> Trips</div>
+    <div class="cal-legend-item"><div class="cal-legend-dot" style="background:#22c55e"></div> Itinerary</div>
+    <div class="cal-legend-item"><div class="cal-legend-dot" style="background:#ef4444"></div> High priority</div>
+    <div class="cal-legend-item"><div class="cal-legend-dot" style="background:#f97316"></div> Reminder</div>
+  </div>`;
+
   bodyEl.innerHTML = html;
 }
 
@@ -3624,11 +3618,15 @@ async function renderJournalTab() {
   var entries = (meta.journal || []).slice().sort(function(a,b){ return new Date(b.date)-new Date(a.date); });
 
   var addFormHtml = '<div style="margin-bottom:16px;background:var(--bg);border:1.5px solid var(--border);border-radius:12px;padding:14px">'
-    +'<div style="display:flex;gap:8px;align-items:center;margin-bottom:10px">'
-    +'<input type="date" id="journalDate" style="padding:8px 10px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;font-family:inherit;background:var(--surface);color:var(--text-1);outline:none"/>'
-    +'<input type="text" id="journalMood" placeholder="Mood (e.g. 😊 Amazing)" style="flex:1;padding:8px 10px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;font-family:inherit;background:var(--surface);color:var(--text-1);outline:none"/>'
+    +'<p style="font-size:11px;font-weight:700;color:#068cdf;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:10px">New Entry</p>'
+    +'<div style="display:grid;grid-template-columns:160px 1fr;gap:8px;margin-bottom:10px">'
+    +'<div><label style="font-size:11px;font-weight:600;color:#64748b;display:block;margin-bottom:4px">📅 Date</label>'
+    +'<input type="date" id="journalDate" style="width:100%;padding:8px 10px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;font-family:inherit;background:var(--surface);color:var(--text-1);outline:none;box-sizing:border-box"/></div>'
+    +'<div><label style="font-size:11px;font-weight:600;color:#64748b;display:block;margin-bottom:4px">😊 Mood</label>'
+    +'<input type="text" id="journalMood" placeholder="e.g. Amazing, Tired, Excited…" style="width:100%;padding:8px 10px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;font-family:inherit;background:var(--surface);color:var(--text-1);outline:none;box-sizing:border-box"/></div>'
     +'</div>'
-    +'<textarea id="journalText" placeholder="What happened today? What did you see, eat, feel?…" style="width:100%;min-height:90px;padding:10px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;font-family:inherit;resize:vertical;outline:none;background:var(--surface);color:var(--text-1);box-sizing:border-box;line-height:1.6"></textarea>'
+    +'<label style="font-size:11px;font-weight:600;color:#64748b;display:block;margin-bottom:6px">✏️ What happened today?</label>'
+    +'<textarea id="journalText" placeholder="What did you see, eat, feel? Who did you meet?…" style="width:100%;min-height:90px;padding:10px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;font-family:inherit;resize:vertical;outline:none;background:var(--surface);color:var(--text-1);box-sizing:border-box;line-height:1.6"></textarea>'
     +'<div style="display:flex;justify-content:flex-end;margin-top:8px">'
     +'<button onclick="addJournalEntry()" style="background:linear-gradient(135deg,#068cdf,#063937);color:white;border:none;border-radius:8px;padding:8px 18px;font-size:13px;font-weight:600;font-family:inherit;cursor:pointer">📝 Add Entry</button>'
     +'</div></div>';
