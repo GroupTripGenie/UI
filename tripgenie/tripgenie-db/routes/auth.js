@@ -5,6 +5,12 @@ const crypto  = require('crypto');
 const pool    = require('../db');
 const auth    = require('../middleware/auth');
 
+// ── Input sanitizer ───────────────────────────────────────────
+function sanitize(str, maxLen = 255) {
+  if (typeof str !== 'string') return '';
+  return str.trim().slice(0, maxLen);
+}
+
 // ── Helper ────────────────────────────────────────────────────
 function signToken(user) {
   return jwt.sign(
@@ -16,8 +22,9 @@ function signToken(user) {
 
 // ── POST /api/auth/register ───────────────────────────────────
 router.post('/register', async (req, res) => {
-  const { email, password, full_name } = req.body;
-  if (!email || !password || !full_name) {
+  const email     = sanitize(req.body.email, 255);
+  const password  = sanitize(req.body.password, 128);
+  const full_name = sanitize(req.body.full_name, 100);  if (!email || !password || !full_name) {
     return res.status(400).json({ error: 'email, password and full_name are required' });
   }
   try {
@@ -43,8 +50,9 @@ router.post('/register', async (req, res) => {
 
 // ── POST /api/auth/login ──────────────────────────────────────
 router.post('/login', async (req, res) => {
-  const { email, password } = req.body;
-  if (!email || !password) {
+  const email    = sanitize(req.body.email, 255);
+  const password = sanitize(req.body.password, 128);
+    if (!email || !password) {
     return res.status(400).json({ error: 'email and password are required' });
   }
   try {
@@ -206,106 +214,3 @@ router.post('/reset-password', async (req, res) => {
 
 module.exports = router;
 
-
-// ── Helper ────────────────────────────────────────────────────
-function signToken(user) {
-  return jwt.sign(
-    { id: user.id, email: user.email, name: user.full_name },
-    process.env.JWT_SECRET,
-    { expiresIn: process.env.JWT_EXPIRES_IN || '7d' }
-  );
-}
-
-// ── POST /api/auth/register ───────────────────────────────────
-router.post('/register', async (req, res) => {
-  const { email, password, full_name } = req.body;
-  if (!email || !password || !full_name) {
-    return res.status(400).json({ error: 'email, password and full_name are required' });
-  }
-  try {
-    const exists = await pool.query('SELECT id FROM users WHERE email = $1', [email]);
-    if (exists.rows.length) {
-      return res.status(409).json({ error: 'Email already registered' });
-    }
-    const password_hash = await bcrypt.hash(password, 12);
-    const { rows } = await pool.query(
-      `INSERT INTO users (email, password_hash, full_name)
-       VALUES ($1, $2, $3)
-       RETURNING id, email, full_name, avatar_initials, created_at`,
-      [email, password_hash, full_name]
-    );
-    const user  = rows[0];
-    const token = signToken(user);
-    res.status(201).json({ token, user });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Server error' });
-  }
-});
-
-// ── POST /api/auth/login ──────────────────────────────────────
-router.post('/login', async (req, res) => {
-  const { email, password } = req.body;
-  if (!email || !password) {
-    return res.status(400).json({ error: 'email and password are required' });
-  }
-  try {
-    const { rows } = await pool.query(
-      'SELECT * FROM users WHERE email = $1 AND provider = $2',
-      [email, 'local']
-    );
-    const user = rows[0];
-    if (!user || !(await bcrypt.compare(password, user.password_hash))) {
-      return res.status(401).json({ error: 'Invalid email or password' });
-    }
-    const token = signToken(user);
-    const { password_hash, ...safeUser } = user;
-    res.json({ token, user: safeUser });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Server error' });
-  }
-});
-
-// ── GET /api/auth/me ──────────────────────────────────────────
-router.get('/me', auth, async (req, res) => {
-  try {
-    const { rows } = await pool.query(
-      `SELECT id, email, full_name, avatar_initials, avatar_url,
-              preferred_currency, preferred_timezone, provider, created_at
-       FROM users WHERE id = $1`,
-      [req.user.id]
-    );
-    if (!rows[0]) return res.status(404).json({ error: 'User not found' });
-    res.json(rows[0]);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Server error' });
-  }
-});
-
-// ── PATCH /api/auth/me ────────────────────────────────────────
-router.patch('/me', auth, async (req, res) => {
-  const { full_name, preferred_currency, preferred_timezone, avatar_url } = req.body;
-  try {
-    const { rows } = await pool.query(
-      `UPDATE users
-       SET full_name           = COALESCE($1, full_name),
-           preferred_currency  = COALESCE($2, preferred_currency),
-           preferred_timezone  = COALESCE($3, preferred_timezone),
-           avatar_url          = COALESCE($4, avatar_url)
-       WHERE id = $5
-       RETURNING id, email, full_name, avatar_initials, avatar_url,
-                 preferred_currency, preferred_timezone, created_at`,
-      [full_name || null, preferred_currency || null,
-       preferred_timezone || null, avatar_url || null, req.user.id]
-    );
-    if (!rows[0]) return res.status(404).json({ error: 'User not found' });
-    res.json(rows[0]);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Server error' });
-  }
-});
-
-module.exports = router;

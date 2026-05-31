@@ -5,6 +5,7 @@ const passport  = require('passport');
 const GoogleStrategy = require('passport-google-oauth20').Strategy;
 const jwt       = require('jsonwebtoken');
 const pool      = require('./db');
+const rateLimit = require('express-rate-limit');
 
 const authRoutes      = require('./routes/auth');
 const tripRoutes      = require('./routes/trips');
@@ -22,7 +23,37 @@ app.use(cors({
   credentials: false
 }));
 app.options('*', cors());
-app.use(express.json());
+
+// ── Rate limiting ─────────────────────────────────────────────
+const globalLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 200,
+  message: { error: 'Too many requests, please try again later.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+const assistantLimiter = rateLimit({
+  windowMs: 60 * 1000, // 1 minute
+  max: 10,
+  message: { error: 'AI request limit reached. Please wait a moment.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 20,
+  message: { error: 'Too many attempts, please try again in 15 minutes.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+app.use(globalLimiter);
+app.use('/api/assistant', assistantLimiter);
+app.use('/api/auth/login', authLimiter);
+app.use('/api/auth/register', authLimiter);
+app.use('/api/auth/forgot-password', authLimiter);
 app.use(passport.initialize());
 
 // ── Google OAuth Strategy ─────────────────────────────────────

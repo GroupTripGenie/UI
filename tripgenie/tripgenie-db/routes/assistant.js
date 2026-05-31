@@ -6,8 +6,8 @@ router.use(auth);
 // ── POST /api/assistant/chat ──────────────────────────────────
 router.post('/chat', async (req, res) => {
   const { message, context } = req.body;
-  if (!message) return res.status(400).json({ error: 'message is required' });
-
+if (!message) return res.status(400).json({ error: 'message is required' });
+if (message.length > 8000) return res.status(400).json({ error: 'Message too long.' });
   // Check if this is a pre-built detailed prompt from the frontend (plan trip form)
   // These contain "TRIP DETAILS:" and "RULES:" sections already
   const isDetailedPrompt = message.includes('TRIP DETAILS:') && message.includes('RULES:');
