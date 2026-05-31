@@ -42,21 +42,55 @@ const DEST_PASTELS = [
   'linear-gradient(135deg, #e8c8d4 0%, #c8b8e8 100%)',
   'linear-gradient(135deg, #b8e8e8 0%, #b8d4e8 100%)',
 ];
+
 function getCountryEmoji(dest) {
   if (!dest) return '🌍';
   const d = dest.toLowerCase();
-  const m = {'japan':'🇯🇵','tokyo':'🇯🇵','osaka':'🇯🇵','kyoto':'🇯🇵','korea':'🇰🇷','seoul':'🇰🇷',
+  const m = {
+    'japan':'🗾','tokyo':'🗾','osaka':'🗾','kyoto':'🗾',
+    'korea':'🇰🇷','seoul':'🇰🇷',
     'philippines':'🇵🇭','manila':'🇵🇭','cebu':'🇵🇭','boracay':'🇵🇭','palawan':'🇵🇭',
-    'thailand':'🇹🇭','bangkok':'🇹🇭','phuket':'🇹🇭','chiang mai':'🇹🇭',
-    'singapore':'🇸🇬','indonesia':'🇮🇩','bali':'🇮🇩','vietnam':'🇻🇳','hanoi':'🇻🇳',
-    'france':'🇫🇷','paris':'🇫🇷','italy':'🇮🇹','rome':'🇮🇹',
-    'spain':'🇪🇸','barcelona':'🇪🇸','uk':'🇬🇧','london':'🇬🇧',
-    'usa':'🇺🇸','new york':'🇺🇸','hawaii':'🇺🇸','australia':'🇦🇺','sydney':'🇦🇺',
-    'dubai':'🇦🇪','china':'🇨🇳','india':'🇮🇳','taiwan':'🇹🇼','taipei':'🇹🇼',
-    'malaysia':'🇲🇾','greece':'🇬🇷','turkey':'🇹🇷','egypt':'🇪🇬',
-    'brazil':'🇧🇷','mexico':'🇲🇽','canada':'🇨🇦','germany':'🇩🇪',
-    'switzerland':'🇨🇭','maldives':'🇲🇻','hong kong':'🇭🇰','cambodia':'🇰🇭','nepal':'🇳🇵',
-    'new zealand':'🇳🇿','portugal':'🇵🇹','netherlands':'🇳🇱'};
+    'thailand':'🏯','bangkok':'🏯','phuket':'🏖️','chiang mai':'🏯',
+    'singapore':'🦁','indonesia':'🌴','bali':'🌺','vietnam':'🌿','hanoi':'🌿','ho chi minh':'🌿',
+    'france':'🗼','paris':'🗼','italy':'🍕','rome':'🏛️','venice':'🚤','milan':'👗',
+    'spain':'💃','barcelona':'🏖️','uk':'🎡','london':'🎡','england':'🎡',
+    'usa':'🗽','new york':'🗽','hawaii':'🌺','los angeles':'🎬','las vegas':'🎰',
+    'australia':'🦘','sydney':'🦘','melbourne':'🦘',
+    'dubai':'🏙️','uae':'🏙️',
+    'china':'🐉','beijing':'🐉','shanghai':'🌆',
+    'india':'🕌','new delhi':'🕌','mumbai':'🌆',
+    'taiwan':'🫖','taipei':'🫖',
+    'malaysia':'🌴','kuala lumpur':'🌴',
+    'greece':'🏛️','athens':'🏛️','santorini':'🌅',
+    'turkey':'🕌','istanbul':'🕌',
+    'egypt':'🏺','cairo':'🏺',
+    'brazil':'⚽','rio':'🏖️',
+    'mexico':'🌮','cancun':'🏖️',
+    'canada':'🍁','toronto':'🍁','vancouver':'🍁',
+    'germany':'🍺','berlin':'🎭','munich':'🍺',
+    'switzerland':'🏔️','zurich':'🏔️',
+    'maldives':'🏝️',
+    'hong kong':'🌃',
+    'cambodia':'🛕','siem reap':'🛕',
+    'nepal':'🏔️','kathmandu':'🏔️',
+    'new zealand':'🥝','auckland':'🥝',
+    'portugal':'🐟','lisbon':'🐟',
+    'netherlands':'🌷','amsterdam':'🌷',
+    'sweden':'🏔️','norway':'🌊','denmark':'🍦','finland':'🌲',
+    'austria':'🎶','vienna':'🎶',
+    'czech':'🍺','prague':'🍺',
+    'hungary':'🌶️','budapest':'🌶️',
+    'poland':'🦅','warsaw':'🦅',
+    'russia':'🪆','moscow':'🪆',
+    'argentina':'🥩','buenos aires':'🥩',
+    'peru':'🦙','lima':'🦙','machu picchu':'🦙',
+    'colombia':'☕','bogota':'☕',
+    'south africa':'🦁','cape town':'🦁',
+    'morocco':'🕌','marrakech':'🕌',
+    'kenya':'🦒','nairobi':'🦒',
+    'iceland':'🌋',
+    'ireland':'🍀','dublin':'🍀',
+  };
   for (const [k,v] of Object.entries(m)) { if (d.includes(k)) return v; }
   return '🌍';
 }
@@ -914,7 +948,7 @@ Continue for all ${days} days with real ${dest} locations.`;
     const itinHTML = parseItinerary(res.reply, dest);
     const itinDays = parseItineraryToDays(res.reply);
 
-    // 4. Save to DB
+   // 4. Save to DB
     try {
       await apiFetch('/trips/'+trip.id, {
         method:'PATCH',
@@ -922,20 +956,26 @@ Continue for all ${days} days with real ${dest} locations.`;
       });
       trip.itinerary = { days: itinDays, html: itinHTML };
     } catch(e) {
-      showToast('Warning: itinerary saved to trip but sync had an issue.');
+      console.warn('Itinerary DB sync issue:', e);
     }
 
-    // 5. Show trip hub
-    renderMyTripsPage();
-    renderDashboardStats();
-    renderDashboardTrips();
-    clearPlanForm();
-    showToast('✅ Trip created with AI itinerary!');
-    openTripHub(trip.id);
-
-  } catch(e) {
-    showToast('Error: '+e.message);
-    console.error(e);
+    // 5. Show preview editor OR go straight to hub
+    if (typeof showItineraryPreview === 'function') {
+      window._pendingItinerary = { trip, itinDays, itinHTML };
+      allTrips.unshift(trip);
+      renderMyTripsPage(); renderDashboardStats(); renderDashboardTrips();
+      clearPlanForm();
+      showItineraryPreview(trip, itinDays, itinHTML);
+    } else {
+      allTrips.unshift(trip);
+      renderMyTripsPage(); renderDashboardStats(); renderDashboardTrips();
+      clearPlanForm();
+      showToast('✅ Trip created with AI itinerary!');
+      openTripHub(trip.id);
+    }
+ } catch(e) {
+    showToast('Error generating itinerary: '+e.message);
+    console.error('generateItinerary error:', e);
   } finally {
     btn.innerHTML='✨ Generate AI Itinerary'; btn.disabled=false;
     if (card) card.style.display='none';
@@ -3587,7 +3627,7 @@ async function renderJournalTab() {
         var dateLabel = new Date(e.date+'T12:00:00').toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'});
         return '<div style="border:1px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:12px">'
           +'<div style="background:var(--blue-soft,#e8f4fd);padding:10px 14px;display:flex;align-items:center;justify-content:space-between">'
-          +'<div><div style="font-size:13px;font-weight:700;color:#068cdf">'+dateLabel+'</div>'
+          +'<div style="min-width:0"><div style="font-size:13px;font-weight:700;color:#068cdf;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+dateLabel+'</div>'          
           +(e.mood?'<div style="font-size:12px;color:#64748b;margin-top:2px">'+e.mood+'</div>':'')
           +'</div>'
           +'<button onclick="deleteJournalEntry('+i+')" style="background:none;border:none;color:#94a3b8;cursor:pointer;font-size:18px;line-height:1;padding:0 4px">×</button>'
@@ -3723,3 +3763,12 @@ window.buildCalEvents=async function(){calEvents=[];var tf=(document.getElementB
 (function(){var _ph=window.openTripHub;window.openTripHub=async function(tripId){if(_ph)await _ph(tripId);var trip=allTrips.find(function(t){return t.id===tripId;});if(!trip)return;setTimeout(function(){initHubMap(trip);loadWeatherWidget(trip);initDestinationAutocomplete();renderHubTags();renderJournalTab();},80);};})();
 (function(){var _pn=window.navigate;window.navigate=function(page){if(_pn)_pn.apply(this,arguments);if(page==='plantrip')setTimeout(initDestinationAutocomplete,120);};})();
 document.addEventListener('DOMContentLoaded',function(){initDestinationAutocomplete();});
+
+function onStartDateChange() {
+  const start = document.getElementById('startDate');
+  const end   = document.getElementById('endDate');
+  if (!start || !end) return;
+  end.min = start.value; // end date cannot be before start
+  if (end.value && end.value < start.value) end.value = start.value;
+}
+window.onStartDateChange = onStartDateChange;

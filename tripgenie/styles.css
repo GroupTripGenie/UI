@@ -1057,3 +1057,43 @@ body.dark * { scrollbar-color:#2d3748 transparent; }
 body.dark div[id$="_acList"] { background:#1a1f2e !important;border-color:#068cdf !important;box-shadow:0 8px 32px rgba(0,0,0,.4) !important; }
 #budgetInsightsContent { min-height:120px; }
 #hubJournalContent textarea:focus, #hubJournalContent input:focus { border-color:#068cdf;outline:none; }
+
+/* ── Themed date inputs ── */
+input[type="date"] {
+  padding: 10px 12px;
+  border: 1.5px solid #e8ecf0;
+  border-radius: 10px;
+  font-size: 14px;
+  font-family: 'Sora', sans-serif;
+  color: #063937;
+  background: white;
+  outline: none;
+  width: 100%;
+  box-sizing: border-box;
+  cursor: pointer;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+input[type="date"]:focus {
+  border-color: #068cdf;
+  box-shadow: 0 0 0 3px rgba(6,140,223,0.12);
+}
+input[type="date"]::-webkit-calendar-picker-indicator {
+  cursor: pointer;
+  opacity: 0.6;
+  filter: invert(20%) sepia(80%) saturate(500%) hue-rotate(180deg);
+}
+input[type="date"]::-webkit-calendar-picker-indicator:hover {
+  opacity: 1;
+}
+body.dark input[type="date"] {
+  background: #1e2535;
+  border-color: #2d3748;
+  color: #e2e8f0;
+}
+body.dark input[type="date"]:focus {
+  border-color: #068cdf;
+  box-shadow: 0 0 0 3px rgba(6,140,223,0.2);
+}
+body.dark input[type="date"]::-webkit-calendar-picker-indicator {
+  filter: invert(1) brightness(0.7);
+}
