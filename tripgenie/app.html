@@ -242,7 +242,9 @@
                     <p id="hubTripDates" style="color:#64748b;font-size:14px;margin-bottom:8px">—</p>
                     <span id="hubTripStatus" class="badge badge-medium" style="font-size:13px">upcoming</span>
                   </div>
+                  <button onclick="openTagEditor()" style="background:none;border:1.5px dashed var(--border);border-radius:8px;padding:5px 12px;font-size:12px;color:#94a3b8;cursor:pointer;white-space:nowrap;margin-top:4px;font-family:inherit">🏷️ Tags</button>
                 </div>
+                <div id="hubTripTags" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:10px"></div>
                 <p id="hubTripNotes" style="color:#64748b;font-size:14px;margin-top:12px;font-style:italic">—</p>
               </div>
             </div>
@@ -277,6 +279,15 @@
                 <div class="card section" style="margin-bottom:20px">
                   <div class="card-header"><h2>🔔 Reminders</h2></div>
                   <div id="hubReminderContent"></div>
+                </div>
+
+                <!-- Journal section -->
+                <div class="card section" style="margin-bottom:20px">
+                  <div class="card-header">
+                    <h2>📖 Trip Journal</h2>
+                    <span style="font-size:12px;color:#94a3b8;margin-left:auto">Your daily memories</span>
+                  </div>
+                  <div id="hubJournalContent"></div>
                 </div>
               </div>
 
@@ -1388,7 +1399,7 @@
       </div>
       <div class="modal-footer" style="gap:8px">
         <button class="btn-outline" onclick="closeModal('modalPackingList')">Cancel</button>
-        <button class="btn-primary" onclick="addPackingListToChecklist()">+ Add to Checklist</button>
+        <button class="btn-primary" onclick="addPackingListToChecklist()">✅ Add Selected to Checklist</button>
       </div>
     </div>
   </div>
@@ -2060,6 +2071,89 @@
           <span style="font-size:12px;color:#94a3b8">Click anywhere to drop a pin</span>
         </div>
         <button onclick="closeFullscreenMap()" style="background:none;border:1.5px solid var(--border);border-radius:8px;padding:6px 14px;font-size:13px;font-weight:600;color:var(--text-2);cursor:pointer">✕ Close</button>
+      </div>
+      <div id="fullscreenMapContainer" style="flex:1;min-height:0;"></div>
+    </div>
+  </div>
+
+  <!-- Budget AI Insights Modal -->
+  <div class="modal-backdrop" id="modalBudgetInsights">
+    <div class="modal" style="max-width:520px">
+      <div class="modal-header">
+        <h3>📊 AI Budget Insights</h3>
+        <button class="modal-close" onclick="closeModal('modalBudgetInsights')">✕</button>
+      </div>
+      <div class="modal-body" id="budgetInsightsContent">
+        <div style="text-align:center;padding:24px;color:#94a3b8">Loading…</div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-outline" onclick="closeModal('modalBudgetInsights')">Close</button>
+        <button class="btn-primary" onclick="openBudgetInsights()">🔄 Refresh</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- AI Itinerary Preview & Edit Modal (Edit Before Saving) -->
+  <div class="modal-backdrop" id="modalItineraryPreview">
+    <div class="modal" style="max-width:640px;max-height:92vh;display:flex;flex-direction:column">
+      <div class="modal-header" style="flex-shrink:0">
+        <h3 id="previewItinTitle">✨ Your AI Itinerary</h3>
+        <button class="modal-close" onclick="discardItineraryPreview()">✕</button>
+      </div>
+      <div style="padding:0 24px 12px;flex-shrink:0">
+        <p style="font-size:13px;color:#64748b;margin:0">Review and edit before saving. Click any field to change it.</p>
+      </div>
+      <div style="padding:0 24px;overflow-y:auto;flex:1">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+          <button onclick="previewAddDay()" class="btn-outline small-btn">+ Add Day</button>
+        </div>
+        <div id="previewItinEditor"></div>
+      </div>
+      <div class="modal-footer" style="flex-shrink:0;gap:8px">
+        <button class="btn-outline" onclick="discardItineraryPreview()">Skip &amp; Save Trip Only</button>
+        <button class="btn-primary" id="previewSaveBtn" onclick="confirmSaveItinerary()">💾 Save Itinerary &amp; Go to Trip</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tag Editor Modal -->
+  <div class="modal-backdrop" id="modalTagEditor">
+    <div class="modal" style="max-width:480px">
+      <div class="modal-header">
+        <h3>🏷️ Trip Tags</h3>
+        <button class="modal-close" onclick="closeModal('modalTagEditor')">✕</button>
+      </div>
+      <div class="modal-body">
+        <p style="font-size:13px;color:#64748b;margin-bottom:14px">Tag your trip to filter and organise your adventures.</p>
+        <label style="font-size:12px;font-weight:700;color:#063937;text-transform:uppercase;letter-spacing:0.05em">Quick Add</label>
+        <div id="tagPresets" style="display:flex;flex-wrap:wrap;gap:6px;margin:8px 0 16px"></div>
+        <label style="font-size:12px;font-weight:700;color:#063937;text-transform:uppercase;letter-spacing:0.05em">Custom Tag</label>
+        <div style="display:flex;gap:8px;margin-top:6px;margin-bottom:16px">
+          <input type="text" id="customTagInput" placeholder="e.g. Honeymoon, Group trip…" maxlength="24"
+            onkeydown="if(event.key==='Enter')addCustomTag()"
+            style="flex:1;padding:9px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:14px;font-family:inherit;outline:none;background:var(--surface);color:var(--text-1)"/>
+          <button onclick="addCustomTag()" class="btn-primary small-btn">Add</button>
+        </div>
+        <label style="font-size:12px;font-weight:700;color:#063937;text-transform:uppercase;letter-spacing:0.05em">Current Tags</label>
+        <div id="currentTagsList" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;min-height:32px"></div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-outline" onclick="closeModal('modalTagEditor')">Cancel</button>
+        <button class="btn-primary" id="saveTagsBtn" onclick="saveTags()">💾 Save Tags</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Fullscreen Map Modal -->
+  <div id="modalFullscreenMap" class="modal-backdrop" style="z-index:500;padding:0;">
+    <div style="width:100%;height:100%;max-width:100%;background:var(--surface);display:flex;flex-direction:column;border-radius:0;">
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 20px;border-bottom:1px solid var(--border);flex-shrink:0">
+        <div style="display:flex;align-items:center;gap:10px">
+          <span style="font-size:20px">🗺️</span>
+          <h3 style="font-size:16px;font-weight:700;color:var(--text-1);margin:0">Full Map</h3>
+          <span style="font-size:12px;color:#94a3b8">Click anywhere to drop a pin · Scroll to zoom</span>
+        </div>
+        <button onclick="closeFullscreenMap()" style="background:none;border:1.5px solid var(--border);border-radius:8px;padding:6px 14px;font-size:13px;font-weight:600;color:var(--text-2);cursor:pointer;font-family:inherit">✕ Close</button>
       </div>
       <div id="fullscreenMapContainer" style="flex:1;min-height:0;"></div>
     </div>
