@@ -285,7 +285,7 @@
                 <div class="card section" style="margin-bottom:20px">
                   <div class="card-header">
                     <h2>📖 Trip Journal</h2>
-                    <span style="font-size:12px;color:#94a3b8;margin-left:auto">Your daily memories</span>
+                    <span style="font-size:12px;color:#94a3b8;margin-left:auto">Saved to cloud</span>
                   </div>
                   <div id="hubJournalContent"></div>
                 </div>
@@ -299,20 +299,14 @@
                   <div style="padding:14px 16px 10px;display:flex;align-items:center;justify-content:space-between">
                     <h2 style="font-size:15px;margin:0">🗺️ Map</h2>
                     <div style="display:flex;gap:6px;align-items:center">
-                      <span style="font-size:11px;color:#94a3b8">Click map to pin</span>
-                      <button onclick="openFullscreenMap()" title="Open full map"
-                        style="background:#068cdf;color:white;border:none;border-radius:6px;padding:4px 10px;font-size:11px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:4px">
-                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>
-                        Full Map
+                      <span style="font-size:11px;color:#94a3b8">Click to pin · Saved to cloud</span>
+                      <button onclick="openFullscreenMap()" style="background:#068cdf;color:white;border:none;border-radius:6px;padding:4px 10px;font-size:11px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:4px;font-family:inherit">
+                        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg> Full Map
                       </button>
                     </div>
                   </div>
                   <div id="hubMapContainer" style="height:260px;background:var(--bg)"></div>
-                  <div style="padding:10px 16px 14px">
-                    <div id="hubMapPinList">
-                      <p style="color:#94a3b8;font-size:13px;margin:0">Click the map to drop a pin 📌</p>
-                    </div>
-                  </div>
+                  <div style="padding:10px 16px 14px"><div id="hubMapPinList"><p style="color:#94a3b8;font-size:13px;margin:0">Click the map to drop a pin 📌</p></div></div>
                 </div>
 
                 <!-- Weather Card -->
@@ -323,7 +317,6 @@
                   </div>
                   <div id="hubWeatherWidget"></div>
                 </div>
-
                 <!-- AI Tip -->
                 <div id="hubAiTip" class="card section" style="margin-bottom:16px;display:none">
                   <div style="display:flex;align-items:flex-start;gap:10px">
@@ -822,23 +815,6 @@
       </div>
       <div class="modal-footer">
         <button class="btn-outline" onclick="closeModal('modalTripSummary')">Close</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Budget AI Insights Modal -->
-  <div class="modal-backdrop" id="modalBudgetInsights">
-    <div class="modal" style="max-width:520px">
-      <div class="modal-header">
-        <h3>📊 AI Budget Insights</h3>
-        <button class="modal-close" onclick="closeModal('modalBudgetInsights')">✕</button>
-      </div>
-      <div class="modal-body" id="budgetInsightsContent">
-        <div style="text-align:center;padding:24px;color:#94a3b8">Loading…</div>
-      </div>
-      <div class="modal-footer">
-        <button class="btn-outline" onclick="closeModal('modalBudgetInsights')">Close</button>
-        <button class="btn-primary" onclick="openBudgetInsights()">🔄 Refresh Analysis</button>
       </div>
     </div>
   </div>
@@ -2061,39 +2037,7 @@
   </script>
 
   <script src="app.js"></script>
-  <!-- Fullscreen Map Modal -->
-  <div id="modalFullscreenMap" class="modal-backdrop" style="z-index:500;padding:0;">
-    <div style="width:100%;height:100%;max-width:100%;background:var(--surface);display:flex;flex-direction:column;border-radius:0;">
-      <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 20px;border-bottom:1px solid var(--border);flex-shrink:0">
-        <div style="display:flex;align-items:center;gap:10px">
-          <span style="font-size:20px">🗺️</span>
-          <h3 style="font-size:16px;font-weight:700;color:var(--text-1);margin:0" id="fullMapTitle">Map</h3>
-          <span style="font-size:12px;color:#94a3b8">Click anywhere to drop a pin</span>
-        </div>
-        <button onclick="closeFullscreenMap()" style="background:none;border:1.5px solid var(--border);border-radius:8px;padding:6px 14px;font-size:13px;font-weight:600;color:var(--text-2);cursor:pointer">✕ Close</button>
-      </div>
-      <div id="fullscreenMapContainer" style="flex:1;min-height:0;"></div>
-    </div>
-  </div>
-
-  <!-- Budget AI Insights Modal -->
-  <div class="modal-backdrop" id="modalBudgetInsights">
-    <div class="modal" style="max-width:520px">
-      <div class="modal-header">
-        <h3>📊 AI Budget Insights</h3>
-        <button class="modal-close" onclick="closeModal('modalBudgetInsights')">✕</button>
-      </div>
-      <div class="modal-body" id="budgetInsightsContent">
-        <div style="text-align:center;padding:24px;color:#94a3b8">Loading…</div>
-      </div>
-      <div class="modal-footer">
-        <button class="btn-outline" onclick="closeModal('modalBudgetInsights')">Close</button>
-        <button class="btn-primary" onclick="openBudgetInsights()">🔄 Refresh</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- AI Itinerary Preview & Edit Modal (Edit Before Saving) -->
+  <!-- AI Itinerary Preview & Edit Modal -->
   <div class="modal-backdrop" id="modalItineraryPreview">
     <div class="modal" style="max-width:640px;max-height:92vh;display:flex;flex-direction:column">
       <div class="modal-header" style="flex-shrink:0">
