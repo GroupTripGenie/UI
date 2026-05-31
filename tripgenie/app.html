@@ -204,6 +204,7 @@
               </button>
               <button class="btn-outline small-btn" onclick="openAIPackingList()">🧳 Packing List</button>
               <button class="btn-outline small-btn" onclick="openSmartReminders()">🔔 Smart Reminders</button>
+              <button class="btn-outline small-btn" onclick="openBudgetInsights()" style="color:#a855f7;border-color:#a855f7">📊 Budget AI</button>
               <button class="btn-outline small-btn" onclick="downloadTripPDF()" style="color:#068cdf;border-color:#068cdf">📄 Export PDF</button>
               <button id="hubCompleteBtn" class="btn-outline small-btn" onclick="toggleTripComplete()" style="color:#22c55e;border-color:#22c55e">✅ Mark Complete</button>
               <button class="btn-outline small-btn" style="color:#ef4444;border-color:#ef4444;margin-left:auto" onclick="deleteCurrentTrip()">🗑 Delete Trip</button>
@@ -281,6 +282,30 @@
 
               <!-- RIGHT COLUMN -->
               <div style="position:sticky;top:80px">
+
+                <!-- Map Card -->
+                <div class="card section" style="margin-bottom:16px;padding:0;overflow:hidden">
+                  <div style="padding:14px 16px 10px;display:flex;align-items:center;justify-content:space-between">
+                    <h2 style="font-size:15px;margin:0">🗺️ Map</h2>
+                    <span style="font-size:11px;color:#94a3b8">Click map to pin a place</span>
+                  </div>
+                  <div id="hubMapContainer" style="height:320px;background:#e8ecf0"></div>
+                  <div style="padding:10px 16px 14px">
+                    <div id="hubMapPinList">
+                      <p style="color:#94a3b8;font-size:13px;margin:0">Click the map to drop a pin 📌</p>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Weather Card -->
+                <div class="card section" style="margin-bottom:16px">
+                  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+                    <h2 style="font-size:15px;margin:0">🌤️ Weather</h2>
+                    <span style="font-size:11px;color:#94a3b8">Open-Meteo · live</span>
+                  </div>
+                  <div id="hubWeatherWidget"></div>
+                </div>
+
                 <!-- AI Tip -->
                 <div id="hubAiTip" class="card section" style="margin-bottom:16px;display:none">
                   <div style="display:flex;align-items:flex-start;gap:10px">
@@ -779,6 +804,23 @@
       </div>
       <div class="modal-footer">
         <button class="btn-outline" onclick="closeModal('modalTripSummary')">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Budget AI Insights Modal -->
+  <div class="modal-backdrop" id="modalBudgetInsights">
+    <div class="modal" style="max-width:520px">
+      <div class="modal-header">
+        <h3>📊 AI Budget Insights</h3>
+        <button class="modal-close" onclick="closeModal('modalBudgetInsights')">✕</button>
+      </div>
+      <div class="modal-body" id="budgetInsightsContent">
+        <div style="text-align:center;padding:24px;color:#94a3b8">Loading…</div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-outline" onclick="closeModal('modalBudgetInsights')">Close</button>
+        <button class="btn-primary" onclick="openBudgetInsights()">🔄 Refresh Analysis</button>
       </div>
     </div>
   </div>

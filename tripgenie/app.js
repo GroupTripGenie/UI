@@ -3445,3 +3445,549 @@ function toggleNotesEdit(editing) {
   }
 }
 window.toggleNotesEdit = toggleNotesEdit;
+
+// ============================================================
+//  FEATURE: DESTINATION AUTOCOMPLETE (Nominatim / OpenStreetMap)
+// ============================================================
+let _acTimer = null;
+let _acIndex = -1;
+
+function initDestinationAutocomplete() {
+  ['destination', 'editTripDest'].forEach(id => {
+    const input = document.getElementById(id);
+    if (!input || input.dataset.acInit) return;
+    input.dataset.acInit = '1';
+    input.setAttribute('autocomplete', 'off');
+
+    // Wrapper
+    const wrap = document.createElement('div');
+    wrap.style.cssText = 'position:relative;';
+    input.parentNode.insertBefore(wrap, input);
+    wrap.appendChild(input);
+
+    // Dropdown
+    const list = document.createElement('div');
+    list.id = id + '_acList';
+    list.style.cssText = `position:absolute;top:100%;left:0;right:0;background:white;border:1.5px solid #068cdf;
+      border-top:none;border-radius:0 0 10px 10px;z-index:999;max-height:220px;overflow-y:auto;
+      box-shadow:0 8px 24px rgba(0,0,0,0.12);display:none;`;
+    wrap.appendChild(list);
+
+    input.addEventListener('input', () => {
+      clearTimeout(_acTimer);
+      _acIndex = -1;
+      const q = input.value.trim();
+      if (q.length < 2) { list.style.display = 'none'; return; }
+      _acTimer = setTimeout(() => fetchACSuggestions(q, input, list), 300);
+    });
+
+    input.addEventListener('keydown', e => {
+      const items = list.querySelectorAll('.ac-item');
+      if (e.key === 'ArrowDown') { _acIndex = Math.min(_acIndex+1, items.length-1); highlightAC(items); e.preventDefault(); }
+      else if (e.key === 'ArrowUp') { _acIndex = Math.max(_acIndex-1, -1); highlightAC(items); e.preventDefault(); }
+      else if (e.key === 'Enter' && _acIndex >= 0) { items[_acIndex]?.click(); e.preventDefault(); }
+      else if (e.key === 'Escape') { list.style.display = 'none'; }
+    });
+
+    document.addEventListener('click', e => { if (!wrap.contains(e.target)) list.style.display = 'none'; });
+  });
+}
+
+function highlightAC(items) {
+  items.forEach((el, i) => {
+    el.style.background = i === _acIndex ? '#e8f4fd' : 'white';
+  });
+}
+
+async function fetchACSuggestions(q, input, list) {
+  try {
+    const url = `https://nominatim.openstreetmap.org/search?format=json&addressdetails=1&limit=6&q=${encodeURIComponent(q)}`;
+    const res = await fetch(url, { headers: { 'Accept-Language': 'en' } });
+    const data = await res.json();
+    if (!data.length) { list.style.display = 'none'; return; }
+
+    const isDark = document.body.classList.contains('dark');
+    list.style.background = isDark ? '#1e2535' : 'white';
+    list.style.borderColor = '#068cdf';
+
+    list.innerHTML = data.map((place, i) => {
+      const city    = place.address?.city || place.address?.town || place.address?.village || place.address?.county || '';
+      const country = place.address?.country || '';
+      const label   = city && country ? `${city}, ${country}` : place.display_name.split(',').slice(0,3).join(',').trim();
+      const emoji   = getCountryEmoji(country + ' ' + city);
+      return `<div class="ac-item" data-val="${label}" style="padding:10px 14px;cursor:pointer;font-size:14px;
+        display:flex;align-items:center;gap:8px;border-bottom:1px solid #f1f5f9;
+        color:${isDark?'#e2e8f0':'#063937'};transition:background 0.1s;"
+        onmouseover="this.style.background='#e8f4fd';_acIndex=${i};"
+        onmouseout="this.style.background='${isDark?'#1e2535':'white'}';">
+        <span style="font-size:18px">${emoji}</span>
+        <div>
+          <div style="font-weight:600">${label}</div>
+          <div style="font-size:11px;color:#94a3b8">${place.display_name.split(',').slice(0,4).join(',')}</div>
+        </div>
+      </div>`;
+    }).join('');
+
+    list.querySelectorAll('.ac-item').forEach(el => {
+      el.addEventListener('click', () => {
+        input.value = el.dataset.val;
+        list.style.display = 'none';
+        _acIndex = -1;
+        // Trigger map refresh if hub destination field
+        if (input.id === 'editTripDest') return;
+        // Set lat/lon for map if we just picked from plan trip
+        const match = data.find(p => {
+          const city = p.address?.city || p.address?.town || p.address?.village || p.address?.county || '';
+          const country = p.address?.country || '';
+          const label = city && country ? `${city}, ${country}` : p.display_name.split(',').slice(0,3).join(',').trim();
+          return label === el.dataset.val;
+        });
+        if (match) {
+          window._lastAcLat = parseFloat(match.lat);
+          window._lastAcLon = parseFloat(match.lon);
+        }
+      });
+    });
+
+    list.style.display = 'block';
+  } catch(e) {
+    console.warn('Autocomplete fetch failed:', e);
+    list.style.display = 'none';
+  }
+}
+
+// ============================================================
+//  FEATURE: LEAFLET MAP IN TRIP HUB
+//  Uses OpenStreetMap tiles — 100% free, no API key
+// ============================================================
+let _hubMap         = null;  // Leaflet map instance
+let _hubMapMarkers  = [];    // all pin markers
+let _hubMapPins     = {};    // tripId → [ {lat,lon,label} ]
+
+async function initHubMap(trip) {
+  const container = document.getElementById('hubMapContainer');
+  if (!container) return;
+
+  // Destroy old map if switching trips
+  if (_hubMap) { _hubMap.remove(); _hubMap = null; }
+
+  container.style.height = '320px';
+  container.innerHTML    = '';
+
+  // Load Leaflet CSS + JS once
+  if (!window.L) {
+    await loadLeaflet();
+  }
+
+  // Geocode the destination
+  let lat = 20, lon = 0, zoom = 2;
+  try {
+    const geoRes  = await fetch(`https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${encodeURIComponent(trip.destination)}`);
+    const geoData = await geoRes.json();
+    if (geoData[0]) { lat = parseFloat(geoData[0].lat); lon = parseFloat(geoData[0].lon); zoom = 11; }
+  } catch(e) { console.warn('Map geocode failed:', e); }
+
+  _hubMap = L.map(container, { zoomControl: true, scrollWheelZoom: false }).setView([lat, lon], zoom);
+
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '© <a href="https://openstreetmap.org">OpenStreetMap</a>',
+    maxZoom: 19
+  }).addTo(_hubMap);
+
+  // Destination pin
+  if (zoom > 2) {
+    const destIcon = L.divIcon({
+      html: `<div style="background:#068cdf;color:white;border-radius:50% 50% 50% 0;width:32px;height:32px;display:flex;align-items:center;justify-content:center;font-size:16px;transform:rotate(-45deg);box-shadow:0 2px 8px rgba(0,0,0,0.3)"><span style="transform:rotate(45deg)">📍</span></div>`,
+      className: '', iconAnchor: [16, 32], popupAnchor: [0, -34]
+    });
+    L.marker([lat, lon], { icon: destIcon })
+      .addTo(_hubMap)
+      .bindPopup(`<strong>${trip.destination}</strong>`)
+      .openPopup();
+  }
+
+  // Restore saved pins for this trip
+  const saved = JSON.parse(localStorage.getItem('mapPins_' + trip.id) || '[]');
+  _hubMapPins[trip.id] = saved;
+  saved.forEach(pin => addMapPin(pin.lat, pin.lon, pin.label, trip.id, false));
+
+  // Click to add pin
+  _hubMap.on('click', (e) => {
+    const label = prompt('📍 Pin label (e.g. "Hotel", "Must-see restaurant"):');
+    if (!label) return;
+    addMapPin(e.latlng.lat, e.latlng.lng, label, trip.id, true);
+  });
+
+  renderMapPinList(trip.id);
+}
+
+function loadLeaflet() {
+  return new Promise(resolve => {
+    if (document.getElementById('leaflet-css')) { resolve(); return; }
+    const css = document.createElement('link');
+    css.id    = 'leaflet-css';
+    css.rel   = 'stylesheet';
+    css.href  = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
+    document.head.appendChild(css);
+
+    const js  = document.createElement('script');
+    js.src    = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
+    js.onload = resolve;
+    document.head.appendChild(js);
+  });
+}
+
+function addMapPin(lat, lon, label, tripId, save = true) {
+  if (!_hubMap) return;
+  const pinIcon = L.divIcon({
+    html: `<div style="background:#ef4444;color:white;border-radius:50% 50% 50% 0;width:28px;height:28px;display:flex;align-items:center;justify-content:center;font-size:13px;transform:rotate(-45deg);box-shadow:0 2px 8px rgba(0,0,0,0.25);"><span style="transform:rotate(45deg)">📌</span></div>`,
+    className: '', iconAnchor: [14, 28], popupAnchor: [0, -30]
+  });
+  const marker = L.marker([lat, lon], { icon: pinIcon }).addTo(_hubMap);
+  marker.bindPopup(`<strong>${label}</strong><br><button onclick="removeMapPin('${tripId}',${lat},${lon})" style="margin-top:6px;padding:3px 10px;background:#ef4444;color:white;border:none;border-radius:6px;cursor:pointer;font-size:12px">Remove Pin</button>`);
+  _hubMapMarkers.push({ lat, lon, label, marker });
+
+  if (save) {
+    if (!_hubMapPins[tripId]) _hubMapPins[tripId] = [];
+    _hubMapPins[tripId].push({ lat, lon, label });
+    localStorage.setItem('mapPins_' + tripId, JSON.stringify(_hubMapPins[tripId]));
+    renderMapPinList(tripId);
+    showToast('📌 Pin added: ' + label);
+  }
+}
+
+function removeMapPin(tripId, lat, lon) {
+  _hubMapMarkers = _hubMapMarkers.filter(m => {
+    if (m.lat === lat && m.lon === lon) { _hubMap.removeLayer(m.marker); return false; }
+    return true;
+  });
+  if (_hubMapPins[tripId]) {
+    _hubMapPins[tripId] = _hubMapPins[tripId].filter(p => !(p.lat === lat && p.lon === lon));
+    localStorage.setItem('mapPins_' + tripId, JSON.stringify(_hubMapPins[tripId]));
+  }
+  renderMapPinList(tripId);
+  if (_hubMap._popup) _hubMap.closePopup();
+  showToast('Pin removed');
+}
+
+function renderMapPinList(tripId) {
+  const el = document.getElementById('hubMapPinList');
+  if (!el) return;
+  const pins = _hubMapPins[tripId] || [];
+  if (!pins.length) {
+    el.innerHTML = '<p style="color:#94a3b8;font-size:13px;margin:0">Click the map to drop a pin 📌</p>';
+    return;
+  }
+  el.innerHTML = pins.map((p, i) => `
+    <div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid #f1f5f9">
+      <span style="font-size:16px">📌</span>
+      <span style="flex:1;font-size:13px;font-weight:600;color:var(--text-1)">${p.label}</span>
+      <span style="font-size:11px;color:#94a3b8">${p.lat.toFixed(3)}, ${p.lon.toFixed(3)}</span>
+      <button onclick="removeMapPin('${tripId}',${p.lat},${p.lon})" style="background:none;border:none;color:#ef4444;cursor:pointer;font-size:16px;padding:0 4px">×</button>
+    </div>`).join('');
+}
+
+window.removeMapPin    = removeMapPin;
+window.renderMapPinList = renderMapPinList;
+
+// ============================================================
+//  FEATURE: WEATHER WIDGET (Open-Meteo — free, no API key)
+// ============================================================
+const WMO_CODES = {
+  0:'☀️ Clear sky', 1:'🌤️ Mainly clear', 2:'⛅ Partly cloudy', 3:'☁️ Overcast',
+  45:'🌫️ Foggy', 48:'🌫️ Icy fog',
+  51:'🌦️ Light drizzle', 53:'🌦️ Drizzle', 55:'🌧️ Heavy drizzle',
+  61:'🌧️ Slight rain', 63:'🌧️ Rain', 65:'🌧️ Heavy rain',
+  71:'🌨️ Slight snow', 73:'❄️ Snow', 75:'❄️ Heavy snow',
+  80:'🌦️ Rain showers', 81:'🌧️ Showers', 82:'⛈️ Violent showers',
+  95:'⛈️ Thunderstorm', 96:'⛈️ Hail storm', 99:'⛈️ Heavy hail storm',
+};
+
+async function loadWeatherWidget(trip) {
+  const el = document.getElementById('hubWeatherWidget');
+  if (!el) return;
+
+  el.innerHTML = `<div style="text-align:center;padding:16px;color:#94a3b8;font-size:13px">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#068cdf" stroke-width="2" style="animation:spin 0.8s linear infinite;display:block;margin:0 auto 8px">
+      <path d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" opacity=".25"/><path d="M21 12a9 9 0 00-9-9" stroke-linecap="round"/>
+    </svg>Loading weather…</div>`;
+
+  try {
+    // 1. Geocode destination
+    const geoRes  = await fetch(`https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${encodeURIComponent(trip.destination)}`);
+    const geoData = await geoRes.json();
+    if (!geoData[0]) { el.innerHTML = '<p style="color:#94a3b8;font-size:13px;padding:12px 0">Weather unavailable for this destination.</p>'; return; }
+
+    const lat      = parseFloat(geoData[0].lat);
+    const lon      = parseFloat(geoData[0].lon);
+    const country  = geoData[0].display_name.split(',').pop().trim();
+
+    // 2. Fetch current + 7-day forecast from Open-Meteo
+    const weatherUrl = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,weathercode,windspeed_10m&daily=weathercode,temperature_2m_max,temperature_2m_min,precipitation_probability_max&timezone=auto&forecast_days=7`;
+    const wRes       = await fetch(weatherUrl);
+    const wData      = await wRes.json();
+
+    const cur  = wData.current;
+    const day  = wData.daily;
+    const unit = '°C';
+
+    const curCode  = cur.weathercode;
+    const curDesc  = WMO_CODES[curCode] || '🌡️ Unknown';
+    const curTemp  = Math.round(cur.temperature_2m);
+    const curHum   = cur.relative_humidity_2m;
+    const curWind  = Math.round(cur.windspeed_10m);
+
+    // Trip date range weather (if trip dates in the 7-day window)
+    let tripWeatherHtml = '';
+    if (trip.start_date) {
+      const tripStart = trip.start_date.split('T')[0];
+      const tripEnd   = trip.end_date ? trip.end_date.split('T')[0] : tripStart;
+      const relevant  = day.time.map((date, i) => ({ date, code: day.weathercode[i], max: Math.round(day.temperature_2m_max[i]), min: Math.round(day.temperature_2m_min[i]), rain: day.precipitation_probability_max[i] }))
+        .filter(d => d.date >= tripStart && d.date <= tripEnd);
+
+      if (relevant.length) {
+        tripWeatherHtml = `
+          <div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border)">
+            <p style="font-size:11px;font-weight:700;color:#068cdf;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:8px">📅 During Your Trip</p>
+            <div style="display:flex;gap:6px;overflow-x:auto;padding-bottom:4px">
+              ${relevant.map(d => {
+                const dayName = new Date(d.date + 'T12:00:00').toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+                const icon    = WMO_CODES[d.code]?.split(' ')[0] || '🌡️';
+                return `<div style="flex-shrink:0;text-align:center;background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:8px 10px;min-width:68px">
+                  <div style="font-size:10px;color:#64748b;margin-bottom:4px">${dayName}</div>
+                  <div style="font-size:22px">${icon}</div>
+                  <div style="font-size:12px;font-weight:700;color:var(--text-1)">${d.max}${unit}</div>
+                  <div style="font-size:10px;color:#94a3b8">${d.min}${unit}</div>
+                  <div style="font-size:10px;color:#068cdf;margin-top:2px">💧${d.rain}%</div>
+                </div>`;
+              }).join('')}
+            </div>
+          </div>`;
+      }
+    }
+
+    // 7-day mini forecast
+    const forecastHtml = `
+      <div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border)">
+        <p style="font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:8px">7-Day Forecast</p>
+        <div style="display:flex;gap:4px;overflow-x:auto;padding-bottom:4px">
+          ${day.time.map((date, i) => {
+            const name = new Date(date + 'T12:00:00').toLocaleDateString('en-US', { weekday: 'short' });
+            const icon = WMO_CODES[day.weathercode[i]]?.split(' ')[0] || '🌡️';
+            return `<div style="flex-shrink:0;text-align:center;padding:6px 8px;min-width:42px">
+              <div style="font-size:10px;color:#94a3b8">${name}</div>
+              <div style="font-size:18px;margin:2px 0">${icon}</div>
+              <div style="font-size:11px;font-weight:600;color:var(--text-1)">${Math.round(day.temperature_2m_max[i])}°</div>
+              <div style="font-size:10px;color:#94a3b8">${Math.round(day.temperature_2m_min[i])}°</div>
+            </div>`;
+          }).join('')}
+        </div>
+      </div>`;
+
+    el.innerHTML = `
+      <!-- Current conditions -->
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:4px">
+        <span style="font-size:42px;line-height:1">${curDesc.split(' ')[0]}</span>
+        <div>
+          <div style="font-size:28px;font-weight:700;color:var(--text-1)">${curTemp}${unit}</div>
+          <div style="font-size:13px;color:#64748b">${curDesc.split(' ').slice(1).join(' ')}</div>
+        </div>
+        <div style="margin-left:auto;text-align:right">
+          <div style="font-size:12px;color:#64748b">💧 ${curHum}% humidity</div>
+          <div style="font-size:12px;color:#64748b">💨 ${curWind} km/h wind</div>
+          <div style="font-size:11px;color:#94a3b8;margin-top:4px">${trip.destination}</div>
+        </div>
+      </div>
+      ${tripWeatherHtml}
+      ${forecastHtml}
+      <p style="font-size:10px;color:#94a3b8;margin-top:8px;text-align:right">via open-meteo.com</p>`;
+
+  } catch(e) {
+    console.warn('Weather load failed:', e);
+    el.innerHTML = '<p style="color:#94a3b8;font-size:13px;padding:12px 0">⚠️ Could not load weather data.</p>';
+  }
+}
+
+// ============================================================
+//  FEATURE: BUDGET AI INSIGHTS
+// ============================================================
+async function openBudgetInsights() {
+  if (!currentTripId || !tripBudget) {
+    showToast('Set up a budget first!');
+    return;
+  }
+
+  openModal('modalBudgetInsights');
+  const el = document.getElementById('budgetInsightsContent');
+  el.innerHTML = `<div style="text-align:center;padding:24px;color:#94a3b8">
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#068cdf" stroke-width="2" style="animation:spin 0.8s linear infinite;display:block;margin:0 auto 8px">
+      <path d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" opacity=".25"/><path d="M21 12a9 9 0 00-9-9" stroke-linecap="round"/>
+    </svg>Analyzing your spending…</div>`;
+
+  const trip  = allTrips.find(t => t.id === currentTripId);
+  const cats  = tripBudget.categories || [];
+  const exps  = tripBudget.expenses   || [];
+
+  // Build a rich context string for GPT
+  const totalBudget = parseFloat(tripBudget.total_amount) || 0;
+  const totalSpent  = cats.reduce((s, c) => s + parseFloat(c.spent || 0), 0);
+  const remaining   = totalBudget - totalSpent;
+  const pctUsed     = totalBudget > 0 ? Math.round((totalSpent / totalBudget) * 100) : 0;
+
+  const catSummary = cats.map(c => {
+    const pct = totalBudget > 0 ? Math.round((parseFloat(c.spent||0) / totalBudget) * 100) : 0;
+    return `- ${c.name}: allocated ${c.allocated} ${tripBudget.currency}, spent ${c.spent||0} ${tripBudget.currency} (${pct}% of total budget)`;
+  }).join('\n');
+
+  const recentExps = exps.slice(0, 15).map(e =>
+    `- ${e.description}: ${e.amount} ${tripBudget.currency} (${e.category_name})`
+  ).join('\n');
+
+  const days = trip?.start_date && trip?.end_date
+    ? Math.ceil((new Date(trip.end_date) - new Date(trip.start_date)) / 86400000)
+    : null;
+
+  try {
+    const res = await apiFetch('/assistant/chat', {
+      method: 'POST',
+      body: JSON.stringify({
+        message: `Analyze this travel budget and give actionable insights. Be specific, friendly, and concise.
+
+TRIP: ${trip?.destination || 'Unknown destination'}
+${days ? `DURATION: ${days} days` : ''}
+TOTAL BUDGET: ${totalBudget} ${tripBudget.currency}
+TOTAL SPENT: ${totalSpent.toFixed(2)} ${tripBudget.currency} (${pctUsed}% used)
+REMAINING: ${remaining.toFixed(2)} ${tripBudget.currency}
+
+SPENDING BY CATEGORY:
+${catSummary || 'No categories yet'}
+
+RECENT EXPENSES:
+${recentExps || 'No expenses logged yet'}
+
+Please provide:
+1. 📊 Overall assessment (on track / over / under budget)
+2. 🔍 Top 2-3 observations about spending patterns
+3. 💡 3 specific money-saving tips for ${trip?.destination || 'this destination'}
+4. 📅 ${days ? `Daily budget status: are they spending ${(totalSpent / (days || 1)).toFixed(0)} ${tripBudget.currency}/day sustainably?` : 'Suggested daily budget breakdown'}
+
+Keep it under 200 words. Use emojis. Be encouraging.`
+      })
+    });
+
+    el.innerHTML = `<div style="line-height:1.8;font-size:14px;color:var(--text-1);white-space:pre-wrap">${res.reply}</div>
+      <div style="margin-top:16px;padding:12px;background:var(--bg);border-radius:10px;border:1px solid var(--border)">
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;text-align:center">
+          <div><div style="font-size:20px;font-weight:700;color:#068cdf">${pctUsed}%</div><div style="font-size:11px;color:#64748b">Budget used</div></div>
+          <div><div style="font-size:20px;font-weight:700;color:${remaining>=0?'#22c55e':'#ef4444'}">${tripBudget.currency} ${Math.abs(remaining).toFixed(0)}</div><div style="font-size:11px;color:#64748b">${remaining>=0?'Remaining':'Over budget'}</div></div>
+          <div><div style="font-size:20px;font-weight:700;color:#f97316">${cats.length}</div><div style="font-size:11px;color:#64748b">Categories</div></div>
+        </div>
+      </div>`;
+  } catch(e) {
+    el.innerHTML = `<p style="color:#ef4444">Error: ${e.message}</p>`;
+  }
+}
+window.openBudgetInsights = openBudgetInsights;
+
+// ============================================================
+//  FEATURE: CALENDAR ↔ ITINERARY SYNC FIX
+//  Reads from DB itinerary (trip.itinerary.days) first,
+//  then falls back to localStorage — so DB-saved itineraries
+//  show up in the calendar even without localStorage.
+// ============================================================
+// Patch buildCalEvents to also read from DB itinerary
+const _origBuildCalEvents = buildCalEvents;
+async function buildCalEvents() {
+  calEvents = [];
+  const tripFilter = document.getElementById('calTripFilter')?.value || 'all';
+  const trips = tripFilter === 'all' ? allTrips : allTrips.filter(t => t.id === tripFilter);
+
+  // 1. Trip date ranges
+  trips.forEach(trip => {
+    if (trip.start_date) {
+      calEvents.push({ type:'trip', tripId:trip.id, title:'✈️ '+trip.destination,
+        date:trip.start_date.split('T')[0], endDate:trip.end_date?trip.end_date.split('T')[0]:trip.start_date.split('T')[0],
+        color:'#068cdf', data:trip });
+    }
+  });
+
+  // 2. Itinerary activities — DB first, then localStorage
+  trips.forEach(trip => {
+    if (!trip.start_date) return;
+
+    // Prefer DB itinerary
+    let days = trip?.itinerary?.days;
+
+    // Fall back to localStorage
+    if (!days || !days.length) {
+      const raw = localStorage.getItem('itinerary_raw_' + trip.id);
+      if (raw) { try { days = JSON.parse(raw); } catch { days = []; } }
+    }
+
+    if (!days || !days.length) return;
+
+    days.forEach((day, di) => {
+      const dayDate = new Date(trip.start_date);
+      dayDate.setDate(dayDate.getDate() + di);
+      const dateStr = dayDate.toISOString().split('T')[0];
+      (day.activities || []).forEach(act => {
+        if (act.desc) {
+          calEvents.push({ type:'itinerary', tripId:trip.id,
+            title: (act.time ? act.time + ' ' : '') + act.desc,
+            date: dateStr, color: '#22c55e', data: { trip, day, act } });
+        }
+      });
+    });
+  });
+
+  // 3. Reminders
+  try {
+    const reminders = tripFilter === 'all'
+      ? await apiFetch('/reminders?done=false')
+      : await apiFetch('/reminders?done=false&tripId=' + tripFilter);
+    reminders.forEach(r => {
+      if (r.remind_at) {
+        calEvents.push({ type:'reminder', tripId:r.trip_id, title:'🔔 '+r.title,
+          date:r.remind_at.split('T')[0],
+          time:new Date(r.remind_at).toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'}),
+          color:r.priority==='high'?'#ef4444':r.priority==='medium'?'#f97316':'#22c55e', data:r });
+      }
+    });
+  } catch {}
+}
+window.buildCalEvents = buildCalEvents;
+
+// ============================================================
+//  HOOK: patch openTripHub to init map + weather
+// ============================================================
+const _origOpenTripHub = openTripHub;
+async function openTripHub(tripId) {
+  await _origOpenTripHub(tripId);
+  const trip = allTrips.find(t => t.id === tripId);
+  if (!trip) return;
+
+  // Small delay so the hub DOM is fully rendered
+  setTimeout(() => {
+    initHubMap(trip);
+    loadWeatherWidget(trip);
+    initDestinationAutocomplete();
+  }, 80);
+}
+window.openTripHub = openTripHub;
+
+// ============================================================
+//  HOOK: patch navigate to init autocomplete on plan trip page
+// ============================================================
+const _origNavigate = window.navigate;
+window.navigate = function(page, ...args) {
+  if (_origNavigate) _origNavigate(page, ...args);
+  if (page === 'plantrip') setTimeout(initDestinationAutocomplete, 100);
+};
+
+// init autocomplete immediately if already on plantrip
+document.addEventListener('DOMContentLoaded', () => {
+  initDestinationAutocomplete();
+  window.openBudgetInsights = openBudgetInsights;
+  window.loadWeatherWidget  = loadWeatherWidget;
+  window.initHubMap         = initHubMap;
+});

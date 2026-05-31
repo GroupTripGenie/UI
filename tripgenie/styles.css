@@ -1001,3 +1001,50 @@ body.dark .pace-btn.active { background:linear-gradient(135deg,var(--blue),#0568
 .reminder-done .reminder-title { text-decoration:line-through; }
 body.dark #page-tripHub { background:var(--bg); }
 
+
+/* ============================================================
+   FEATURE ADDITIONS: Map, Weather, Autocomplete
+   ============================================================ */
+
+/* Leaflet map in hub — make it respect dark mode */
+.dark .leaflet-popup-content-wrapper {
+  background: #1e2535;
+  color: #e2e8f0;
+  border: 1px solid #2d3748;
+}
+.dark .leaflet-popup-tip { background: #1e2535; }
+.dark .leaflet-control-zoom a {
+  background: #1e2535;
+  color: #e2e8f0;
+  border-color: #2d3748;
+}
+.dark .leaflet-control-attribution {
+  background: rgba(30,37,53,0.8);
+  color: #94a3b8;
+}
+.dark .leaflet-control-attribution a { color: #68cdf0; }
+
+/* Autocomplete dropdown in dark mode */
+.dark .ac-item { background: #1e2535 !important; }
+.dark .ac-item:hover { background: #252d3d !important; }
+
+/* Weather widget day cards */
+.dark #hubWeatherWidget > div { color: var(--text-1); }
+
+/* Budget insights modal */
+#budgetInsightsContent { min-height: 120px; }
+
+/* Smooth map container transition */
+#hubMapContainer {
+  transition: height 0.2s ease;
+}
+#hubMapContainer .leaflet-container {
+  border-radius: 0;
+  font-family: inherit;
+}
+
+/* Pin list items */
+#hubMapPinList > div:last-child { border-bottom: none !important; }
+
+/* Autocomplete list */
+.ac-item { transition: background 0.1s; }
