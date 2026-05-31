@@ -914,7 +914,6 @@ async function generateItinerary() {
     if (budget>0) {
       await apiFetch('/budget/'+trip.id, {method:'POST',body:JSON.stringify({total_amount:budget,currency})});
     }
-    allTrips.unshift(trip);
     currentTripId = trip.id;
 
     // 2. Build rich context-aware prompt
@@ -964,19 +963,19 @@ Continue for all ${days} days with real ${dest} locations.`;
     }
 
     // 5. Show preview editor OR go straight to hub
+    allTrips.unshift(trip);
     if (typeof showItineraryPreview === 'function') {
       window._pendingItinerary = { trip, itinDays, itinHTML };
-      allTrips.unshift(trip);
       renderMyTripsPage(); renderDashboardStats(); renderDashboardTrips();
       clearPlanForm();
       showItineraryPreview(trip, itinDays, itinHTML);
     } else {
-      allTrips.unshift(trip);
       renderMyTripsPage(); renderDashboardStats(); renderDashboardTrips();
       clearPlanForm();
       showToast('✅ Trip created with AI itinerary!');
       openTripHub(trip.id);
     }
+    
  } catch(e) {
     showToast('Error generating itinerary: '+e.message);
     console.error('generateItinerary error:', e);
@@ -3534,20 +3533,22 @@ async function confirmSaveItinerary() {
     trip.itinerary = {days:itinDays, html:itinHTML};
   } catch(e) { showToast('Error saving: '+e.message); if(btn){btn.disabled=false;btn.textContent='💾 Save Itinerary & Go to Trip';} return; }
 
-  allTrips.unshift(trip);
+  // trip already in allTrips from generateItinerary
+  const existingIdx = allTrips.findIndex(t => t.id === trip.id);
+  if (existingIdx === -1) allTrips.unshift(trip);
   renderMyTripsPage(); renderDashboardStats(); renderDashboardTrips();
   clearPlanForm();
   closeModal('modalItineraryPreview');
   showToast('✅ Trip & itinerary saved!');
   openTripHub(trip.id);
   window._pendingItinerary = null;
-}
-
+  
 function discardItineraryPreview() {
   var pending = window._pendingItinerary;
   if (!pending) { closeModal('modalItineraryPreview'); return; }
-  var trip = pending.trip;
-  allTrips.unshift(trip);
+ var trip = pending.trip;
+  const existingIdx2 = allTrips.findIndex(t => t.id === trip.id);
+  if (existingIdx2 === -1) allTrips.unshift(trip);
   renderMyTripsPage(); renderDashboardStats(); renderDashboardTrips();
   clearPlanForm();
   closeModal('modalItineraryPreview');
