@@ -289,12 +289,14 @@
                     <h2 style="font-size:15px;margin:0">🗺️ Map</h2>
                     <div style="display:flex;gap:6px;align-items:center">
                       <span style="font-size:11px;color:#94a3b8">Click map to pin</span>
-                      <button onclick="toggleMapSize()" id="mapSizeBtn" title="Toggle map size"
-                        style="background:none;border:1px solid var(--border);border-radius:6px;padding:3px 8px;font-size:11px;color:#64748b;cursor:pointer">⛶ Expand</button>
+                      <button onclick="openFullscreenMap()" title="Open full map"
+                        style="background:#068cdf;color:white;border:none;border-radius:6px;padding:4px 10px;font-size:11px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:4px">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>
+                        Full Map
+                      </button>
                     </div>
                   </div>
-                  <div id="hubMapContainer" style="height:300px;background:var(--bg)"></div>
-                  <div class="map-resize-bar" id="mapResizeBar"></div>
+                  <div id="hubMapContainer" style="height:260px;background:var(--bg)"></div>
                   <div style="padding:10px 16px 14px">
                     <div id="hubMapPinList">
                       <p style="color:#94a3b8;font-size:13px;margin:0">Click the map to drop a pin 📌</p>
@@ -2048,46 +2050,37 @@
   </script>
 
   <script src="app.js"></script>
-  <script>
-    // Map expand toggle
-    var _mapExpanded = false;
-    function toggleMapSize() {
-      var c   = document.getElementById('hubMapContainer');
-      var btn = document.getElementById('mapSizeBtn');
-      if (!c) return;
-      _mapExpanded = !_mapExpanded;
-      c.style.height = _mapExpanded ? '520px' : '300px';
-      btn.textContent = _mapExpanded ? '⛶ Collapse' : '⛶ Expand';
-      if (window._hubMap) setTimeout(function(){ window._hubMap.invalidateSize(); }, 260);
-    }
-    window.toggleMapSize = toggleMapSize;
+  <!-- Fullscreen Map Modal -->
+  <div id="modalFullscreenMap" class="modal-backdrop" style="z-index:500;padding:0;">
+    <div style="width:100%;height:100%;max-width:100%;background:var(--surface);display:flex;flex-direction:column;border-radius:0;">
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 20px;border-bottom:1px solid var(--border);flex-shrink:0">
+        <div style="display:flex;align-items:center;gap:10px">
+          <span style="font-size:20px">🗺️</span>
+          <h3 style="font-size:16px;font-weight:700;color:var(--text-1);margin:0" id="fullMapTitle">Map</h3>
+          <span style="font-size:12px;color:#94a3b8">Click anywhere to drop a pin</span>
+        </div>
+        <button onclick="closeFullscreenMap()" style="background:none;border:1.5px solid var(--border);border-radius:8px;padding:6px 14px;font-size:13px;font-weight:600;color:var(--text-2);cursor:pointer">✕ Close</button>
+      </div>
+      <div id="fullscreenMapContainer" style="flex:1;min-height:0;"></div>
+    </div>
+  </div>
 
-    // Drag-to-resize the map
-    (function() {
-      var bar = document.getElementById('mapResizeBar');
-      if (!bar) return;
-      var dragging = false, startY = 0, startH = 0;
-      bar.addEventListener('mousedown', function(e) {
-        var c = document.getElementById('hubMapContainer');
-        if (!c) return;
-        dragging = true; startY = e.clientY; startH = c.offsetHeight;
-        document.body.style.userSelect = 'none';
-        e.preventDefault();
-      });
-      document.addEventListener('mousemove', function(e) {
-        if (!dragging) return;
-        var c = document.getElementById('hubMapContainer');
-        if (!c) return;
-        var newH = Math.max(180, Math.min(700, startH + (e.clientY - startY)));
-        c.style.height = newH + 'px';
-      });
-      document.addEventListener('mouseup', function() {
-        if (!dragging) return;
-        dragging = false;
-        document.body.style.userSelect = '';
-        if (window._hubMap) window._hubMap.invalidateSize();
-      });
-    })();
-  </script>
+  <!-- Budget AI Insights Modal -->
+  <div class="modal-backdrop" id="modalBudgetInsights">
+    <div class="modal" style="max-width:520px">
+      <div class="modal-header">
+        <h3>📊 AI Budget Insights</h3>
+        <button class="modal-close" onclick="closeModal('modalBudgetInsights')">✕</button>
+      </div>
+      <div class="modal-body" id="budgetInsightsContent">
+        <div style="text-align:center;padding:24px;color:#94a3b8">Loading…</div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-outline" onclick="closeModal('modalBudgetInsights')">Close</button>
+        <button class="btn-primary" onclick="openBudgetInsights()">🔄 Refresh</button>
+      </div>
+    </div>
+  </div>
+
 </body>
 </html>
