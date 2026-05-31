@@ -3195,6 +3195,9 @@ async function toggleTripComplete() {
   const trip = allTrips.find(t=>t.id===currentTripId);
   if (!trip) return;
   const newStatus = trip.status === 'completed' ? 'upcoming' : 'completed';
+  if (newStatus === 'completed') {
+    if (!confirm(`Mark "${trip.destination}" as complete? 🎉`)) return;
+  }
   try {
     await apiFetch('/trips/'+currentTripId, { method:'PATCH', body: JSON.stringify({ status: newStatus }) });
     trip.status = newStatus;
@@ -3945,3 +3948,72 @@ window.cdpSelect       = cdpSelect;
 window.cdpClear        = cdpClear;
 window.cdpToday        = cdpToday;
 window.onStartDateChange = onStartDateChange;
+
+// ============================================================
+//  GEOCODE CACHE — prevents Nominatim rate limiting
+//  Caches lat/lon per destination in memory for the session
+// ============================================================
+var _geoCache = {};
+
+async function geocode(destination) {
+  var key = destination.trim().toLowerCase();
+  if (_geoCache[key]) return _geoCache[key];
+  try {
+    var res  = await fetch('https://nominatim.openstreetmap.org/search?format=json&limit=1&q=' + encodeURIComponent(destination));
+    var data = await res.json();
+    if (data[0]) {
+      var result = { lat: parseFloat(data[0].lat), lon: parseFloat(data[0].lon) };
+      _geoCache[key] = result;
+      return result;
+    }
+  } catch(e) { console.warn('Geocode failed:', e); }
+  return null;
+}
+window.geocode = geocode;
+
+// Patch initHubMap to use cache
+(function() {
+  var _orig = window.initHubMap;
+  window.initHubMap = async function(trip) {
+    // Pre-warm cache before map loads
+    if (trip && trip.destination && !_geoCache[trip.destination.trim().toLowerCase()]) {
+      await geocode(trip.destination);
+    }
+    if (_orig) return _orig(trip);
+  };
+})();
+
+// Patch loadWeatherWidget to use cache
+(function() {
+  var _orig = window.loadWeatherWidget;
+  window.loadWeatherWidget = async function(trip) {
+    if (!trip) return;
+    // Inject cached coords so weather doesn't re-geocode
+    var cached = trip.destination ? _geoCache[trip.destination.trim().toLowerCase()] : null;
+    if (cached) trip._cachedGeo = cached;
+    if (_orig) return _orig(trip);
+  };
+})();
+
+// ============================================================
+//  GLOBAL ERROR HANDLER — friendly message instead of blank
+// ============================================================
+window.addEventListener('unhandledrejection', function(e) {
+  var msg = e.reason && e.reason.message ? e.reason.message : String(e.reason);
+  // Ignore non-critical errors
+  if (msg.includes('ResizeObserver') || msg.includes('Non-Error')) return;
+  if (msg.toLowerCase().includes('failed to fetch') || msg.toLowerCase().includes('networkerror')) {
+    showToast('⚠️ Could not reach TripGenie servers. Check your connection.');
+    e.preventDefault();
+    return;
+  }
+  // Only log others, don't spam the user
+  console.warn('Unhandled error:', msg);
+  e.preventDefault();
+});
+
+window.onerror = function(msg, src, line, col, err) {
+  // Let normal dev errors through to console
+  console.warn('Global error:', msg, 'at', src + ':' + line);
+  return false; // don't suppress default console logging
+};
