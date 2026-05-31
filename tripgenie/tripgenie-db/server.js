@@ -16,45 +16,52 @@ const assistantRoutes = require('./routes/assistant');
 const app  = express();
 const PORT = process.env.PORT || 3000;
 
+// ── CORS must be first — before everything including rate limiter ──
 app.use(cors({
   origin: '*',
   methods: ['GET', 'POST', 'PATCH', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
   credentials: false
 }));
-app.options('*', cors());
+app.options('*', cors()); // Handle preflight immediately
+app.use(express.json());
 
-// ── Rate limiting ─────────────────────────────────────────────
+// ── Rate limiters (defined but applied after CORS) ────────────
 const globalLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
+  windowMs: 15 * 60 * 1000,
   max: 200,
   message: { error: 'Too many requests, please try again later.' },
   standardHeaders: true,
   legacyHeaders: false,
+  skip: (req) => req.method === 'OPTIONS', // never rate-limit preflight
 });
 
 const assistantLimiter = rateLimit({
-  windowMs: 60 * 1000, // 1 minute
+  windowMs: 60 * 1000,
   max: 10,
   message: { error: 'AI request limit reached. Please wait a moment.' },
   standardHeaders: true,
   legacyHeaders: false,
+  skip: (req) => req.method === 'OPTIONS',
 });
 
 const authLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
+  windowMs: 15 * 60 * 1000,
   max: 20,
   message: { error: 'Too many attempts, please try again in 15 minutes.' },
   standardHeaders: true,
   legacyHeaders: false,
+  skip: (req) => req.method === 'OPTIONS',
 });
 
+app.use(passport.initialize());
+
+// ── Apply rate limiters after CORS + body parsing ─────────────
 app.use(globalLimiter);
 app.use('/api/assistant', assistantLimiter);
 app.use('/api/auth/login', authLimiter);
 app.use('/api/auth/register', authLimiter);
 app.use('/api/auth/forgot-password', authLimiter);
-app.use(passport.initialize());
 
 // ── Google OAuth Strategy ─────────────────────────────────────
 passport.use(new GoogleStrategy({
