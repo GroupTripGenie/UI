@@ -3542,7 +3542,8 @@ async function confirmSaveItinerary() {
   showToast('✅ Trip & itinerary saved!');
   openTripHub(trip.id);
   window._pendingItinerary = null;
-  
+}
+
 function discardItineraryPreview() {
   var pending = window._pendingItinerary;
   if (!pending) { closeModal('modalItineraryPreview'); return; }
