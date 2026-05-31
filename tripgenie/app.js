@@ -251,7 +251,7 @@ function renderMyTripsPage() {
   const completed = allTrips.filter(t=>t.status==='completed');
   if (upEl) upEl.innerHTML = upcoming.length
     ? upcoming.map(t=>smallTripCard(t)).join('')
-    : emptyHTML('🗺️','No upcoming trips','Start planning your next adventure!','+ Plan a Trip',"navigate('plantrip')");
+    : emptyHTML('🗺️','No upcoming trips','Start planning your next adventure!','','');
   if (paEl) paEl.innerHTML = completed.length
     ? completed.map(t=>smallTripCard(t)).join('')
     : '<p style="color:#64748b;font-size:14px;padding:20px 0">No completed trips yet.</p>';
@@ -838,8 +838,8 @@ async function createMyOwnTrip() {
   const dest  = document.getElementById('destination')?.value?.trim();
   const startEl = document.getElementById('startDate');
   const endEl   = document.getElementById('endDate');
-  const start   = startEl?.value || '';
-  const end     = endEl?.value || '';
+  const start   = startEl?.dataset?.isoVal || startEl?.value || '';
+  const end     = endEl?.dataset?.isoVal   || endEl?.value   || '';
   const budget= parseFloat(document.getElementById('budgetAmount')?.value)||0;
   const notes = document.getElementById('tripNotes')?.value?.trim()||'';
 
@@ -880,8 +880,8 @@ async function generateItinerary() {
   const dest  = document.getElementById('destination')?.value?.trim();
   const startEl = document.getElementById('startDate');
   const endEl   = document.getElementById('endDate');
-  const start   = startEl?.value || '';
-  const end     = endEl?.value || '';
+  const start   = startEl?.dataset?.isoVal || startEl?.value || '';
+  const end     = endEl?.dataset?.isoVal   || endEl?.value   || '';
   const notes = document.getElementById('tripNotes')?.value?.trim()||'';
   const pace  = document.querySelector('.pace-btn.active')?.textContent?.trim()||'Moderate';
   const interests = [...document.querySelectorAll('.interest-btn.active')].map(b=>b.textContent.trim()).join(', ')||'general sightseeing';
@@ -1270,7 +1270,7 @@ function renderBudgetPage(tripFilter, search='', sort='date-asc') {
   const el = document.getElementById('budgetPageContent');
   if (!el) return;
 
-  let trips = tripFilter === 'all' ? [...allTrips] : allTrips.filter(t=>t.id===tripFilter);
+  let trips = tripFilter === 'all' ? allTrips.filter(t=>t.status!=='completed') : allTrips.filter(t=>t.id===tripFilter);
 
   // Search filter
   if (search) trips = trips.filter(t =>
@@ -1504,7 +1504,7 @@ function openNewChecklistFromPage() {
 function renderChecklistPage(tripFilter, search='', sort='date-asc') {
   const el = document.getElementById('checklistPageContent');
   if (!el) return;
-  let trips = tripFilter==='all' ? [...allTrips] : allTrips.filter(t=>t.id===tripFilter);
+  let trips = tripFilter==='all' ? allTrips.filter(t=>t.status!=='completed') : allTrips.filter(t=>t.id===tripFilter);
 
   if (search) trips = trips.filter(t =>
     t.destination?.toLowerCase().includes(search) ||
@@ -3556,11 +3556,10 @@ function discardItineraryPreview() {
   openTripHub(trip.id);
   window._pendingItinerary = null;
 }
-
-window.showItineraryPreview=showItineraryPreview; window.renderPreviewEditor=renderPreviewEditor;
+window.discardItineraryPreview = discardItineraryPreview;
+window.confirmSaveItinerary = confirmSaveItinerary;
 window.previewAddDay=previewAddDay; window.previewRemoveDay=previewRemoveDay;
 window.previewAddActivity=previewAddActivity; window.previewRemoveActivity=previewRemoveActivity;
-window.confirmSaveItinerary=confirmSaveItinerary; window.discardItineraryPreview=discardItineraryPreview;
 
 // ============================================================
 //  FEATURE: PACKING LIST — SELECT ALL + INLINE RENAME
@@ -3614,11 +3613,11 @@ async function renderJournalTab() {
   el.innerHTML = '<div style="text-align:center;padding:16px;color:#94a3b8;font-size:13px">Loading journal…</div>';
 
   var trip = allTrips.find(function(t){ return t.id === currentTripId; });
-  if (!trip) return;
+  if (!trip) { el.innerHTML = '<p style="color:#94a3b8;font-size:13px">Open a trip to see its journal.</p>'; return; }
   // Fetch fresh metadata from DB
   var meta = trip.metadata || {};
   if (!trip.metadata) {
-    try { meta = await loadTripMetadata(currentTripId); } catch(e) {}
+    try { meta = await loadTripMetadata(currentTripId); } catch(e) { meta = {}; }
   }
   var entries = (meta.journal || []).slice().sort(function(a,b){ return new Date(b.date)-new Date(a.date); });
 
@@ -3708,7 +3707,16 @@ async function initHubMap(trip) {
   container.innerHTML='';
   await loadLeaflet();
   var lat=20,lon=0,zoom=2;
-  try{ var gR=await fetch('https://nominatim.openstreetmap.org/search?format=json&limit=1&q='+encodeURIComponent(trip.destination)); var gD=await gR.json(); if(gD[0]){lat=parseFloat(gD[0].lat);lon=parseFloat(gD[0].lon);zoom=11;} }catch(e){}
+  try{
+    var cacheKey = trip.destination.trim().toLowerCase();
+    var cached = _geoCache[cacheKey];
+    if (!cached) {
+      var gR=await fetch('https://nominatim.openstreetmap.org/search?format=json&limit=1&q='+encodeURIComponent(trip.destination));
+      var gD=await gR.json();
+      if(gD[0]){ cached={lat:parseFloat(gD[0].lat),lon:parseFloat(gD[0].lon)}; _geoCache[cacheKey]=cached; }
+    }
+    if(cached){lat=cached.lat;lon=cached.lon;zoom=11;}
+  }catch(e){}
   _hubMap=L.map(container,{zoomControl:true,scrollWheelZoom:false}).setView([lat,lon],zoom);
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© <a href="https://openstreetmap.org">OpenStreetMap</a>',maxZoom:19}).addTo(_hubMap);
   if(zoom>2){var di=L.divIcon({html:'<div style="background:#068cdf;color:white;border-radius:50% 50% 50% 0;width:32px;height:32px;display:flex;align-items:center;justify-content:center;font-size:16px;transform:rotate(-45deg);box-shadow:0 2px 8px rgba(0,0,0,0.3)"><span style="transform:rotate(45deg)">📍</span></div>',className:'',iconAnchor:[16,32],popupAnchor:[0,-34]});L.marker([lat,lon],{icon:di}).addTo(_hubMap).bindPopup('<strong>'+trip.destination+'</strong>').openPopup();}
@@ -3784,7 +3792,171 @@ function onStartDateChange() {
 window.onStartDateChange = onStartDateChange;
 
 // ============================================================
-//  CUSTOM DATE PICKER — removed, using native date inputs
+//  CUSTOM DATE PICKER
+// ============================================================
+var _cdpTarget = null;
+var _cdpYear   = 0;
+var _cdpMonth  = 0;
+
+function openDatePicker(inputId) {
+  _cdpTarget = inputId;
+  var inp    = document.getElementById(inputId);
+  var picker = document.getElementById('customDatePicker');
+  if (!inp || !picker) return;
+
+  // Parse existing value
+  var today = new Date();
+  _cdpYear  = today.getFullYear();
+  _cdpMonth = today.getMonth();
+  if (inp.dataset.isoVal) {
+    var d = new Date(inp.dataset.isoVal);
+    _cdpYear  = d.getFullYear();
+    _cdpMonth = d.getMonth();
+  }
+
+  cdpRender();
+
+  // Position below the input
+  var rect = inp.getBoundingClientRect();
+  picker.style.display = 'block';
+  var left = rect.left + window.scrollX;
+  var top  = rect.bottom + window.scrollY + 4;
+  // Keep on screen
+  if (left + 300 > window.innerWidth) left = window.innerWidth - 308;
+  picker.style.left = left + 'px';
+  picker.style.top  = top  + 'px';
+
+  // Close on outside click
+  setTimeout(function() {
+    document.addEventListener('click', cdpOutsideClick, true);
+  }, 10);
+}
+
+function cdpOutsideClick(e) {
+  var picker = document.getElementById('customDatePicker');
+  var isInside = picker && picker.contains(e.target);
+  var isInput  = ['startDate','endDate'].includes(e.target.id);
+  if (!isInside && !isInput) {
+    cdpClose();
+  }
+}
+
+function cdpClose() {
+  var picker = document.getElementById('customDatePicker');
+  if (picker) picker.style.display = 'none';
+  document.removeEventListener('click', cdpOutsideClick, true);
+  _cdpTarget = null;
+}
+
+function cdpChangeMonth(dir) {
+  _cdpMonth += dir;
+  if (_cdpMonth > 11) { _cdpMonth = 0; _cdpYear++; }
+  if (_cdpMonth < 0)  { _cdpMonth = 11; _cdpYear--; }
+  cdpRender();
+}
+
+function cdpRender() {
+  var label = document.getElementById('cdpMonthLabel');
+  var grid  = document.getElementById('cdpDays');
+  if (!label || !grid) return;
+
+  var months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  label.textContent = months[_cdpMonth] + ' ' + _cdpYear;
+
+  var first    = new Date(_cdpYear, _cdpMonth, 1).getDay();
+  var daysInM  = new Date(_cdpYear, _cdpMonth + 1, 0).getDate();
+  var today    = new Date();
+  today.setHours(0,0,0,0);
+
+  // Get min date (for endDate, min = startDate)
+  var minISO = null;
+  if (_cdpTarget === 'endDate') {
+    var startInp = document.getElementById('startDate');
+    if (startInp && startInp.dataset.isoVal) minISO = startInp.dataset.isoVal;
+  }
+
+  // Current selected value
+  var selInp  = document.getElementById(_cdpTarget);
+  var selISO  = selInp && selInp.dataset.isoVal ? selInp.dataset.isoVal : null;
+
+  var html = '';
+  // Empty cells before first day
+  for (var i = 0; i < first; i++) html += '<div></div>';
+
+  for (var d = 1; d <= daysInM; d++) {
+    var iso      = _cdpYear + '-' + String(_cdpMonth+1).padStart(2,'0') + '-' + String(d).padStart(2,'0');
+    var isToday  = (iso === today.toISOString().split('T')[0]);
+    var isSel    = (iso === selISO);
+    var disabled = minISO && iso < minISO;
+
+    var bg    = isSel    ? '#068cdf' : isToday ? 'rgba(6,140,223,0.12)' : 'transparent';
+    var color = isSel    ? 'white'   : disabled ? '#94a3b8' : 'var(--text-1)';
+    var fw    = (isSel || isToday) ? '700' : '400';
+    var cur   = disabled ? 'not-allowed' : 'pointer';
+    var onclick = disabled ? '' : 'cdpSelect(\'' + iso + '\')';
+
+    html += '<div onclick="' + onclick + '" style="text-align:center;padding:6px 2px;border-radius:8px;font-size:13px;'
+          + 'background:' + bg + ';color:' + color + ';font-weight:' + fw + ';cursor:' + cur + ';'
+          + 'transition:background 0.1s;" '
+          + 'onmouseover="if(!' + disabled + ')this.style.background=\'' + (isSel?'#068cdf':'rgba(6,140,223,0.12)') + '\'" '
+          + 'onmouseout="this.style.background=\'' + bg + '\'">'
+          + d + '</div>';
+  }
+  grid.innerHTML = html;
+}
+
+function cdpSelect(iso) {
+  var inp = document.getElementById(_cdpTarget);
+  if (!inp) return;
+  // Store ISO value, display formatted
+  inp.dataset.isoVal = iso;
+  var parts = iso.split('-');
+  inp.value = parts[2] + '/' + parts[1] + '/' + parts[0];
+  // Fire onchange for onStartDateChange
+  inp.dispatchEvent(new Event('change'));
+  if (_cdpTarget === 'startDate') onStartDateChange();
+  cdpClose();
+}
+
+function cdpClear() {
+  var inp = document.getElementById(_cdpTarget);
+  if (inp) { inp.value = ''; inp.dataset.isoVal = ''; }
+  cdpClose();
+}
+
+function cdpToday() {
+  var today = new Date().toISOString().split('T')[0];
+  cdpSelect(today);
+}
+
+// Override onStartDateChange to work with custom picker
+function onStartDateChange() {
+  var start = document.getElementById('startDate');
+  var end   = document.getElementById('endDate');
+  if (!start || !end) return;
+  var startISO = start.dataset.isoVal || '';
+  // If end date is before start, clear it
+  if (end.dataset.isoVal && end.dataset.isoVal < startISO) {
+    end.value = '';
+    end.dataset.isoVal = '';
+  }
+}
+
+// Make generateItinerary read isoVal instead of .value
+// Patch the date reading in generateItinerary
+var _origGetDateVal = function(id) {
+  var el = document.getElementById(id);
+  if (!el) return '';
+  return el.dataset.isoVal || el.value || '';
+};
+window.getDateVal = _origGetDateVal;
+
+window.openDatePicker  = openDatePicker;
+window.cdpChangeMonth  = cdpChangeMonth;
+window.cdpSelect       = cdpSelect;
+window.cdpClear        = cdpClear;
+window.cdpToday        = cdpToday;
+window.onStartDateChange = onStartDateChange;
 
 // ============================================================
 //  GEOCODE CACHE — prevents Nominatim rate limiting
@@ -3808,29 +3980,7 @@ async function geocode(destination) {
 }
 window.geocode = geocode;
 
-// Patch initHubMap to use cache
-(function() {
-  var _orig = window.initHubMap;
-  window.initHubMap = async function(trip) {
-    // Pre-warm cache before map loads
-    if (trip && trip.destination && !_geoCache[trip.destination.trim().toLowerCase()]) {
-      await geocode(trip.destination);
-    }
-    if (_orig) return _orig(trip);
-  };
-})();
-
-// Patch loadWeatherWidget to use cache
-(function() {
-  var _orig = window.loadWeatherWidget;
-  window.loadWeatherWidget = async function(trip) {
-    if (!trip) return;
-    // Inject cached coords so weather doesn't re-geocode
-    var cached = trip.destination ? _geoCache[trip.destination.trim().toLowerCase()] : null;
-    if (cached) trip._cachedGeo = cached;
-    if (_orig) return _orig(trip);
-  };
-})();
+// Geocode cache used directly inside initHubMap and loadWeatherWidget
 
 // ============================================================
 //  GLOBAL ERROR HANDLER — friendly message instead of blank
