@@ -4017,4 +4017,4 @@ window.onerror = function(msg, src, line, col, err) {
   // Let normal dev errors through to console
   console.warn('Global error:', msg, 'at', src + ':' + line);
   return false; // don't suppress default console logging
-};
+};}
