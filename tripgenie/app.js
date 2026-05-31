@@ -3627,11 +3627,11 @@ function loadLeaflet() {
     const css = document.createElement('link');
     css.id    = 'leaflet-css';
     css.rel   = 'stylesheet';
-    css.href  = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
+    css.href  = 'https://unpkg.com/leaflet@1.9.3/dist/leaflet.css';
     document.head.appendChild(css);
 
     const js  = document.createElement('script');
-    js.src    = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
+    js.src    = 'https://unpkg.com/leaflet@1.9.3/dist/leaflet.js';
     js.onload = resolve;
     document.head.appendChild(js);
   });
@@ -3978,11 +3978,13 @@ window.openTripHub = openTripHub;
 // ============================================================
 //  HOOK: patch navigate to init autocomplete on plan trip page
 // ============================================================
-const _origNavigate = window.navigate;
-window.navigate = function(page, ...args) {
-  if (_origNavigate) _origNavigate(page, ...args);
-  if (page === 'plantrip') setTimeout(initDestinationAutocomplete, 100);
-};
+(function() {
+  const _navBeforeAC = window.navigate;
+  window.navigate = function(page, ...args) {
+    if (_navBeforeAC) _navBeforeAC(page, ...args);
+    if (page === 'plantrip') setTimeout(initDestinationAutocomplete, 100);
+  };
+})();
 
 // init autocomplete immediately if already on plantrip
 document.addEventListener('DOMContentLoaded', () => {
