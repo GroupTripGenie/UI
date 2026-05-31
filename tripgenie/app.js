@@ -1911,12 +1911,22 @@ async function deleteReminder(id) {
 // ── Hook navigate to load pages ───────────────────────────────
 const _origNavigate = window.navigate;
 if (_origNavigate) {
+  const pageTitles = {
+    dashboard: 'Dashboard', mytrips: 'My Trips', plantrip: 'Plan a Trip',
+    budget: 'Budget', checklists: 'Checklists', reminders: 'Reminders',
+    calendar: 'Calendar', profile: 'Profile', tripHub: 'Trip Hub'
+  };
   window.navigate = function(page) {
     _origNavigate(page);
     if (page==='budget')     loadBudgetPage();
     if (page==='checklists') loadChecklistPage();
     if (page==='reminders')  loadReminderPage();
     if (page==='calendar')   loadCalendar();
+    // Update topbar page title
+    const titleEl = document.getElementById('topbarPageTitle');
+    if (titleEl) titleEl.textContent = pageTitles[page] || 'TripGenie';
+    // Update browser tab title
+    document.title = (pageTitles[page] || 'TripGenie') + ' — TripGenie';
   };
 }
 
