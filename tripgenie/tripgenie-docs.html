@@ -1,0 +1,1197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>TripGenie — Comprehensive Documentation</title>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<style>
+  :root {
+    --teal-dark: #063937;
+    --teal-blue: #068cdf;
+    --bg: #f8fafc;
+    --surface: #ffffff;
+    --border: #e2e8f0;
+    --text-1: #0f172a;
+    --text-2: #475569;
+    --text-3: #94a3b8;
+    --green: #22c55e;
+    --orange: #f97316;
+    --red: #ef4444;
+    --purple: #a855f7;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body { font-family: 'Sora', sans-serif; background: var(--bg); color: var(--text-1); line-height: 1.7; }
+
+  /* ── Layout ── */
+  .layout { display: flex; min-height: 100vh; }
+  .sidebar {
+    width: 280px; flex-shrink: 0; background: var(--teal-dark);
+    position: sticky; top: 0; height: 100vh; overflow-y: auto;
+    padding: 32px 0;
+  }
+  .sidebar-logo { padding: 0 24px 28px; border-bottom: 1px solid rgba(255,255,255,0.1); margin-bottom: 20px; }
+  .sidebar-logo .logo-mark { font-size: 32px; margin-bottom: 6px; }
+  .sidebar-logo h1 { font-size: 20px; font-weight: 800; color: white; }
+  .sidebar-logo p { font-size: 12px; color: rgba(255,255,255,0.5); margin-top: 2px; }
+  .nav-section { padding: 0 16px; margin-bottom: 8px; }
+  .nav-label { font-size: 10px; font-weight: 700; color: rgba(255,255,255,0.35); text-transform: uppercase; letter-spacing: 0.1em; padding: 8px 8px 4px; }
+  .nav-link { display: block; padding: 7px 12px; border-radius: 8px; color: rgba(255,255,255,0.7); text-decoration: none; font-size: 13px; font-weight: 500; transition: all 0.15s; }
+  .nav-link:hover { background: rgba(255,255,255,0.1); color: white; }
+  .nav-link.active { background: var(--teal-blue); color: white; }
+
+  /* ── Main ── */
+  .main { flex: 1; min-width: 0; }
+  .hero {
+    background: linear-gradient(135deg, var(--teal-dark) 0%, #0a4a8a 100%);
+    padding: 80px 64px; color: white;
+  }
+  .hero-badge { display: inline-flex; align-items: center; gap: 8px; background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.2); border-radius: 99px; padding: 5px 16px; font-size: 12px; font-weight: 600; margin-bottom: 24px; }
+  .hero h1 { font-size: 48px; font-weight: 800; line-height: 1.15; margin-bottom: 16px; }
+  .hero h1 span { color: #60d0ff; }
+  .hero p { font-size: 18px; color: rgba(255,255,255,0.75); max-width: 560px; margin-bottom: 32px; }
+  .hero-meta { display: flex; gap: 32px; flex-wrap: wrap; }
+  .hero-meta-item { font-size: 13px; color: rgba(255,255,255,0.6); }
+  .hero-meta-item strong { color: white; display: block; font-size: 15px; }
+
+  .content { padding: 64px; max-width: 900px; }
+  .content + .content { padding-top: 0; }
+
+  /* ── Sections ── */
+  section { margin-bottom: 80px; }
+  .section-tag { display: inline-block; font-size: 11px; font-weight: 700; color: var(--teal-blue); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 10px; }
+  h2 { font-size: 30px; font-weight: 800; color: var(--text-1); margin-bottom: 8px; }
+  h3 { font-size: 18px; font-weight: 700; color: var(--text-1); margin: 32px 0 12px; }
+  h4 { font-size: 14px; font-weight: 700; color: var(--text-2); margin: 20px 0 8px; text-transform: uppercase; letter-spacing: 0.06em; }
+  p { color: var(--text-2); margin-bottom: 14px; font-size: 15px; }
+  .lead { font-size: 17px; color: var(--text-2); margin-bottom: 32px; line-height: 1.8; }
+  hr { border: none; border-top: 1px solid var(--border); margin: 48px 0; }
+
+  /* ── Cards ── */
+  .card-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 16px; margin: 24px 0; }
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 20px; }
+  .card .icon { font-size: 28px; margin-bottom: 10px; }
+  .card h4 { font-size: 14px; font-weight: 700; color: var(--text-1); text-transform: none; letter-spacing: 0; margin: 0 0 6px; }
+  .card p { font-size: 13px; color: var(--text-3); margin: 0; }
+
+  /* ── Tech stack table ── */
+  .tech-table { width: 100%; border-collapse: collapse; margin: 20px 0; font-size: 14px; }
+  .tech-table th { text-align: left; padding: 10px 16px; background: var(--teal-dark); color: white; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; }
+  .tech-table th:first-child { border-radius: 10px 0 0 0; }
+  .tech-table th:last-child { border-radius: 0 10px 0 0; }
+  .tech-table td { padding: 11px 16px; border-bottom: 1px solid var(--border); color: var(--text-2); vertical-align: top; }
+  .tech-table tr:last-child td { border-bottom: none; }
+  .tech-table tr:hover td { background: #f8fafc; }
+  .tech-table td:first-child { font-weight: 600; color: var(--text-1); width: 160px; }
+  .badge { display: inline-block; padding: 2px 10px; border-radius: 99px; font-size: 11px; font-weight: 600; }
+  .badge-free { background: #dcfce7; color: #166534; }
+  .badge-paid { background: #fef9c3; color: #854d0e; }
+
+  /* ── API endpoints ── */
+  .endpoint { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; margin-bottom: 12px; overflow: hidden; }
+  .endpoint-header { display: flex; align-items: center; gap: 12px; padding: 14px 18px; cursor: pointer; }
+  .method { font-size: 11px; font-weight: 800; padding: 3px 10px; border-radius: 6px; font-family: 'DM Mono', monospace; min-width: 52px; text-align: center; }
+  .method-get    { background: #dcfce7; color: #166534; }
+  .method-post   { background: #dbeafe; color: #1e40af; }
+  .method-patch  { background: #fef9c3; color: #854d0e; }
+  .method-delete { background: #fee2e2; color: #991b1b; }
+  .endpoint-path { font-family: 'DM Mono', monospace; font-size: 14px; color: var(--text-1); font-weight: 500; }
+  .endpoint-desc { font-size: 13px; color: var(--text-3); margin-left: auto; }
+  .endpoint-body { padding: 0 18px 16px; border-top: 1px solid var(--border); }
+  .endpoint-body p { font-size: 13px; margin: 10px 0 0; }
+  .auth-required { font-size: 11px; background: #fef3c7; color: #92400e; padding: 2px 8px; border-radius: 6px; font-weight: 600; }
+
+  /* ── Code blocks ── */
+  pre { background: #0f172a; color: #e2e8f0; border-radius: 12px; padding: 20px 24px; overflow-x: auto; margin: 16px 0; font-size: 13px; line-height: 1.7; }
+  code { font-family: 'DM Mono', monospace; }
+  p code, li code { background: #f1f5f9; color: var(--teal-dark); padding: 2px 7px; border-radius: 5px; font-size: 13px; }
+
+  /* ── DB Schema ── */
+  .schema-table { width: 100%; border-collapse: collapse; font-size: 13px; margin: 12px 0 24px; }
+  .schema-table th { background: #f1f5f9; color: var(--text-2); text-align: left; padding: 8px 12px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; }
+  .schema-table td { padding: 8px 12px; border-bottom: 1px solid var(--border); font-family: 'DM Mono', monospace; color: var(--text-2); }
+  .schema-table td:first-child { color: var(--teal-dark); font-weight: 600; }
+  .schema-table td:nth-child(2) { color: #7c3aed; }
+  .schema-table .pk { color: var(--orange); font-size: 10px; font-family: 'Sora', sans-serif; font-weight: 700; }
+
+  /* ── Steps ── */
+  .steps { counter-reset: step; list-style: none; }
+  .steps li { display: flex; gap: 16px; margin-bottom: 20px; counter-increment: step; }
+  .steps li::before { content: counter(step); display: flex; align-items: center; justify-content: center; width: 32px; height: 32px; border-radius: 50%; background: var(--teal-blue); color: white; font-weight: 700; font-size: 14px; flex-shrink: 0; margin-top: 2px; }
+  .steps li > div { flex: 1; }
+  .steps li strong { display: block; font-size: 15px; margin-bottom: 4px; }
+  .steps li p { font-size: 14px; margin: 0; }
+
+  /* ── Feature list ── */
+  .feature-list { list-style: none; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 16px 0; }
+  .feature-list li { display: flex; align-items: flex-start; gap: 10px; font-size: 14px; color: var(--text-2); padding: 10px 14px; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; }
+  .feature-list li span:first-child { font-size: 18px; flex-shrink: 0; }
+
+  /* ── Security ── */
+  .security-item { display: flex; gap: 14px; padding: 16px; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; margin-bottom: 10px; }
+  .security-icon { font-size: 22px; flex-shrink: 0; }
+  .security-item h4 { font-size: 14px; font-weight: 700; color: var(--text-1); text-transform: none; letter-spacing: 0; margin: 0 0 4px; }
+  .security-item p { font-size: 13px; color: var(--text-3); margin: 0; }
+
+  /* ── Architecture diagram ── */
+  .arch { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 32px; margin: 24px 0; }
+  .arch-row { display: flex; align-items: center; justify-content: center; gap: 12px; flex-wrap: wrap; margin-bottom: 12px; }
+  .arch-box { background: linear-gradient(135deg, var(--teal-dark), var(--teal-blue)); color: white; border-radius: 10px; padding: 10px 18px; font-size: 13px; font-weight: 600; text-align: center; }
+  .arch-box.ext { background: #f1f5f9; color: var(--text-1); border: 1px solid var(--border); }
+  .arch-arrow { color: var(--text-3); font-size: 20px; }
+  .arch-label { font-size: 11px; color: var(--text-3); text-align: center; margin-top: 6px; }
+
+  /* ── Callouts ── */
+  .callout { border-radius: 10px; padding: 16px 20px; margin: 20px 0; display: flex; gap: 12px; }
+  .callout-info { background: #eff6ff; border-left: 4px solid var(--teal-blue); }
+  .callout-warn { background: #fffbeb; border-left: 4px solid #f59e0b; }
+  .callout-danger { background: #fef2f2; border-left: 4px solid var(--red); }
+  .callout p { font-size: 14px; margin: 0; color: var(--text-1); }
+
+  /* ── Print / PDF ── */
+  @media print {
+    .sidebar { display: none; }
+    .hero { padding: 40px; }
+    .content { padding: 32px; }
+    .endpoint-body { display: block !important; }
+    pre { white-space: pre-wrap; }
+    section { page-break-inside: avoid; }
+  }
+
+  /* ── Scrollbar ── */
+  .sidebar::-webkit-scrollbar { width: 4px; }
+  .sidebar::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 99px; }
+</style>
+</head>
+<body>
+<div class="layout">
+
+<!-- ── SIDEBAR ── -->
+<nav class="sidebar">
+  <div class="sidebar-logo">
+    <div class="logo-mark">🧞</div>
+    <h1>TripGenie</h1>
+    <p>Documentation v1.0</p>
+  </div>
+
+  <div class="nav-section">
+    <div class="nav-label">Overview</div>
+    <a class="nav-link" href="#overview">Project Overview</a>
+    <a class="nav-link" href="#features">Features</a>
+    <a class="nav-link" href="#tech-stack">Tech Stack</a>
+    <a class="nav-link" href="#architecture">Architecture</a>
+  </div>
+
+  <div class="nav-section">
+    <div class="nav-label">Developer Guide</div>
+    <a class="nav-link" href="#setup">Local Setup</a>
+    <a class="nav-link" href="#env-vars">Environment Variables</a>
+    <a class="nav-link" href="#database">Database Schema</a>
+    <a class="nav-link" href="#api">API Reference</a>
+    <a class="nav-link" href="#frontend">Frontend Structure</a>
+    <a class="nav-link" href="#security">Security</a>
+  </div>
+
+  <div class="nav-section">
+    <div class="nav-label">User Guide</div>
+    <a class="nav-link" href="#user-auth">Account & Login</a>
+    <a class="nav-link" href="#user-trips">Planning a Trip</a>
+    <a class="nav-link" href="#user-hub">Trip Hub</a>
+    <a class="nav-link" href="#user-budget">Budget Tracker</a>
+    <a class="nav-link" href="#user-checklist">Checklists</a>
+    <a class="nav-link" href="#user-reminders">Reminders</a>
+    <a class="nav-link" href="#user-journal">Trip Journal</a>
+    <a class="nav-link" href="#user-map">Map & Weather</a>
+    <a class="nav-link" href="#user-calendar">Calendar</a>
+    <a class="nav-link" href="#user-assistant">AI Assistant</a>
+  </div>
+
+  <div class="nav-section">
+    <div class="nav-label">School Submission</div>
+    <a class="nav-link" href="#decisions">Tech Decisions</a>
+    <a class="nav-link" href="#challenges">Challenges</a>
+    <a class="nav-link" href="#deployment">Deployment</a>
+  </div>
+</nav>
+
+<!-- ── MAIN ── -->
+<div class="main">
+
+<!-- Hero -->
+<div class="hero">
+  <div class="hero-badge">📄 Comprehensive Documentation</div>
+  <h1>🧞 <span>TripGenie</span><br/>Documentation</h1>
+  <p>AI-powered travel planning — plan smarter, travel better. Full developer reference, user manual, and school submission guide.</p>
+  <div class="hero-meta">
+    <div class="hero-meta-item"><strong>tripgenie.space</strong>Live URL</div>
+    <div class="hero-meta-item"><strong>TripGenie Team</strong>Authors</div>
+    <div class="hero-meta-item"><strong>v1.0</strong>Version</div>
+    <div class="hero-meta-item"><strong>May 2026</strong>Date</div>
+  </div>
+</div>
+
+<div class="content">
+
+<!-- ══════════════════════════════════════════════ OVERVIEW -->
+<section id="overview">
+  <span class="section-tag">Overview</span>
+  <h2>What is TripGenie?</h2>
+  <p class="lead">TripGenie is a full-stack AI-powered travel planning web application built as a school project. It allows users to plan trips end-to-end — from generating AI itineraries to tracking budgets, managing packing lists, setting reminders, pinning places on a map, logging journal entries, and checking live weather — all in one cloud-synced platform.</p>
+
+  <div class="callout callout-info">
+    <p>💡 <strong>School context:</strong> TripGenie was built entirely by the TripGenie Team as a school project. It is live at <strong>tripgenie.space</strong> with a real PostgreSQL database, real user authentication, and real AI integration.</p>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════ FEATURES -->
+<section id="features">
+  <span class="section-tag">Features</span>
+  <h2>Feature Overview</h2>
+  <ul class="feature-list">
+    <li><span>🤖</span><span><strong>AI Itinerary Generator</strong> — generates day-by-day plans based on destination, dates, pace, budget, and interests using GPT-4o-mini</span></li>
+    <li><span>✏️</span><span><strong>Edit Before Saving</strong> — review and edit AI itineraries inline before committing to the database</span></li>
+    <li><span>🗺️</span><span><strong>Interactive Map</strong> — Leaflet/OpenStreetMap with custom pin-drop, fullscreen mode, saved to the cloud</span></li>
+    <li><span>🌤️</span><span><strong>Live Weather</strong> — real-time weather + trip-date forecast via Open-Meteo, zero API cost</span></li>
+    <li><span>💸</span><span><strong>Budget Tracker</strong> — categories, expenses, live totals, AI spending analysis</span></li>
+    <li><span>💱</span><span><strong>Currency Converter</strong> — live exchange rates via Frankfurter API</span></li>
+    <li><span>✅</span><span><strong>Checklists</strong> — per-trip checklists with items, check/uncheck, delete</span></li>
+    <li><span>🧳</span><span><strong>AI Packing List</strong> — AI-generated and inline-editable before saving</span></li>
+    <li><span>🔔</span><span><strong>Smart Reminders</strong> — priorities, categories, AI-suggested dates, done/undo</span></li>
+    <li><span>📖</span><span><strong>Trip Journal</strong> — date-stamped entries with mood, saved to DB via JSONB metadata</span></li>
+    <li><span>🏷️</span><span><strong>Trip Tags</strong> — preset + custom tags (Beach, Business, Family…) stored as TEXT[] in DB</span></li>
+    <li><span>📅</span><span><strong>Calendar View</strong> — visual month calendar showing trips, itinerary events, and reminders</span></li>
+    <li><span>🎙️</span><span><strong>Voice Input</strong> — speak trip details, AI extracts and auto-fills the form</span></li>
+    <li><span>📄</span><span><strong>PDF Export</strong> — full trip summary exported via browser print API</span></li>
+    <li><span>🔐</span><span><strong>Full Auth</strong> — email/password + Google OAuth 2.0, JWT, forgot/reset password</span></li>
+    <li><span>🌙</span><span><strong>Dark Mode</strong> — full dark palette with deep #0a0c10 background</span></li>
+    <li><span>📍</span><span><strong>Destination Autocomplete</strong> — Nominatim-powered with keyboard navigation</span></li>
+    <li><span>📊</span><span><strong>AI Budget Insights</strong> — GPT analyzes spending patterns and gives saving tips</span></li>
+  </ul>
+</section>
+
+<!-- ══════════════════════════════════════════════ TECH STACK -->
+<section id="tech-stack">
+  <span class="section-tag">Technology</span>
+  <h2>Tech Stack</h2>
+  <table class="tech-table">
+    <tr><th>Layer</th><th>Technology</th><th>Notes</th></tr>
+    <tr><td>Frontend</td><td>Vanilla HTML, CSS, JavaScript</td><td>No framework — single SPA in <code>app.html</code> + <code>app.js</code></td></tr>
+    <tr><td>Backend</td><td>Node.js + Express</td><td>REST API on Railway</td></tr>
+    <tr><td>Database</td><td>PostgreSQL</td><td>Hosted on Railway</td></tr>
+    <tr><td>Authentication</td><td>JWT + bcrypt + Google OAuth 2.0</td><td>7-day tokens, cost factor 12</td></tr>
+    <tr><td>AI</td><td>OpenAI GPT-4o-mini</td><td>Itinerary, packing list, reminders, budget analysis, chat <span class="badge badge-paid">Paid</span></td></tr>
+    <tr><td>Email</td><td>Resend API</td><td>Password reset emails <span class="badge badge-paid">Paid</span></td></tr>
+    <tr><td>Images</td><td>Cloudinary</td><td>Profile photos, trip cover photos <span class="badge badge-free">Free tier</span></td></tr>
+    <tr><td>Maps</td><td>Leaflet.js + OpenStreetMap</td><td>100% free, no API key <span class="badge badge-free">Free</span></td></tr>
+    <tr><td>Weather</td><td>Open-Meteo API</td><td>Real-time + forecast, no API key <span class="badge badge-free">Free</span></td></tr>
+    <tr><td>Currency</td><td>Frankfurter API</td><td>Live exchange rates, no API key <span class="badge badge-free">Free</span></td></tr>
+    <tr><td>Geocoding</td><td>Nominatim / OpenStreetMap</td><td>Destination autocomplete + map geocoding <span class="badge badge-free">Free</span></td></tr>
+    <tr><td>Frontend Host</td><td>Render</td><td>Static site hosting <span class="badge badge-free">Free tier</span></td></tr>
+    <tr><td>Backend Host</td><td>Railway</td><td>Node.js + PostgreSQL <span class="badge badge-paid">Paid</span></td></tr>
+    <tr><td>Domain</td><td>Namecheap → Cloudflare → Render</td><td>tripgenie.space with HTTPS</td></tr>
+    <tr><td>Rate Limiting</td><td>express-rate-limit</td><td>Global + per-route limits</td></tr>
+  </table>
+</section>
+
+<!-- ══════════════════════════════════════════════ ARCHITECTURE -->
+<section id="architecture">
+  <span class="section-tag">Architecture</span>
+  <h2>System Architecture</h2>
+  <p>TripGenie uses a classic three-tier architecture with a separately hosted frontend and backend.</p>
+
+  <div class="arch">
+    <div class="arch-row">
+      <div class="arch-box ext">Browser (User)</div>
+      <div class="arch-arrow">→</div>
+      <div class="arch-box ext">Cloudflare DNS</div>
+      <div class="arch-arrow">→</div>
+      <div class="arch-box ext">Render (CDN)</div>
+    </div>
+    <div class="arch-label">↓ Static files served (app.html, app.js, styles.css)</div>
+    <div style="height:20px"></div>
+    <div class="arch-row">
+      <div class="arch-box">app.js (Frontend SPA)</div>
+      <div class="arch-arrow">→ HTTPS/JWT →</div>
+      <div class="arch-box">Express API (Railway)</div>
+      <div class="arch-arrow">→</div>
+      <div class="arch-box">PostgreSQL (Railway)</div>
+    </div>
+    <div style="height:20px"></div>
+    <div class="arch-row">
+      <div class="arch-box ext">OpenAI API</div>
+      <div class="arch-box ext">Cloudinary</div>
+      <div class="arch-box ext">Resend API</div>
+      <div class="arch-box ext">Open-Meteo</div>
+      <div class="arch-box ext">Nominatim</div>
+      <div class="arch-box ext">Frankfurter</div>
+    </div>
+    <div class="arch-label">External APIs called from backend (OpenAI, Resend, Cloudinary) and frontend (Open-Meteo, Nominatim, Frankfurter, Leaflet tiles)</div>
+  </div>
+
+  <h3>Request Flow</h3>
+  <ol class="steps">
+    <li><div><strong>User opens tripgenie.space</strong><p>Browser loads static files from Render's CDN. app.js initialises, reads JWT from localStorage, and calls <code>GET /api/auth/me</code> to verify the session.</p></div></li>
+    <li><div><strong>Authenticated API calls</strong><p>Every API call goes through <code>apiFetch()</code> which automatically attaches the <code>Authorization: Bearer &lt;token&gt;</code> header and handles 401 auto-logout.</p></div></li>
+    <li><div><strong>Backend processes request</strong><p>Express routes validate the JWT via the <code>auth</code> middleware, query PostgreSQL, and return JSON. Rate limiting runs before any route handler.</p></div></li>
+    <li><div><strong>AI requests</strong><p>The frontend sends a message to <code>POST /api/assistant/chat</code>. The backend calls the OpenAI API server-side (keeping the API key secret) and returns the reply to the frontend.</p></div></li>
+  </ol>
+</section>
+
+<hr/>
+
+<!-- ══════════════════════════════════════════════ SETUP -->
+<section id="setup">
+  <span class="section-tag">Developer Guide</span>
+  <h2>Local Setup</h2>
+
+  <h3>Prerequisites</h3>
+  <ul style="padding-left:20px;color:var(--text-2);font-size:14px;line-height:2">
+    <li>Node.js 18+</li>
+    <li>PostgreSQL 14+ (local instance or Railway)</li>
+    <li>OpenAI API key</li>
+    <li>Resend API key (for password reset emails)</li>
+    <li>Google OAuth 2.0 credentials (optional — for Google sign-in)</li>
+    <li>Cloudinary account (optional — for photo uploads)</li>
+  </ul>
+
+  <h3>Backend Setup</h3>
+  <pre><code># Clone the repo
+git clone https://github.com/GroupTripGenie/UI.git
+cd UI-main/tripgenie/tripgenie-db
+
+# Install dependencies
+npm install
+
+# Create .env file (see Environment Variables section)
+cp .env.example .env
+
+# Start the server
+node server.js
+# → TripGenie API running → http://localhost:3000</code></pre>
+
+  <h3>Frontend Setup</h3>
+  <pre><code># Open in VS Code
+code UI-main/tripgenie
+
+# If running backend locally, update the API constant in app.js:
+# Find: const API = 'https://ui-production-e419.up.railway.app/api'
+# Change to: const API = 'http://localhost:3000/api'
+
+# Then open app.html with Live Server (VS Code extension)
+# or any static file server</code></pre>
+
+  <h3>Database Initialisation</h3>
+  <pre><code>-- Run on your PostgreSQL instance:
+CREATE TABLE users (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  email TEXT UNIQUE NOT NULL,
+  password_hash TEXT,
+  full_name TEXT NOT NULL,
+  avatar_initials TEXT,
+  avatar_url TEXT,
+  preferred_currency TEXT DEFAULT 'USD',
+  preferred_timezone TEXT DEFAULT 'UTC',
+  provider TEXT DEFAULT 'local',
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE trips (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+  title TEXT NOT NULL,
+  destination TEXT NOT NULL,
+  cover_image TEXT,
+  start_date DATE,
+  end_date DATE,
+  status TEXT DEFAULT 'upcoming',
+  planning_pct INT DEFAULT 0,
+  notes TEXT,
+  itinerary JSONB,
+  tags TEXT[] DEFAULT '{}',
+  metadata JSONB DEFAULT '{}',
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE budgets (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  trip_id UUID UNIQUE REFERENCES trips(id) ON DELETE CASCADE,
+  total_amount NUMERIC NOT NULL,
+  currency TEXT DEFAULT 'USD',
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE budget_categories (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  budget_id UUID REFERENCES budgets(id) ON DELETE CASCADE,
+  name TEXT NOT NULL,
+  allocated NUMERIC DEFAULT 0,
+  color TEXT DEFAULT '#068cdf'
+);
+
+CREATE TABLE expenses (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  category_id UUID REFERENCES budget_categories(id) ON DELETE CASCADE,
+  trip_id UUID REFERENCES trips(id) ON DELETE CASCADE,
+  description TEXT NOT NULL,
+  amount NUMERIC NOT NULL,
+  spent_on DATE DEFAULT CURRENT_DATE,
+  receipt_url TEXT,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE checklists (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  trip_id UUID REFERENCES trips(id) ON DELETE CASCADE,
+  title TEXT NOT NULL,
+  icon TEXT DEFAULT '📋',
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE checklist_items (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  checklist_id UUID REFERENCES checklists(id) ON DELETE CASCADE,
+  label TEXT NOT NULL,
+  is_checked BOOLEAN DEFAULT FALSE,
+  sort_order INT DEFAULT 0
+);
+
+CREATE TABLE reminders (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+  trip_id UUID REFERENCES trips(id) ON DELETE SET NULL,
+  title TEXT NOT NULL,
+  description TEXT,
+  remind_at TIMESTAMPTZ NOT NULL,
+  priority TEXT DEFAULT 'medium',
+  category TEXT,
+  is_done BOOLEAN DEFAULT FALSE,
+  done_at TIMESTAMPTZ,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE password_reset_tokens (
+  user_id UUID PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+  token TEXT NOT NULL,
+  expires_at TIMESTAMPTZ NOT NULL
+);
+
+-- View for category spending totals
+CREATE OR REPLACE VIEW category_spending AS
+  SELECT bc.*, COALESCE(SUM(e.amount), 0) AS spent
+  FROM budget_categories bc
+  LEFT JOIN expenses e ON e.category_id = bc.id
+  GROUP BY bc.id;</code></pre>
+</section>
+
+<!-- ══════════════════════════════════════════════ ENV VARS -->
+<section id="env-vars">
+  <span class="section-tag">Configuration</span>
+  <h2>Environment Variables</h2>
+  <p>All set in Railway dashboard under your backend service's Variables tab.</p>
+  <table class="tech-table">
+    <tr><th>Variable</th><th>Required</th><th>Description</th></tr>
+    <tr><td><code>DATABASE_URL</code></td><td>✅ Yes</td><td>PostgreSQL connection string (auto-set by Railway)</td></tr>
+    <tr><td><code>JWT_SECRET</code></td><td>✅ Yes</td><td>Random string for signing JWT tokens. Use <code>openssl rand -hex 32</code></td></tr>
+    <tr><td><code>JWT_EXPIRES_IN</code></td><td>No</td><td>Token expiry. Default: <code>7d</code></td></tr>
+    <tr><td><code>OPENAI_API_KEY</code></td><td>✅ Yes</td><td>OpenAI API key for AI features</td></tr>
+    <tr><td><code>RESEND_API_KEY</code></td><td>✅ Yes</td><td>Resend API key for password reset emails</td></tr>
+    <tr><td><code>GOOGLE_CLIENT_ID</code></td><td>No</td><td>Google OAuth 2.0 client ID</td></tr>
+    <tr><td><code>GOOGLE_CLIENT_SECRET</code></td><td>No</td><td>Google OAuth 2.0 client secret</td></tr>
+    <tr><td><code>FRONTEND_URL</code></td><td>✅ Yes</td><td>Frontend base URL e.g. <code>https://tripgenie.space</code></td></tr>
+    <tr><td><code>BACKEND_URL</code></td><td>No</td><td>Backend base URL for OAuth callback. Auto-detected if not set.</td></tr>
+    <tr><td><code>PORT</code></td><td>No</td><td>Server port. Default: <code>3000</code>. Auto-set by Railway.</td></tr>
+  </table>
+</section>
+
+<!-- ══════════════════════════════════════════════ DATABASE -->
+<section id="database">
+  <span class="section-tag">Database</span>
+  <h2>Database Schema</h2>
+
+  <h3>users</h3>
+  <table class="schema-table">
+    <tr><th>Column</th><th>Type</th><th>Notes</th></tr>
+    <tr><td>id</td><td>UUID</td><td><span class="pk">PK</span> gen_random_uuid()</td></tr>
+    <tr><td>email</td><td>TEXT</td><td>UNIQUE, NOT NULL</td></tr>
+    <tr><td>password_hash</td><td>TEXT</td><td>bcrypt hash, NULL for Google users</td></tr>
+    <tr><td>full_name</td><td>TEXT</td><td>NOT NULL</td></tr>
+    <tr><td>avatar_url</td><td>TEXT</td><td>Cloudinary URL</td></tr>
+    <tr><td>preferred_currency</td><td>TEXT</td><td>DEFAULT 'USD'</td></tr>
+    <tr><td>preferred_timezone</td><td>TEXT</td><td>DEFAULT 'UTC'</td></tr>
+    <tr><td>provider</td><td>TEXT</td><td>'local' or 'google'</td></tr>
+    <tr><td>created_at</td><td>TIMESTAMPTZ</td><td>DEFAULT NOW()</td></tr>
+  </table>
+
+  <h3>trips</h3>
+  <table class="schema-table">
+    <tr><th>Column</th><th>Type</th><th>Notes</th></tr>
+    <tr><td>id</td><td>UUID</td><td><span class="pk">PK</span></td></tr>
+    <tr><td>user_id</td><td>UUID</td><td>FK → users, CASCADE DELETE</td></tr>
+    <tr><td>title</td><td>TEXT</td><td>NOT NULL</td></tr>
+    <tr><td>destination</td><td>TEXT</td><td>NOT NULL</td></tr>
+    <tr><td>cover_image</td><td>TEXT</td><td>Cloudinary URL</td></tr>
+    <tr><td>start_date</td><td>DATE</td><td>nullable</td></tr>
+    <tr><td>end_date</td><td>DATE</td><td>nullable</td></tr>
+    <tr><td>status</td><td>TEXT</td><td>'upcoming' | 'ongoing' | 'completed'</td></tr>
+    <tr><td>planning_pct</td><td>INT</td><td>0–100, auto-calculated</td></tr>
+    <tr><td>notes</td><td>TEXT</td><td>User planning notes</td></tr>
+    <tr><td>itinerary</td><td>JSONB</td><td>{days: [...], html: '...'}</td></tr>
+    <tr><td>tags</td><td>TEXT[]</td><td>e.g. ['Beach', 'Family']</td></tr>
+    <tr><td>metadata</td><td>JSONB</td><td>{pins: [...], journal: [...]}</td></tr>
+  </table>
+
+  <h3>Key JSONB Structures</h3>
+  <pre><code>-- trips.itinerary
+{
+  "days": [
+    {
+      "title": "Day 1 — Arrival",
+      "activities": [
+        { "time": "9:00 AM", "desc": "Check in to hotel" },
+        { "time": "12:00 PM", "desc": "Lunch at local restaurant" }
+      ]
+    }
+  ],
+  "html": "&lt;div class='itinerary-day'&gt;...&lt;/div&gt;"
+}
+
+-- trips.metadata
+{
+  "pins": [
+    { "lat": 48.8566, "lon": 2.3522, "label": "Hotel" }
+  ],
+  "journal": [
+    {
+      "date": "2026-06-01",
+      "text": "Amazing first day in Paris!",
+      "mood": "😊 Amazing",
+      "createdAt": "2026-06-01T20:00:00Z"
+    }
+  ]
+}</code></pre>
+</section>
+
+<!-- ══════════════════════════════════════════════ API -->
+<section id="api">
+  <span class="section-tag">API Reference</span>
+  <h2>API Endpoints</h2>
+  <p>Base URL: <code>https://ui-production-e419.up.railway.app/api</code></p>
+  <p>All protected routes require header: <code>Authorization: Bearer &lt;token&gt;</code></p>
+
+  <h3>Authentication</h3>
+
+  <div class="endpoint">
+    <div class="endpoint-header">
+      <span class="method method-post">POST</span>
+      <span class="endpoint-path">/auth/register</span>
+      <span class="endpoint-desc">Create a new account</span>
+    </div>
+    <div class="endpoint-body">
+      <p><strong>Body:</strong> <code>{ email, password, full_name }</code></p>
+      <p><strong>Returns:</strong> <code>{ token, user }</code></p>
+    </div>
+  </div>
+
+  <div class="endpoint">
+    <div class="endpoint-header">
+      <span class="method method-post">POST</span>
+      <span class="endpoint-path">/auth/login</span>
+      <span class="endpoint-desc">Sign in with email/password</span>
+    </div>
+    <div class="endpoint-body">
+      <p><strong>Body:</strong> <code>{ email, password }</code></p>
+      <p><strong>Returns:</strong> <code>{ token, user }</code></p>
+    </div>
+  </div>
+
+  <div class="endpoint">
+    <div class="endpoint-header">
+      <span class="method method-get">GET</span>
+      <span class="endpoint-path">/auth/me</span>
+      <span class="auth-required">Auth required</span>
+      <span class="endpoint-desc">Get current user profile</span>
+    </div>
+  </div>
+
+  <div class="endpoint">
+    <div class="endpoint-header">
+      <span class="method method-patch">PATCH</span>
+      <span class="endpoint-path">/auth/me</span>
+      <span class="auth-required">Auth required</span>
+      <span class="endpoint-desc">Update profile</span>
+    </div>
+    <div class="endpoint-body">
+      <p><strong>Body:</strong> <code>{ full_name?, preferred_currency?, preferred_timezone?, avatar_url? }</code></p>
+    </div>
+  </div>
+
+  <div class="endpoint">
+    <div class="endpoint-header">
+      <span class="method method-post">POST</span>
+      <span class="endpoint-path">/auth/forgot-password</span>
+      <span class="endpoint-desc">Send password reset email</span>
+    </div>
+    <div class="endpoint-body"><p><strong>Body:</strong> <code>{ email }</code> — always returns success to prevent enumeration</p></div>
+  </div>
+
+  <div class="endpoint">
+    <div class="endpoint-header">
+      <span class="method method-post">POST</span>
+      <span class="endpoint-path">/auth/reset-password</span>
+      <span class="endpoint-desc">Reset password with token</span>
+    </div>
+    <div class="endpoint-body"><p><strong>Body:</strong> <code>{ token, password }</code></p></div>
+  </div>
+
+  <div class="endpoint">
+    <div class="endpoint-header">
+      <span class="method method-get">GET</span>
+      <span class="endpoint-path">/auth/google</span>
+      <span class="endpoint-desc">Initiate Google OAuth flow</span>
+    </div>
+  </div>
+
+  <h3>Trips</h3>
+
+  <div class="endpoint">
+    <div class="endpoint-header">
+      <span class="method method-get">GET</span>
+      <span class="endpoint-path">/trips</span>
+      <span class="auth-required">Auth required</span>
+      <span class="endpoint-desc">List all trips. Query: <code>?status=upcoming</code></span>
+    </div>
+  </div>
+
+  <div class="endpoint">
+    <div class="endpoint-header">
+      <span class="method method-get">GET</span>
+      <span class="endpoint-path">/trips/:id</span>
+      <span class="auth-required">Auth required</span>
+      <span class="endpoint-desc">Get single trip</span>
+    </div>
+  </div>
+
+  <div class="endpoint">
+    <div class="endpoint-header">
+      <span class="method method-post">POST</span>
+      <span class="endpoint-path">/trips</span>
+      <span class="auth-required">Auth required</span>
+      <span class="endpoint-desc">Create trip</span>
+    </div>
+    <div class="endpoint-body"><p><strong>Body:</strong> <code>{ title, destination, start_date?, end_date?, notes?, cover_image? }</code></p></div>
+  </div>
+
+  <div class="endpoint">
+    <div class="endpoint-header">
+      <span class="method method-patch">PATCH</span>
+      <span class="endpoint-path">/trips/:id</span>
+      <span class="auth-required">Auth required</span>
+      <span class="endpoint-desc">Update trip fields</span>
+    </div>
+    <div class="endpoint-body"><p><strong>Allowed fields:</strong> <code>title, destination, cover_image, start_date, end_date, status, planning_pct, notes, itinerary, tags, metadata</code></p></div>
+  </div>
+
+  <div class="endpoint">
+    <div class="endpoint-header">
+      <span class="method method-delete">DELETE</span>
+      <span class="endpoint-path">/trips/:id</span>
+      <span class="auth-required">Auth required</span>
+      <span class="endpoint-desc">Delete trip and all related data</span>
+    </div>
+  </div>
+
+  <h3>Budget</h3>
+
+  <div class="endpoint">
+    <div class="endpoint-header">
+      <span class="method method-get">GET</span>
+      <span class="endpoint-path">/budget/:tripId</span>
+      <span class="auth-required">Auth required</span>
+      <span class="endpoint-desc">Get budget + categories with live spending totals</span>
+    </div>
+  </div>
+
+  <div class="endpoint">
+    <div class="endpoint-header">
+      <span class="method method-post">POST</span>
+      <span class="endpoint-path">/budget/:tripId</span>
+      <span class="auth-required">Auth required</span>
+      <span class="endpoint-desc">Create or update budget total</span>
+    </div>
+    <div class="endpoint-body"><p><strong>Body:</strong> <code>{ total_amount, currency? }</code></p></div>
+  </div>
+
+  <div class="endpoint">
+    <div class="endpoint-header">
+      <span class="method method-post">POST</span>
+      <span class="endpoint-path">/budget/:tripId/categories</span>
+      <span class="auth-required">Auth required</span>
+      <span class="endpoint-desc">Add spending category</span>
+    </div>
+    <div class="endpoint-body"><p><strong>Body:</strong> <code>{ name, allocated?, color? }</code></p></div>
+  </div>
+
+  <div class="endpoint">
+    <div class="endpoint-header">
+      <span class="method method-post">POST</span>
+      <span class="endpoint-path">/budget/:tripId/expenses</span>
+      <span class="auth-required">Auth required</span>
+      <span class="endpoint-desc">Log an expense</span>
+    </div>
+    <div class="endpoint-body"><p><strong>Body:</strong> <code>{ category_id, description, amount, spent_on?, receipt_url? }</code></p></div>
+  </div>
+
+  <div class="endpoint">
+    <div class="endpoint-header">
+      <span class="method method-delete">DELETE</span>
+      <span class="endpoint-path">/budget/:tripId/expenses/:expenseId</span>
+      <span class="auth-required">Auth required</span>
+      <span class="endpoint-desc">Delete expense</span>
+    </div>
+  </div>
+
+  <h3>Checklists & Reminders</h3>
+
+  <div class="endpoint">
+    <div class="endpoint-header">
+      <span class="method method-get">GET</span>
+      <span class="endpoint-path">/checklists</span>
+      <span class="auth-required">Auth required</span>
+      <span class="endpoint-desc">List checklists. Query: <code>?tripId=uuid</code></span>
+    </div>
+  </div>
+
+  <div class="endpoint">
+    <div class="endpoint-header">
+      <span class="method method-post">POST</span>
+      <span class="endpoint-path">/checklists</span>
+      <span class="auth-required">Auth required</span>
+      <span class="endpoint-desc">Create checklist</span>
+    </div>
+    <div class="endpoint-body"><p><strong>Body:</strong> <code>{ trip_id, title, icon? }</code></p></div>
+  </div>
+
+  <div class="endpoint">
+    <div class="endpoint-header">
+      <span class="method method-post">POST</span>
+      <span class="endpoint-path">/checklists/:id/items</span>
+      <span class="auth-required">Auth required</span>
+      <span class="endpoint-desc">Add item to checklist</span>
+    </div>
+    <div class="endpoint-body"><p><strong>Body:</strong> <code>{ label, sort_order? }</code></p></div>
+  </div>
+
+  <div class="endpoint">
+    <div class="endpoint-header">
+      <span class="method method-patch">PATCH</span>
+      <span class="endpoint-path">/checklists/items/:itemId</span>
+      <span class="auth-required">Auth required</span>
+      <span class="endpoint-desc">Toggle checked or rename item</span>
+    </div>
+    <div class="endpoint-body"><p><strong>Body:</strong> <code>{ is_checked?, label? }</code></p></div>
+  </div>
+
+  <div class="endpoint">
+    <div class="endpoint-header">
+      <span class="method method-get">GET</span>
+      <span class="endpoint-path">/reminders</span>
+      <span class="auth-required">Auth required</span>
+      <span class="endpoint-desc">List reminders. Query: <code>?tripId=uuid&done=false</code></span>
+    </div>
+  </div>
+
+  <div class="endpoint">
+    <div class="endpoint-header">
+      <span class="method method-post">POST</span>
+      <span class="endpoint-path">/reminders</span>
+      <span class="auth-required">Auth required</span>
+      <span class="endpoint-desc">Create reminder</span>
+    </div>
+    <div class="endpoint-body"><p><strong>Body:</strong> <code>{ title, remind_at, trip_id?, description?, priority?, category? }</code></p></div>
+  </div>
+
+  <div class="endpoint">
+    <div class="endpoint-header">
+      <span class="method method-patch">PATCH</span>
+      <span class="endpoint-path">/reminders/:id</span>
+      <span class="auth-required">Auth required</span>
+      <span class="endpoint-desc">Update or mark done</span>
+    </div>
+    <div class="endpoint-body"><p><strong>Body:</strong> <code>{ is_done?, title?, remind_at?, priority?, description? }</code></p></div>
+  </div>
+
+  <h3>AI Assistant</h3>
+
+  <div class="endpoint">
+    <div class="endpoint-header">
+      <span class="method method-post">POST</span>
+      <span class="endpoint-path">/assistant/chat</span>
+      <span class="auth-required">Auth required</span>
+      <span class="endpoint-desc">Send message to AI. Rate limited: 10 req/min</span>
+    </div>
+    <div class="endpoint-body">
+      <p><strong>Body:</strong> <code>{ message, context? }</code> — message max 8,000 chars</p>
+      <p><strong>Returns:</strong> <code>{ reply }</code></p>
+      <p>The backend auto-detects intent (itinerary, packing list, budget, weather, tips) and applies appropriate system prompts and token limits.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════ FRONTEND -->
+<section id="frontend">
+  <span class="section-tag">Frontend</span>
+  <h2>Frontend Structure</h2>
+  <p>The entire app lives in <code>app.html</code> as a Single Page Application. Navigation is simulated by showing/hiding <code>.page</code> div sections. There is no client-side router library.</p>
+
+  <h3>Key Files</h3>
+  <table class="tech-table">
+    <tr><th>File</th><th>Purpose</th></tr>
+    <tr><td><code>app.html</code></td><td>Main SPA — all pages, modals, and UI structure (~2,100 lines)</td></tr>
+    <tr><td><code>app.js</code></td><td>All frontend logic — ~3,950 lines of vanilla JS</td></tr>
+    <tr><td><code>styles.css</code></td><td>All styles including dark mode, components, animations (~1,100 lines)</td></tr>
+    <tr><td><code>index.html</code></td><td>Public landing page (pre-login)</td></tr>
+    <tr><td><code>login.html</code></td><td>Login page</td></tr>
+    <tr><td><code>register.html</code></td><td>Registration page</td></tr>
+    <tr><td><code>forgot.html</code></td><td>Forgot password page</td></tr>
+    <tr><td><code>reset-password.html</code></td><td>Password reset page (reads token from URL)</td></tr>
+    <tr><td><code>auth-callback.html</code></td><td>Google OAuth redirect handler</td></tr>
+  </table>
+
+  <h3>Key Global Variables (app.js)</h3>
+  <pre><code>let allTrips       = [];   // All trips for the current user
+let currentTripId  = null; // Currently open trip hub
+let tripBudget     = null; // Budget for the current trip hub
+let tripChecklists = [];   // Checklists for the current trip
+let calEvents      = [];   // Events for the calendar view
+let itineraryDays  = [];   // Current itinerary being edited
+let itinerarySnapshot = []; // Snapshot for cancel/revert</code></pre>
+
+  <h3>Core Utility Functions</h3>
+  <table class="tech-table">
+    <tr><th>Function</th><th>Description</th></tr>
+    <tr><td><code>apiFetch(path, opts)</code></td><td>Authenticated fetch wrapper. Auto-attaches JWT, handles 401 logout, throws on error.</td></tr>
+    <tr><td><code>showToast(msg)</code></td><td>Shows a brief notification toast.</td></tr>
+    <tr><td><code>openModal(id)</code></td><td>Opens a modal by ID.</td></tr>
+    <tr><td><code>closeModal(id)</code></td><td>Closes a modal by ID.</td></tr>
+    <tr><td><code>navigate(page)</code></td><td>Switches the active page view.</td></tr>
+    <tr><td><code>getCountryEmoji(dest)</code></td><td>Returns an emoji for a destination string.</td></tr>
+    <tr><td><code>geocode(destination)</code></td><td>Geocodes a destination with Nominatim, caches result in memory.</td></tr>
+    <tr><td><code>fmtDate(d)</code></td><td>Formats a date string for display.</td></tr>
+    <tr><td><code>fmtMoney(n)</code></td><td>Formats a number as currency using the user's preferred currency.</td></tr>
+  </table>
+</section>
+
+<!-- ══════════════════════════════════════════════ SECURITY -->
+<section id="security">
+  <span class="section-tag">Security</span>
+  <h2>Security Measures</h2>
+
+  <div class="security-item">
+    <div class="security-icon">🔐</div>
+    <div><h4>Password Hashing</h4><p>All passwords hashed with bcrypt at cost factor 12 before storage. Plain text passwords are never stored or logged.</p></div>
+  </div>
+  <div class="security-item">
+    <div class="security-icon">🎫</div>
+    <div><h4>JWT Authentication</h4><p>Stateless JWT tokens with 7-day expiry. All protected routes verify the token via the <code>auth</code> middleware. 401 responses trigger automatic client-side logout.</p></div>
+  </div>
+  <div class="security-item">
+    <div class="security-icon">🚦</div>
+    <div><h4>Rate Limiting</h4><p>Global: 200 req / 15 min. AI assistant: 10 req / min. Auth routes: 20 req / 15 min. Prevents brute force and OpenAI credit drain.</p></div>
+  </div>
+  <div class="security-item">
+    <div class="security-icon">🧹</div>
+    <div><h4>Input Sanitization</h4><p>Auth inputs trimmed and capped at max lengths (email: 255, password: 128, name: 100). AI messages capped at 8,000 characters server-side.</p></div>
+  </div>
+  <div class="security-item">
+    <div class="security-icon">🔒</div>
+    <div><h4>HTTPS</h4><p>All traffic encrypted via TLS. Render enforces HTTPS on the frontend. Railway enforces HTTPS on the backend. Cloudflare adds an additional security layer.</p></div>
+  </div>
+  <div class="security-item">
+    <div class="security-icon">🛡️</div>
+    <div><h4>Email Enumeration Prevention</h4><p>The forgot-password endpoint always returns the same success message regardless of whether the email exists, preventing user enumeration attacks.</p></div>
+  </div>
+  <div class="security-item">
+    <div class="security-icon">🔑</div>
+    <div><h4>API Key Security</h4><p>OpenAI, Resend, and Cloudinary API keys are stored as Railway environment variables. They are never exposed to the frontend. All AI calls are proxied through the backend.</p></div>
+  </div>
+  <div class="security-item">
+    <div class="security-icon">🗄️</div>
+    <div><h4>Row-Level Security</h4><p>All trip, budget, checklist, and reminder queries include <code>user_id = req.user.id</code> constraints — users can only access their own data.</p></div>
+  </div>
+</section>
+
+<hr/>
+
+<!-- ══════════════════════════════════════════════ USER GUIDE -->
+<section id="user-auth">
+  <span class="section-tag">User Guide</span>
+  <h2>Account & Login</h2>
+
+  <h3>Creating an Account</h3>
+  <ol class="steps">
+    <li><div><strong>Visit tripgenie.space</strong><p>Click "Get Started Free" on the landing page.</p></div></li>
+    <li><div><strong>Register</strong><p>Enter your full name, email address, and a password (min 8 characters, must include a letter and number). Or click "Continue with Google" for one-click sign-up.</p></div></li>
+    <li><div><strong>You're in</strong><p>You'll be taken straight to your dashboard. No email verification required.</p></div></li>
+  </ol>
+
+  <h3>Forgot Password</h3>
+  <p>Click "Forgot your password?" on the login page → enter your email → check your inbox for a reset link (valid for 1 hour). The link takes you to a secure reset page where you can set a new password.</p>
+</section>
+
+<section id="user-trips">
+  <span class="section-tag">User Guide</span>
+  <h2>Planning a Trip</h2>
+
+  <h3>Generate AI Itinerary</h3>
+  <ol class="steps">
+    <li><div><strong>Click "Plan a Trip"</strong><p>From the sidebar or dashboard.</p></div></li>
+    <li><div><strong>Enter your destination</strong><p>Start typing and select from the autocomplete suggestions (powered by OpenStreetMap). Or type freely.</p></div></li>
+    <li><div><strong>Set your dates</strong><p>Click the Start Date field to open the custom date picker. Select a date. The End Date will automatically prevent you from picking a date before the start date.</p></div></li>
+    <li><div><strong>Set your budget</strong><p>Optional. Enter an amount and select your currency. The AI will factor this into its recommendations.</p></div></li>
+    <li><div><strong>Choose your pace</strong><p>Relaxed, Moderate, or Intensive — controls how many activities per day the AI includes.</p></div></li>
+    <li><div><strong>Select interests</strong><p>Tap any relevant interest chips: Culture, Food & Dining, Adventure, Shopping, Nightlife, Nature, Beaches, History, Art, Photography, Wellness, Sports.</p></div></li>
+    <li><div><strong>Add notes</strong><p>Optional. Any special requirements ("vegetarian only", "travelling with kids", "no museums").</p></div></li>
+    <li><div><strong>Click "✨ Generate AI Itinerary"</strong><p>Wait 10–30 seconds while the AI generates your plan. A preview editor appears — you can edit any day, time, or activity before saving.</p></div></li>
+    <li><div><strong>Save</strong><p>Click "💾 Save Itinerary & Go to Trip" to save and open your Trip Hub. Or "Skip & Save Trip Only" to save the trip without an itinerary.</p></div></li>
+  </ol>
+
+  <h3>Create Your Own Trip (Manual)</h3>
+  <p>Click "✏️ Create My Own Trip" — enter a destination and optionally a title, then build the itinerary yourself inside the Trip Hub using the manual editor.</p>
+
+  <h3>Voice Input</h3>
+  <p>Click the circular 🎤 microphone button on the Plan Trip form. Speak naturally: <em>"I want to go to Tokyo for 7 days in August, moderate pace, interested in food and culture, budget of 2000 USD."</em> The AI will extract the details and auto-fill the form fields.</p>
+</section>
+
+<section id="user-hub">
+  <span class="section-tag">User Guide</span>
+  <h2>Trip Hub</h2>
+  <p>The Trip Hub is the central view for each trip. Open it by clicking any trip card from the Dashboard or My Trips page.</p>
+
+  <h3>Action Bar</h3>
+  <p>The buttons across the top of the hub give you quick access to: Edit Trip, Calendar, AI Packing List, Smart Reminders, Budget AI, PDF Export, Mark Complete, and Delete Trip.</p>
+
+  <h3>Tags</h3>
+  <p>Click "🏷️ Tags" in the trip header. Choose from 14 presets (Beach, Business, Family, etc.) or type a custom tag. Tags appear as coloured chips on your trip cards and can be used to filter trips.</p>
+
+  <h3>Itinerary</h3>
+  <p>View your AI-generated or manually written itinerary in the left column. Click "✏️ Edit Itinerary" to open the in-place editor — add/remove days and activities, change times, then click Save.</p>
+
+  <h3>Marking a Trip Complete</h3>
+  <p>Click "✅ Mark Complete" — you'll be asked to confirm, then confetti launches and the trip is marked completed. Click again to revert to upcoming.</p>
+
+  <h3>PDF Export</h3>
+  <p>Click "📄 Export PDF" to open the browser's print dialog with a formatted trip summary including the itinerary, budget overview, and notes.</p>
+</section>
+
+<section id="user-budget">
+  <span class="section-tag">User Guide</span>
+  <h2>Budget Tracker</h2>
+  <ol class="steps">
+    <li><div><strong>Set a total budget</strong><p>In the Budget section of the Trip Hub, click "Set Budget", enter a total amount and currency, then save.</p></div></li>
+    <li><div><strong>Add categories</strong><p>Click "+ Add Category" — name it (e.g. "Accommodation", "Food"), set an allocated amount and colour.</p></div></li>
+    <li><div><strong>Log expenses</strong><p>Click the "+" on any category to add an expense. Enter a description, amount, and date.</p></div></li>
+    <li><div><strong>Track spending</strong><p>Each category shows a progress bar comparing allocated vs spent. The top shows total budget used.</p></div></li>
+    <li><div><strong>AI Budget Insights</strong><p>Click "📊 Budget AI" in the action bar for an AI analysis of your spending patterns with personalised saving tips.</p></div></li>
+    <li><div><strong>Currency Converter</strong><p>Click the 💱 icon to open the live currency converter. Rates are fetched in real-time from Frankfurter API.</p></div></li>
+  </ol>
+</section>
+
+<section id="user-checklist">
+  <span class="section-tag">User Guide</span>
+  <h2>Checklists</h2>
+  <p>Checklists help you track what to pack, what to book, and what to do before your trip.</p>
+
+  <h3>AI Packing List</h3>
+  <p>Click "🧳 Packing List" in the Trip Hub action bar. The AI generates a categorised packing list (Clothing, Toiletries, Documents, Health & Safety, Electronics, Miscellaneous). Tick items to include, click any item name to rename it inline, use "All" / "None" to select quickly, then click "✅ Add Selected to Checklist" to save.</p>
+
+  <h3>Manual Checklists</h3>
+  <p>Go to the Checklists page from the sidebar. Click "+ New Checklist", choose a trip, give it a name and icon. Add items one by one. Check off items as you pack.</p>
+</section>
+
+<section id="user-reminders">
+  <span class="section-tag">User Guide</span>
+  <h2>Reminders</h2>
+  <p>Set reminders for important pre-trip tasks like booking flights, applying for visas, or getting vaccinations.</p>
+
+  <h3>Smart Reminder Suggestions</h3>
+  <p>Click "🔔 Smart Reminders" in the Trip Hub action bar. The AI generates 8 reminders with calculated dates based on your trip start date (e.g. "Book flights — 3 months before", "Pack bags — 1 day before"). Select the ones you want and save them.</p>
+
+  <h3>Manual Reminders</h3>
+  <p>Go to the Reminders page from the sidebar. Click "+ Add Reminder". Set a title, date/time, priority (High/Medium/Low), and category. Link it to a trip optionally.</p>
+
+  <h3>Mark Done / Undo</h3>
+  <p>Click the checkmark on any reminder to mark it done. Use the "Show Done" toggle to view completed reminders. Click "Undo" on any done reminder to restore it.</p>
+</section>
+
+<section id="user-journal">
+  <span class="section-tag">User Guide</span>
+  <h2>Trip Journal</h2>
+  <p>The Trip Journal lets you log daily memories while you travel. Entries are saved to the cloud and tied to your trip.</p>
+  <ol class="steps">
+    <li><div><strong>Open the Trip Hub</strong><p>Scroll down the left column to find the 📖 Trip Journal section.</p></div></li>
+    <li><div><strong>Pick a date</strong><p>The date defaults to today (or the trip start date if the trip hasn't started).</p></div></li>
+    <li><div><strong>Add a mood</strong><p>Optional — type something like "😊 Amazing day" or "😴 Exhausted but happy".</p></div></li>
+    <li><div><strong>Write your entry</strong><p>Free-form text. What you saw, ate, felt, who you met.</p></div></li>
+    <li><div><strong>Click "📝 Add Entry"</strong><p>Saved instantly to the cloud. Entries appear below sorted newest first.</p></div></li>
+  </ol>
+</section>
+
+<section id="user-map">
+  <span class="section-tag">User Guide</span>
+  <h2>Map & Weather</h2>
+
+  <h3>Interactive Map</h3>
+  <p>The map in the right column of the Trip Hub auto-centres on your destination. Click anywhere on the map to drop a pin — you'll be prompted for a label (e.g. "Hotel", "Must-visit restaurant"). Pins are saved to the cloud. Click "Full Map" to open a fullscreen map with scroll-to-zoom.</p>
+
+  <h3>Weather Widget</h3>
+  <p>Below the map, the weather widget shows current conditions (temperature, humidity, wind speed) and a 7-day forecast. If your trip dates fall within the forecast window, a "During Your Trip" section highlights just those days with rain probability.</p>
+</section>
+
+<section id="user-calendar">
+  <span class="section-tag">User Guide</span>
+  <h2>Calendar View</h2>
+  <p>Click "📅 Calendar" in the sidebar to see a monthly calendar view. It shows:</p>
+  <ul style="padding-left:20px;color:var(--text-2);font-size:14px;line-height:2;margin-bottom:16px">
+    <li><strong style="color:#068cdf">Blue</strong> — trip date ranges</li>
+    <li><strong style="color:#22c55e">Green</strong> — individual itinerary activities</li>
+    <li><strong style="color:#ef4444">Red/Orange</strong> — reminders (colour varies by priority)</li>
+  </ul>
+  <p>Use the trip filter dropdown to focus on a specific trip. Click the month arrows to navigate. Click any event to jump to that trip's hub.</p>
+</section>
+
+<section id="user-assistant">
+  <span class="section-tag">User Guide</span>
+  <h2>AI Assistant</h2>
+  <p>The floating AI chat button (bottom right) opens a chat panel with TripGenie's AI assistant. You can ask about destinations, get packing advice, request budget breakdowns, ask about weather or visas, or get local tips.</p>
+  <p>Quick action buttons at the top of the chat panel offer one-tap prompts for common requests. The assistant is context-aware — when you're inside a trip hub, it knows your destination and can give personalised advice.</p>
+</section>
+
+<hr/>
+
+<!-- ══════════════════════════════════════════════ SCHOOL SUBMISSION -->
+<section id="decisions">
+  <span class="section-tag">School Submission</span>
+  <h2>Technical Decisions</h2>
+
+  <h3>Why Vanilla JS (no React/Vue)?</h3>
+  <p>We chose vanilla JavaScript intentionally to demonstrate a deep understanding of the DOM, event handling, async/await, and state management without framework abstractions. The app manages complex state (trips, budgets, checklists, modals, editing sessions) entirely in plain JS — this is a harder approach that showcases fundamental web development skills.</p>
+
+  <h3>Why PostgreSQL over MongoDB?</h3>
+  <p>Travel data is highly relational — a user has trips, trips have budgets, budgets have categories, categories have expenses. Relational integrity (CASCADE DELETEs, foreign keys) is critical. We also use JSONB columns (<code>itinerary</code>, <code>metadata</code>) where flexibility is needed, giving us the best of both worlds.</p>
+
+  <h3>Why GPT-4o-mini over GPT-4?</h3>
+  <p>GPT-4o-mini provides excellent quality for travel planning tasks at a fraction of the cost of GPT-4. For a school project with real usage, cost control was important. The assistant route uses intent detection to dynamically adjust system prompts and token limits per request type — itinerary generation gets 2,500 tokens while quick tips get 400.</p>
+
+  <h3>Why free APIs for maps/weather/currency?</h3>
+  <p>Leaflet + OpenStreetMap, Open-Meteo, Frankfurter, and Nominatim are all production-grade free APIs with no API keys or rate limit concerns for reasonable usage. This keeps the project cost-effective and removes the risk of billing surprises during the project's demo period.</p>
+
+  <h3>Why Render + Railway over AWS?</h3>
+  <p>Render and Railway offer zero-config deployments from GitHub with automatic SSL, environment variable management, and free/low-cost tiers. For a school project, reducing DevOps overhead meant we could focus on features. Railway's integrated PostgreSQL also eliminated the need for a separate database host.</p>
+
+  <h3>Data storage: DB over localStorage</h3>
+  <p>All user data — itineraries, map pins, journal entries, trip tags — is stored in PostgreSQL, not localStorage. This makes the app genuinely cloud-synced: users get the same data on any device, in any browser. The only things in localStorage are auth tokens and UI preferences.</p>
+</section>
+
+<section id="challenges">
+  <span class="section-tag">School Submission</span>
+  <h2>Challenges & Solutions</h2>
+
+  <div class="card-grid">
+    <div class="card">
+      <div class="icon">🧩</div>
+      <h4>SPA without a router</h4>
+      <p>Managing navigation, modals, and state across 15+ pages with no framework required careful global state design and event delegation.</p>
+    </div>
+    <div class="card">
+      <div class="icon">⚡</div>
+      <p><h4>Nominatim rate limiting</h4>The geocoding API limits to 1 req/sec. Solved with an in-memory geocode cache and request debouncing on the autocomplete.</p>
+    </div>
+    <div class="card">
+      <div class="icon">🔄</div>
+      <h4>AI response parsing</h4>
+      <p>GPT responses vary in format. Built robust regex parsers that handle clock emoji variants, different dash characters, and markdown artifacts.</p>
+    </div>
+    <div class="card">
+      <div class="icon">🌙</div>
+      <h4>Dark mode with third-party maps</h4>
+      <p>Leaflet renders its own canvas outside our CSS. Solved with a CSS brightness/saturate filter on the tile layer and custom Leaflet popup styles.</p>
+    </div>
+    <div class="card">
+      <div class="icon">🔐</div>
+      <h4>Google OAuth callback</h4>
+      <p>The backend receives the OAuth callback and must redirect to the frontend with the JWT token. Required careful URL encoding of user data in the redirect.</p>
+    </div>
+    <div class="card">
+      <div class="icon">📦</div>
+      <h4>JSONB metadata design</h4>
+      <p>Storing map pins and journal entries in a JSONB column avoided new DB tables while keeping data cloud-synced. Required careful merge logic on updates.</p>
+    </div>
+  </div>
+</section>
+
+<section id="deployment">
+  <span class="section-tag">School Submission</span>
+  <h2>Deployment</h2>
+
+  <table class="tech-table">
+    <tr><th>Service</th><th>What it hosts</th><th>Config</th></tr>
+    <tr><td>Namecheap</td><td>Domain registrar — tripgenie.space</td><td>DNS pointed to Cloudflare</td></tr>
+    <tr><td>Cloudflare</td><td>DNS + CDN + SSL</td><td>CNAME to Render, proxied</td></tr>
+    <tr><td>Render</td><td>Frontend static site</td><td>Auto-deploy from GitHub main, rewrite rules for SPA routing</td></tr>
+    <tr><td>Railway</td><td>Backend API + PostgreSQL</td><td>Auto-deploy from GitHub main, env vars in dashboard</td></tr>
+  </table>
+
+  <h3>Render Rewrite Rules</h3>
+  <p>Since the app is a SPA served from static files, Render needs rewrite rules so that navigating to <code>/app</code> serves <code>app.html</code>:</p>
+  <pre><code>/app         → /app.html      (Rewrite)
+/login       → /login.html    (Rewrite)
+/register    → /register.html (Rewrite)
+/forgot      → /forgot.html   (Rewrite)
+/reset-password → /reset-password.html (Rewrite)
+/auth-callback  → /auth-callback.html  (Rewrite)
+/terms       → /terms.html    (Rewrite)
+/privacy     → /privacy.html  (Rewrite)
+/*           → /app.html      (Rewrite — catch-all)</code></pre>
+
+  <h3>Deploy Process</h3>
+  <pre><code># Any push to main triggers auto-deploy on both Render and Railway
+git add .
+git commit -m "feat: your change"
+git push origin main
+
+# Render deploys in ~30 seconds (static site)
+# Railway deploys in ~2 minutes (npm install + node server.js)</code></pre>
+
+  <div class="callout callout-warn">
+    <p>⚠️ <strong>Before presenting:</strong> Remove any test trips, rotate API keys if they were ever shared, and verify the live URL is working at tripgenie.space.</p>
+  </div>
+</section>
+
+<div style="text-align:center;padding:48px 0 32px;color:var(--text-3);font-size:13px">
+  <div style="font-size:32px;margin-bottom:10px">🧞</div>
+  <strong>TripGenie</strong> — Built by the TripGenie Team · School Project 2026<br/>
+  <a href="https://tripgenie.space" style="color:var(--teal-blue)">tripgenie.space</a> · <a href="https://github.com/GroupTripGenie/UI" style="color:var(--teal-blue)">GitHub</a>
+</div>
+
+</div><!-- end content -->
+</div><!-- end main -->
+</div><!-- end layout -->
+
+<script>
+// Highlight active nav link on scroll
+const sections = document.querySelectorAll('section[id]');
+const links = document.querySelectorAll('.nav-link');
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(e => {
+    if (e.isIntersecting) {
+      links.forEach(l => l.classList.remove('active'));
+      const active = document.querySelector('.nav-link[href="#'+e.target.id+'"]');
+      if (active) active.classList.add('active');
+    }
+  });
+}, { rootMargin: '-20% 0px -70% 0px' });
+sections.forEach(s => observer.observe(s));
+</script>
+</body>
+</html>
