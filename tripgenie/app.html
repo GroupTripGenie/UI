@@ -364,7 +364,7 @@
               <div class="form-row">
                 <div class="form-group">
                   <label>📅 Start Date</label>
-                  <input type="date" id="startDate" onchange="onStartDateChange()"/>
+                  <input type="date" id="startDate"/>
                 </div>
                 <div class="form-group">
                   <label>📅 End Date</label>
@@ -532,17 +532,41 @@
               </select>
               <label style="font-size:13px;font-weight:600;color:#063937;display:block;margin-bottom:6px">Time Zone</label>
               <select id="profileTimezone" style="width:100%;padding:10px 12px;border:1.5px solid #e8ecf0;border-radius:8px;font-size:14px;margin-bottom:20px;font-family:inherit;outline:none">
-                <option value="Asia/Manila">🇵🇭 Asia/Manila (PHT)</option>
-                <option value="America/New_York">🇺🇸 America/New_York (EST)</option>
-                <option value="America/Los_Angeles">🇺🇸 America/Los_Angeles (PST)</option>
-                <option value="Europe/London">🇬🇧 Europe/London (GMT)</option>
-                <option value="Europe/Paris">🇪🇺 Europe/Paris (CET)</option>
-                <option value="Asia/Tokyo">🇯🇵 Asia/Tokyo (JST)</option>
-                <option value="Asia/Singapore">🇸🇬 Asia/Singapore (SGT)</option>
-                <option value="Australia/Sydney">🇦🇺 Australia/Sydney (AEDT)</option>
+                <option value="UTC-12">UTC-12:00 — Baker Island</option>
+                <option value="UTC-11">UTC-11:00 — American Samoa</option>
+                <option value="UTC-10">UTC-10:00 — Hawaii</option>
+                <option value="UTC-9">UTC-09:00 — Alaska</option>
+                <option value="UTC-8">UTC-08:00 — Pacific Time (US)</option>
+                <option value="UTC-7">UTC-07:00 — Mountain Time (US)</option>
+                <option value="UTC-6">UTC-06:00 — Central Time (US)</option>
+                <option value="UTC-5">UTC-05:00 — Eastern Time (US)</option>
+                <option value="UTC-4">UTC-04:00 — Atlantic Time</option>
+                <option value="UTC-3">UTC-03:00 — Buenos Aires</option>
+                <option value="UTC-2">UTC-02:00 — Mid-Atlantic</option>
+                <option value="UTC-1">UTC-01:00 — Azores</option>
+                <option value="UTC+0">UTC+00:00 — London, Dublin, Lisbon</option>
+                <option value="UTC+1">UTC+01:00 — Paris, Berlin, Rome, Madrid</option>
+                <option value="UTC+2">UTC+02:00 — Cairo, Johannesburg, Athens</option>
+                <option value="UTC+3">UTC+03:00 — Moscow, Nairobi, Riyadh</option>
+                <option value="UTC+4">UTC+04:00 — Dubai, Baku</option>
+                <option value="UTC+5">UTC+05:00 — Karachi, Tashkent</option>
+                <option value="UTC+5:30">UTC+05:30 — Mumbai, New Delhi</option>
+                <option value="UTC+5:45">UTC+05:45 — Kathmandu</option>
+                <option value="UTC+6">UTC+06:00 — Dhaka, Almaty</option>
+                <option value="UTC+6:30">UTC+06:30 — Yangon</option>
+                <option value="UTC+7">UTC+07:00 — Bangkok, Jakarta, Hanoi</option>
+                <option value="UTC+8" selected>UTC+08:00 — Manila, Singapore, Beijing, Perth</option>
+                <option value="UTC+9">UTC+09:00 — Tokyo, Seoul</option>
+                <option value="UTC+9:30">UTC+09:30 — Adelaide, Darwin</option>
+                <option value="UTC+10">UTC+10:00 — Sydney, Melbourne, Brisbane</option>
+                <option value="UTC+11">UTC+11:00 — Solomon Islands</option>
+                <option value="UTC+12">UTC+12:00 — Auckland, Fiji</option>
+                <option value="UTC+13">UTC+13:00 — Samoa, Tonga</option>
               </select>
               <button class="btn-primary full-width" onclick="saveProfile()" style="margin-bottom:10px">Save Changes</button>
-              <button class="btn-outline full-width" id="logoutBtn2" style="color:#ef4444;border-color:#ef4444">Log Out</button>
+              <button class="btn-outline full-width" onclick="openModal('modalChangePassword')" style="margin-bottom:10px">🔑 Change Password</button>
+              <button class="btn-outline full-width" id="logoutBtn2" style="color:#ef4444;border-color:#ef4444;margin-bottom:10px">Log Out</button>
+              <button class="btn-outline full-width" onclick="confirmDeleteAccount()" style="color:#ef4444;border-color:#ef4444;font-size:13px">🗑 Delete Account</button>
             </div>
           </div>
           </div>
@@ -960,8 +984,20 @@
       <div class="modal-body">
         <label>Checklist Title</label>
         <input type="text" id="newChecklistTitle" placeholder="e.g. Visa Documents"/>
-        <label>Icon (emoji)</label>
-        <input type="text" id="newChecklistIcon" placeholder="e.g. 📋" maxlength="2"/>
+        <label>Icon</label>
+        <div style="position:relative">
+          <button type="button" id="emojiPickerBtn" onclick="toggleEmojiPicker('newChecklistIcon','emojiPickerBtn')"
+            style="width:100%;padding:10px 14px;border:1.5px solid #e8ecf0;border-radius:8px;font-size:20px;text-align:left;background:white;cursor:pointer;display:flex;align-items:center;gap:8px;font-family:inherit">
+            <span id="newChecklistIconDisplay">📋</span>
+            <span style="font-size:13px;color:#94a3b8">Click to change icon</span>
+          </button>
+          <input type="hidden" id="newChecklistIcon" value="📋"/>
+          <div id="emojiPickerDropdown" style="display:none;position:absolute;top:100%;left:0;right:0;z-index:999;background:white;border:1.5px solid #068cdf;border-radius:10px;padding:10px;box-shadow:0 8px 24px rgba(0,0,0,0.12);margin-top:4px">
+            <input type="text" id="emojiSearch" placeholder="🔍 Search emojis…" oninput="filterEmojis(this.value)"
+              style="width:100%;padding:8px 10px;border:1.5px solid #e8ecf0;border-radius:8px;font-size:13px;font-family:inherit;outline:none;margin-bottom:8px;box-sizing:border-box"/>
+            <div id="emojiGrid" style="display:grid;grid-template-columns:repeat(8,1fr);gap:4px;max-height:160px;overflow-y:auto"></div>
+          </div>
+        </div>
       </div>
       <div class="modal-footer">
         <button class="btn-outline" onclick="closeModal('modalNewChecklist')">Cancel</button>
@@ -2116,6 +2152,34 @@
       <div class="modal-footer">
         <button class="btn-outline" onclick="closeModal('modalBudgetInsights')">Close</button>
         <button class="btn-primary" onclick="openBudgetInsights()">🔄 Refresh</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Change Password Modal -->
+  <div class="modal-backdrop" id="modalChangePassword">
+    <div class="modal" style="max-width:420px">
+      <div class="modal-header">
+        <h3>🔑 Change Password</h3>
+        <button class="modal-close" onclick="closeModal('modalChangePassword')">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label>Current Password</label>
+          <input type="password" id="currentPassword" placeholder="Enter current password"/>
+        </div>
+        <div class="form-group">
+          <label>New Password</label>
+          <input type="password" id="newPassword" placeholder="Min 8 characters"/>
+        </div>
+        <div class="form-group">
+          <label>Confirm New Password</label>
+          <input type="password" id="confirmNewPassword" placeholder="Re-enter new password"/>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-outline" onclick="closeModal('modalChangePassword')">Cancel</button>
+        <button class="btn-primary" onclick="changePassword()">Save New Password</button>
       </div>
     </div>
   </div>

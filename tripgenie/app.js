@@ -2037,6 +2037,7 @@ function renderInPlaceEditor() {
     <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:2px solid #068cdf;margin-bottom:16px">
       <button onclick="addItineraryDay()" class="btn-primary small-btn">+ Add Day</button>
       <div style="display:flex;gap:8px">
+        <button onclick="undoItinerary()" class="btn-outline small-btn" title="Undo to last saved version">↩ Undo</button>
         <button onclick="saveManualItinerary()" class="btn-primary small-btn">💾 Save</button>
         <button onclick="closeManualItinerary()" class="btn-outline small-btn">Cancel</button>
       </div>
@@ -2044,6 +2045,15 @@ function renderInPlaceEditor() {
     <div id="itineraryDaysList"></div>`;
   renderItineraryEditorDays();
 }
+
+function undoItinerary() {
+  if (!itinerarySnapshot || !itinerarySnapshot.length) { showToast('Nothing to undo'); return; }
+  if (!confirm('Undo all unsaved changes and revert to last saved version?')) return;
+  itineraryDays = JSON.parse(JSON.stringify(itinerarySnapshot));
+  renderItineraryEditorDays();
+  showToast('↩ Reverted to last saved version');
+}
+window.undoItinerary = undoItinerary;
 
 function renderItineraryEditorDays() {
   const el = document.getElementById('itineraryDaysList');
@@ -2080,6 +2090,7 @@ function addItineraryDay() {
 
 function removeDay(di) {
   if (itineraryDays.length<=1){showToast('Keep at least one day');return;}
+  if (!confirm('Delete "' + (itineraryDays[di]?.title || 'this day') + '" and all its activities?')) return;
   itineraryDays.splice(di,1);
   itineraryDays.forEach((d,i)=>{if(/^Day \d+$/.test(d.title))d.title=`Day ${i+1}`;});
   renderItineraryEditorDays();
@@ -2266,50 +2277,56 @@ function renderMonthView(titleEl, bodyEl) {
   const daysInMonth = new Date(year, month+1, 0).getDate();
   const dayNames = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
 
-  // Header row
-  let html = '<div class="cal-header-row">'
-    + dayNames.map(d=>`<div class="cal-header-cell">${d}</div>`).join('')
-    + '</div><div class="cal-grid-month">';
+  // Build calendar using table for reliable equal-width columns
+  const isDark = document.body.classList.contains('dark');
+  const borderCol = isDark ? '#2d3748' : '#e8ecf0';
+  const altBg     = isDark ? '#141824' : '#fafafa';
+  const hoverBg   = isDark ? '#252d3d' : '#f8fafc';
+  const baseBg    = isDark ? '#1a1f2e' : 'white';
+  const textCol   = isDark ? '#f1f5f9' : '#063937';
 
+  let html = `<div style="overflow-x:auto;-webkit-overflow-scrolling:touch">
+  <table style="width:100%;border-collapse:collapse;table-layout:fixed;min-width:560px">
+    <thead>
+      <tr>${dayNames.map(d=>`<th style="padding:10px 4px;text-align:center;font-size:12px;font-weight:700;color:#64748b;background:${altBg};border-bottom:2px solid ${borderCol}">${d}</th>`).join('')}</tr>
+    </thead>
+    <tbody>`;
+
+  let cells = [];
   // Empty cells before month
-  for (let i=0; i<firstDay; i++) {
-    html += '<div class="cal-day other-month"></div>';
-  }
-
+  for (let i=0; i<firstDay; i++) cells.push({empty:true, before:true});
   // Month days
   for (let d=1; d<=daysInMonth; d++) {
     const dateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
-    const isToday = dateStr === today;
-    const events  = getEventsForDate(dateStr);
-    const maxShow = 2;
-
-    html += `<div class="cal-day${isToday?' today':''}" onclick="openDayDetail('${dateStr}')">`;
-    html += `<div class="cal-day-num">${d}</div>`;
-    html += events.slice(0,maxShow).map(e =>
-      `<div class="cal-event" style="background:${e.color}" title="${e.title}">${e.title}</div>`
-    ).join('');
-    if (events.length > maxShow) {
-      html += `<div style="font-size:10px;color:#94a3b8;margin-top:2px;text-align:center">+${events.length-maxShow} more</div>`;
-    }
-    html += '</div>';
+    cells.push({ d, dateStr, isToday: dateStr===today, events: getEventsForDate(dateStr) });
   }
-
   // Pad to complete last row
-  const remaining = (7 - ((firstDay + daysInMonth) % 7)) % 7;
-  for (let i=0; i<remaining; i++) {
-    html += '<div class="cal-day other-month"></div>';
+  while (cells.length % 7 !== 0) cells.push({empty:true, after:true});
+
+  // Build rows
+  for (let r=0; r<cells.length/7; r++) {
+    html += '<tr>';
+    for (let c=0; c<7; c++) {
+      const cell = cells[r*7+c];
+      if (cell.empty) {
+        html += `<td style="height:90px;background:${altBg};border:1px solid ${borderCol}"></td>`;
+      } else {
+        const maxShow = 2;
+        html += `<td onclick="openDayDetail('${cell.dateStr}')"
+          style="height:90px;vertical-align:top;padding:6px 6px;border:1px solid ${borderCol};cursor:pointer;background:${baseBg};transition:background 0.1s"
+          onmouseover="this.style.background='${hoverBg}'" onmouseout="this.style.background='${baseBg}'">
+          <div style="display:flex;justify-content:center;margin-bottom:4px">
+            <span style="width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:${cell.isToday?'700':'500'};background:${cell.isToday?'#068cdf':'transparent'};color:${cell.isToday?'white':textCol}">${cell.d}</span>
+          </div>
+          ${cell.events.slice(0,maxShow).map(e=>`<div style="background:${e.color};color:white;border-radius:4px;padding:2px 5px;font-size:10px;margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="${e.title}">${e.title}</div>`).join('')}
+          ${cell.events.length>maxShow?`<div style="font-size:10px;color:#64748b">+${cell.events.length-maxShow} more</div>`:''}
+        </td>`;
+      }
+    }
+    html += '</tr>';
   }
 
-  html += '</div>';
-
-  // Legend
-  html += `<div class="cal-legend">
-    <div class="cal-legend-item"><div class="cal-legend-dot" style="background:#068cdf"></div> Trips</div>
-    <div class="cal-legend-item"><div class="cal-legend-dot" style="background:#22c55e"></div> Itinerary</div>
-    <div class="cal-legend-item"><div class="cal-legend-dot" style="background:#ef4444"></div> High priority</div>
-    <div class="cal-legend-item"><div class="cal-legend-dot" style="background:#f97316"></div> Reminder</div>
-  </div>`;
-
+  html += '</tbody></table></div>';
   bodyEl.innerHTML = html;
 }
 
@@ -2483,24 +2500,31 @@ async function saveEditCategory() {
   const color  = document.querySelector('.color-swatch.selected')?.dataset.color || window._editingCatColor || '#068cdf';
   if (!name) { showToast('Please enter a category name'); return; }
 
-  // Optimistically update local state
-  if (tripBudget?.categories) {
-    const cat = tripBudget.categories.find(c => c.category_id === window._editingCatId);
-    if (cat) { cat.name = name; cat.allocated = amount; cat.color = color; }
-  }
-  if (allBudgets[currentTripId]?.categories) {
-    const cat = allBudgets[currentTripId].categories.find(c => c.category_id === window._editingCatId);
-    if (cat) { cat.name = name; cat.allocated = amount; cat.color = color; }
-  }
+  try {
+    // Actually save to DB
+    await apiFetch('/budget/'+currentTripId+'/categories/'+window._editingCatId, {
+      method: 'PATCH',
+      body: JSON.stringify({ name, allocated: amount, color })
+    });
 
-  closeModal('modalEditBudget');
-  showToast('Category updated!');
+    // Update local state
+    if (tripBudget?.categories) {
+      const cat = tripBudget.categories.find(c => c.category_id === window._editingCatId);
+      if (cat) { cat.name = name; cat.allocated = amount; cat.color = color; }
+    }
+    if (allBudgets[currentTripId]?.categories) {
+      const cat = allBudgets[currentTripId].categories.find(c => c.category_id === window._editingCatId);
+      if (cat) { cat.name = name; cat.allocated = amount; cat.color = color; }
+    }
 
-  // Refresh views
-  if (document.getElementById('page-tripHub')?.classList.contains('active')) renderHubBudget();
-  if (document.getElementById('page-budget')?.classList.contains('active')) {
-    renderBudgetPage(document.getElementById('budgetTripFilter')?.value || 'all');
-  }
+    closeModal('modalEditBudget');
+    showToast('Category updated!');
+
+    if (document.getElementById('page-tripHub')?.classList.contains('active')) renderHubBudget();
+    if (document.getElementById('page-budget')?.classList.contains('active')) {
+      renderBudgetPage(document.getElementById('budgetTripFilter')?.value || 'all');
+    }
+  } catch(e) { showToast('Error saving: ' + e.message); }
 }
 
 // ── BUDGET CATEGORY: Delete from hub ─────────────────────────
@@ -3618,15 +3642,11 @@ async function renderJournalTab() {
   var entries = (meta.journal || []).slice().sort(function(a,b){ return new Date(b.date)-new Date(a.date); });
 
   var addFormHtml = '<div style="margin-bottom:16px;background:var(--bg);border:1.5px solid var(--border);border-radius:12px;padding:14px">'
-    +'<p style="font-size:11px;font-weight:700;color:#068cdf;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:10px">New Entry</p>'
-    +'<div style="display:grid;grid-template-columns:160px 1fr;gap:8px;margin-bottom:10px">'
-    +'<div><label style="font-size:11px;font-weight:600;color:#64748b;display:block;margin-bottom:4px">📅 Date</label>'
-    +'<input type="date" id="journalDate" style="width:100%;padding:8px 10px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;font-family:inherit;background:var(--surface);color:var(--text-1);outline:none;box-sizing:border-box"/></div>'
-    +'<div><label style="font-size:11px;font-weight:600;color:#64748b;display:block;margin-bottom:4px">😊 Mood</label>'
-    +'<input type="text" id="journalMood" placeholder="e.g. Amazing, Tired, Excited…" style="width:100%;padding:8px 10px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;font-family:inherit;background:var(--surface);color:var(--text-1);outline:none;box-sizing:border-box"/></div>'
+    +'<div style="display:flex;gap:8px;align-items:center;margin-bottom:10px">'
+    +'<input type="date" id="journalDate" style="padding:8px 10px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;font-family:inherit;background:var(--surface);color:var(--text-1);outline:none"/>'
+    +'<input type="text" id="journalMood" placeholder="Mood (e.g. 😊 Amazing)" style="flex:1;padding:8px 10px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;font-family:inherit;background:var(--surface);color:var(--text-1);outline:none"/>'
     +'</div>'
-    +'<label style="font-size:11px;font-weight:600;color:#64748b;display:block;margin-bottom:6px">✏️ What happened today?</label>'
-    +'<textarea id="journalText" placeholder="What did you see, eat, feel? Who did you meet?…" style="width:100%;min-height:90px;padding:10px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;font-family:inherit;resize:vertical;outline:none;background:var(--surface);color:var(--text-1);box-sizing:border-box;line-height:1.6"></textarea>'
+    +'<textarea id="journalText" placeholder="What happened today? What did you see, eat, feel?…" style="width:100%;min-height:90px;padding:10px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;font-family:inherit;resize:vertical;outline:none;background:var(--surface);color:var(--text-1);box-sizing:border-box;line-height:1.6"></textarea>'
     +'<div style="display:flex;justify-content:flex-end;margin-top:8px">'
     +'<button onclick="addJournalEntry()" style="background:linear-gradient(135deg,#068cdf,#063937);color:white;border:none;border-radius:8px;padding:8px 18px;font-size:13px;font-weight:600;font-family:inherit;cursor:pointer">📝 Add Entry</button>'
     +'</div></div>';
@@ -3982,3 +4002,125 @@ window.onerror = function(msg, src, line, col, err) {
   console.warn('Global error:', msg, 'at', src + ':' + line);
   return false; // don't suppress default console logging
 };
+// ============================================================
+//  EMOJI PICKER FOR CHECKLIST ICON
+// ============================================================
+var CHECKLIST_EMOJIS = [
+  '📋','✅','🗒️','📝','📌','📍','🎯','🏆','⭐','🌟','💡','🔔','🛎️','⚠️',
+  '✈️','🚢','🚂','🚗','🏨','🏕️','🏖️','🏔️','🗺️','🌍','🌏','🌎',
+  '💰','💳','💸','🧾','📊','📈','💹',
+  '🧳','👕','👗','👟','🧢','🕶️','☂️','🧥',
+  '🍽️','🍜','🍣','🍕','☕','🍺','🥗','🍰',
+  '🎭','🎨','🎪','🎡','🏛️','⛩️','🕌','🗼','🗽','🏯',
+  '📸','🎥','🎵','🎤','📖','📚','🔖',
+  '💊','🩺','🏥','🧴','🪥','🧼',
+  '🔑','🛂','📄','🪪','💻','📱','🔌','🔋',
+  '🐘','🦁','🐧','🦋','🌸','🌴','🌊','❄️','🌈','☀️','🌙',
+  '🎁','🎀','🎊','🎉','🏅','🥇','🎖️',
+  '🔐','🛡️','🚨','🆘'
+];
+
+var _emojiPickerTarget = null;
+var _emojiPickerBtn    = null;
+
+function toggleEmojiPicker(inputId, btnId) {
+  _emojiPickerTarget = inputId;
+  _emojiPickerBtn    = btnId;
+  var dropdown = document.getElementById('emojiPickerDropdown');
+  var searchEl = document.getElementById('emojiSearch');
+  if (!dropdown) return;
+  var isOpen = dropdown.style.display !== 'none';
+  if (isOpen) { dropdown.style.display = 'none'; return; }
+  if (searchEl) searchEl.value = '';
+  renderEmojiGrid('');
+  dropdown.style.display = 'block';
+  if (searchEl) setTimeout(function(){ searchEl.focus(); }, 50);
+  setTimeout(function(){
+    document.addEventListener('click', closeEmojiOnOutside, true);
+  }, 10);
+}
+
+function closeEmojiOnOutside(e) {
+  var dropdown = document.getElementById('emojiPickerDropdown');
+  var btn = _emojiPickerBtn ? document.getElementById(_emojiPickerBtn) : null;
+  if (dropdown && !dropdown.contains(e.target) && btn && !btn.contains(e.target)) {
+    dropdown.style.display = 'none';
+    document.removeEventListener('click', closeEmojiOnOutside, true);
+  }
+}
+
+function filterEmojis(q) {
+  renderEmojiGrid(q);
+}
+
+function renderEmojiGrid(q) {
+  var grid = document.getElementById('emojiGrid');
+  if (!grid) return;
+  var list = q ? CHECKLIST_EMOJIS.filter(function(e){ return e.includes(q); }) : CHECKLIST_EMOJIS;
+  grid.innerHTML = list.map(function(em) {
+    return '<button type="button" onclick="selectEmoji(\'' + em + '\')" title="' + em + '" '
+      + 'style="font-size:22px;padding:4px;border:none;background:none;cursor:pointer;border-radius:6px;transition:background 0.1s;line-height:1" '
+      + 'onmouseover="this.style.background=\'rgba(6,140,223,0.1)\'" onmouseout="this.style.background=\'none\'">'
+      + em + '</button>';
+  }).join('');
+}
+
+function selectEmoji(em) {
+  var inp = _emojiPickerTarget ? document.getElementById(_emojiPickerTarget) : null;
+  var display = document.getElementById('newChecklistIconDisplay');
+  if (inp) inp.value = em;
+  if (display) display.textContent = em;
+  var dropdown = document.getElementById('emojiPickerDropdown');
+  if (dropdown) dropdown.style.display = 'none';
+  document.removeEventListener('click', closeEmojiOnOutside, true);
+}
+
+window.toggleEmojiPicker = toggleEmojiPicker;
+window.filterEmojis = filterEmojis;
+window.selectEmoji  = selectEmoji;
+
+// ============================================================
+//  CHANGE PASSWORD
+// ============================================================
+async function changePassword() {
+  var current = document.getElementById('currentPassword')?.value;
+  var newPw   = document.getElementById('newPassword')?.value;
+  var confirm = document.getElementById('confirmNewPassword')?.value;
+  if (!current || !newPw || !confirm) { showToast('Please fill in all fields'); return; }
+  if (newPw.length < 8)               { showToast('New password must be at least 8 characters'); return; }
+  if (!/[A-Za-z]/.test(newPw))        { showToast('Password must contain at least one letter'); return; }
+  if (!/[0-9]/.test(newPw))           { showToast('Password must contain at least one number'); return; }
+  if (newPw !== confirm)              { showToast('Passwords do not match'); return; }
+  try {
+    await apiFetch('/auth/change-password', {
+      method: 'POST',
+      body: JSON.stringify({ currentPassword: current, newPassword: newPw })
+    });
+    closeModal('modalChangePassword');
+    document.getElementById('currentPassword').value = '';
+    document.getElementById('newPassword').value = '';
+    document.getElementById('confirmNewPassword').value = '';
+    showToast('✅ Password changed successfully!');
+  } catch(e) { showToast('Error: ' + e.message); }
+}
+window.changePassword = changePassword;
+
+// ============================================================
+//  DELETE ACCOUNT
+// ============================================================
+async function confirmDeleteAccount() {
+  var confirmed = confirm('⚠️ Delete your account?\n\nThis will permanently delete your account and ALL your trips, budgets, checklists, and reminders.\n\nThis cannot be undone.');
+  if (!confirmed) return;
+  var typed = prompt('Type DELETE to confirm:');
+  if (typed !== 'DELETE') { showToast('Account deletion cancelled'); return; }
+  try {
+    await apiFetch('/auth/delete-account', { method: 'DELETE' });
+    localStorage.removeItem('tg_token');
+    localStorage.removeItem('tg_user');
+    localStorage.removeItem('tg_currency');
+    localStorage.removeItem('tg_avatar_url');
+    showToast('Account deleted. Goodbye!');
+    setTimeout(function(){ window.location.href = '/'; }, 1500);
+  } catch(e) { showToast('Error: ' + e.message); }
+}
+window.confirmDeleteAccount = confirmDeleteAccount;
