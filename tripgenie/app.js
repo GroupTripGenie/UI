@@ -3650,9 +3650,9 @@ async function renderJournalTab() {
   var entries = (meta.journal || []).slice().sort(function(a,b){ return new Date(b.date)-new Date(a.date); });
 
   var addFormHtml = '<div style="margin-bottom:16px;background:var(--bg);border:1.5px solid var(--border);border-radius:12px;padding:14px">'
-    +'<div style="display:flex;gap:8px;align-items:center;margin-bottom:10px">'
-    +'<input type="date" id="journalDate" style="padding:8px 10px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;font-family:inherit;background:var(--surface);color:var(--text-1);outline:none"/>'
-    +'<input type="text" id="journalMood" placeholder="Mood (e.g. 😊 Amazing)" style="flex:1;padding:8px 10px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;font-family:inherit;background:var(--surface);color:var(--text-1);outline:none"/>'
+    +'<div style="display:grid;grid-template-columns:150px 1fr;gap:8px;margin-bottom:10px">'
+    +'<input type="date" id="journalDate" style="padding:8px 10px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;font-family:inherit;background:var(--surface);color:var(--text-1);outline:none;width:100%;box-sizing:border-box"/>'
+    +'<input type="text" id="journalMood" placeholder="Mood (e.g. 😊 Amazing)" style="padding:8px 10px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;font-family:inherit;background:var(--surface);color:var(--text-1);outline:none;width:100%;box-sizing:border-box"/>'
     +'</div>'
     +'<textarea id="journalText" placeholder="What happened today? What did you see, eat, feel?…" style="width:100%;min-height:90px;padding:10px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;font-family:inherit;resize:vertical;outline:none;background:var(--surface);color:var(--text-1);box-sizing:border-box;line-height:1.6"></textarea>'
     +'<div style="display:flex;justify-content:flex-end;margin-top:8px">'
