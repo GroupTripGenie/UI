@@ -1432,12 +1432,14 @@ async function saveCategory() {
 
 async function deleteBudgetCategory(catId, tripId) {
   if (!confirm('Delete this category and all its expenses?')) return;
-  // Note: backend doesn't have delete category endpoint yet — remove from UI optimistically
-  if (allBudgets[tripId]) {
-    allBudgets[tripId].categories = allBudgets[tripId].categories.filter(c=>c.category_id!==catId);
-  }
-  renderBudgetPage(document.getElementById('budgetTripFilter')?.value||'all');
-  showToast('Category removed');
+  try {
+    await apiFetch('/budget/'+tripId+'/categories/'+catId, { method:'DELETE' });
+    if (allBudgets[tripId]) {
+      allBudgets[tripId].categories = allBudgets[tripId].categories.filter(c=>c.category_id!==catId);
+    }
+    renderBudgetPage(document.getElementById('budgetTripFilter')?.value||'all');
+    showToast('Category deleted');
+  } catch(e) { showToast('Error deleting category: ' + e.message); }
 }
 
 // Override saveExpense to refresh budget page
@@ -2533,12 +2535,15 @@ async function saveEditCategory() {
 // ── BUDGET CATEGORY: Delete from hub ─────────────────────────
 async function deleteHubCategory(catId) {
   if (!confirm('Delete this category and all its expenses?')) return;
-  if (tripBudget?.categories) {
-    tripBudget.categories = tripBudget.categories.filter(c => c.category_id !== catId);
-    if (tripBudget.expenses) tripBudget.expenses = tripBudget.expenses.filter(e => e.category_id !== catId);
-  }
-  renderHubBudget();
-  showToast('Category deleted');
+  try {
+    await apiFetch('/budget/'+currentTripId+'/categories/'+catId, { method:'DELETE' });
+    if (tripBudget?.categories) {
+      tripBudget.categories = tripBudget.categories.filter(c => c.category_id !== catId);
+      if (tripBudget.expenses) tripBudget.expenses = tripBudget.expenses.filter(e => e.category_id !== catId);
+    }
+    renderHubBudget();
+    showToast('Category deleted');
+  } catch(e) { showToast('Error deleting category: ' + e.message); }
 }
 
 // ── EXPENSE: Edit ─────────────────────────────────────────────
@@ -4036,6 +4041,16 @@ function toggleEmojiPicker(inputId, btnId) {
   if (isOpen) { dropdown.style.display = 'none'; return; }
   if (searchEl) searchEl.value = '';
   renderEmojiGrid('');
+  // Position below the button using fixed coords
+  var btn = btnId ? document.getElementById(btnId) : null;
+  if (btn) {
+    var rect = btn.getBoundingClientRect();
+    dropdown.style.top  = (rect.bottom + 6) + 'px';
+    dropdown.style.left = rect.left + 'px';
+    // Keep on screen
+    var right = rect.left + 320;
+    if (right > window.innerWidth) dropdown.style.left = (window.innerWidth - 328) + 'px';
+  }
   dropdown.style.display = 'block';
   if (searchEl) setTimeout(function(){ searchEl.focus(); }, 50);
   setTimeout(function(){

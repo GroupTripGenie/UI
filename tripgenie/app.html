@@ -992,10 +992,10 @@
             <span style="font-size:13px;color:#94a3b8">Click to change icon</span>
           </button>
           <input type="hidden" id="newChecklistIcon" value="📋"/>
-          <div id="emojiPickerDropdown" style="display:none;position:absolute;top:100%;left:0;right:0;z-index:999;background:white;border:1.5px solid #068cdf;border-radius:10px;padding:10px;box-shadow:0 8px 24px rgba(0,0,0,0.12);margin-top:4px">
+          <div id="emojiPickerDropdown" style="display:none;position:fixed;z-index:9999;background:white;border:1.5px solid #068cdf;border-radius:12px;padding:12px;box-shadow:0 12px 40px rgba(0,0,0,0.2);width:320px">
             <input type="text" id="emojiSearch" placeholder="🔍 Search emojis…" oninput="filterEmojis(this.value)"
               style="width:100%;padding:8px 10px;border:1.5px solid #e8ecf0;border-radius:8px;font-size:13px;font-family:inherit;outline:none;margin-bottom:8px;box-sizing:border-box"/>
-            <div id="emojiGrid" style="display:grid;grid-template-columns:repeat(8,1fr);gap:4px;max-height:160px;overflow-y:auto"></div>
+            <div id="emojiGrid" style="display:grid;grid-template-columns:repeat(8,1fr);gap:2px;max-height:200px;overflow-y:auto"></div>
           </div>
         </div>
       </div>
