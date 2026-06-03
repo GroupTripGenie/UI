@@ -162,7 +162,8 @@
                 <a href="#" class="view-all" data-page="mytrips">View All →</a>
               </div>
               <div style="margin-bottom:16px">
-                <input type="text" id="dashSearch" placeholder="🔍 Search trips by destination…" oninput="filterDashTrips()" autocomplete="off" name="trip-search"              </div>
+                <input type="text" id="dashSearch" placeholder="🔍 Search trips by destination…" oninput="filterDashTrips()" autocomplete="off" name="trip-search" style="width:100%;padding:10px 16px;border:1.5px solid #e8ecf0;border-radius:10px;font-size:14px;font-family:inherit;outline:none;box-sizing:border-box"/>
+              </div>
               <div class="trips-grid" id="dashTripsGrid"></div>
             </div>
           </div>
@@ -586,7 +587,8 @@
               <select id="budgetTripFilter" onchange="filterBudgetByTrip()" style="padding:8px 12px;border:1.5px solid #e8ecf0;border-radius:8px;font-family:inherit;font-size:14px;outline:none;flex:1;min-width:140px">
                 <option value="all">All Trips</option>
               </select>
-                  <input type="text" id="budgetSearch" placeholder="Search trips…" oninput="filterBudgetByTrip()" autocomplete="off" name="budget-search"              <select id="budgetSort" onchange="filterBudgetByTrip()" style="padding:8px 12px;border:1.5px solid #e8ecf0;border-radius:8px;font-family:inherit;font-size:14px;outline:none">
+                  <input type="text" id="budgetSearch" placeholder="Search trips…" oninput="filterBudgetByTrip()" autocomplete="off" name="budget-search" style="padding:8px 12px;border:1.5px solid #e8ecf0;border-radius:8px;font-size:14px;font-family:inherit;outline:none;flex:1;min-width:140px"/>
+              <select id="budgetSort" onchange="filterBudgetByTrip()" style="padding:8px 12px;border:1.5px solid #e8ecf0;border-radius:8px;font-family:inherit;font-size:14px;outline:none">
                 <option value="date-asc">Date ↑</option>
                 <option value="date-desc">Date ↓</option>
                 <option value="name-asc">Name A–Z</option>
