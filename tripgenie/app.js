@@ -207,6 +207,9 @@ function renderDashboardStats() {
 function renderDashboardTrips() {
   const grid = document.getElementById('dashTripsGrid');
   if (!grid) return;
+  // Always clear the search field to prevent browser autofill showing wrong results
+  const searchEl = document.getElementById('dashSearch');
+  if (searchEl) searchEl.value = '';
   const upcoming = allTrips.filter(t=>t.status!=='completed').slice(0,4);
   grid.innerHTML = upcoming.length
     ? upcoming.map(t => smallTripCard(t)).join('')

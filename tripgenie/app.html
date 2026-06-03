@@ -162,7 +162,7 @@
                 <a href="#" class="view-all" data-page="mytrips">View All →</a>
               </div>
               <div style="margin-bottom:16px">
-                <input type="text" id="dashSearch" placeholder="🔍 Search trips by destination…" oninput="filterDashTrips()" autocomplete="off" name="trip-search" style="width:100%;padding:10px 16px;border:1.5px solid #e8ecf0;border-radius:10px;font-size:14px;font-family:inherit;outline:none;box-sizing:border-box"/>
+                <input type="text" id="dashSearch" placeholder="🔍 Search trips by destination…" oninput="filterDashTrips()" autocomplete="new-password" readonly onfocus="this.removeAttribute('readonly')" style="width:100%;padding:10px 16px;border:1.5px solid #e8ecf0;border-radius:10px;font-size:14px;font-family:inherit;outline:none;box-sizing:border-box"/>
               </div>
               <div class="trips-grid" id="dashTripsGrid"></div>
             </div>
