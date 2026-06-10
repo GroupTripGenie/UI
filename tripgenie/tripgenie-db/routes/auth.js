@@ -143,7 +143,7 @@ router.post('/forgot-password', async (req, res) => {
         'Authorization': `Bearer ${process.env.RESEND_API_KEY}`
       },
       body: JSON.stringify({
-        from:    'TripGenie <onboarding@resend.dev>',
+        from:    'TripGenie <noreply@tripgenie.space',
         to:      [email],
         subject: '🧞 Reset your TripGenie password',
         html: `
